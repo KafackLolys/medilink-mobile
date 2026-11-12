@@ -21,6 +21,8 @@ npx expo-doctor             # diagnose dependency and config issues
 npx expo install --fix      # fix incompatible package versions
 ```
 
+**- Always perform a TypeScript check on the modified files at the end.**
+
 Run lint and typecheck before declaring any task done.
 
 ## Navigation & Routing
