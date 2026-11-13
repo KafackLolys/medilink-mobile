@@ -77,16 +77,18 @@ export default function DoctorProfessionalProfile() {
     const checked=validateDoctorProfileEdit(draft);
     setFormErrors(checked.errors);
     if(!checked.payload)return;
+    const operationEpoch=seq.current;
     lock.current=true;setBusy(true);setError('');setNotice('');
     try{
       const returned=await doctorsApi.update(checked.payload);
+      if(operationEpoch!==seq.current)return;
       const updated=confirmedDoctorProfileUpdate(profile,returned);
       // Success is based on a confirmed profile response, not a local draft.
       setState({status:'success',profile:updated});
       setEditing(false);setNotice('Profil professionnel enregistré sur le serveur.');
       reload(true);
-    }catch(e){setFormErrors({form:doctorProfileError(e)});}
-    finally{lock.current=false;setBusy(false);}
+    }catch(e){if(operationEpoch===seq.current)setFormErrors({form:doctorProfileError(e)});}
+    finally{lock.current=false;if(operationEpoch===seq.current)setBusy(false);}
   }
   async function pickDocument(){
     if(lock.current||!profile)return;
@@ -107,29 +109,33 @@ export default function DoctorProfessionalProfile() {
     if(lock.current||!picked||!profile||session.status!=='authenticated'||session.role!=='doctor')return;
     const issue=validateDoctorDocument(picked,profile.documents.length);
     if(issue){setError(issue);return;}
+    const operationEpoch=seq.current;
     lock.current=true;setBusy(true);setError('');setNotice('');
     try{
       const file:NativeUploadFile={uri:picked.uri,name:picked.name,type:picked.mimeType!};
       const uploaded=await doctorsApi.uploadDocument(file,documentType);
+      if(operationEpoch!==seq.current)return;
       if(!uploaded?.id||uploaded.name!==documentType||uploaded.status!=='pending')
         throw new Error('Réponse de document non confirmée.');
       setPicked(null);
       setNotice('Justificatif envoyé. Il est en attente de vérification.');
       reload(true);
-    }catch(e){setError(doctorProfileError(e));reload(true);}
-    finally{lock.current=false;setBusy(false);}
+    }catch(e){if(operationEpoch===seq.current){setError(doctorProfileError(e));reload(true);}}
+    finally{lock.current=false;if(operationEpoch===seq.current)setBusy(false);}
   }
   async function remove(){
     if(lock.current||!deleteTarget||session.status!=='authenticated'||session.role!=='doctor')return;
+    const operationEpoch=seq.current;
     lock.current=true;setBusy(true);setError('');setNotice('');
     try{
       await doctorsApi.deleteDocument(deleteTarget.id);
+      if(operationEpoch!==seq.current)return;
       setDeleteTarget(null);
       setPicked(null);
       setNotice('Justificatif supprimé. Le statut professionnel a été rechargé.');
       reload(true);
-    }catch(e){setDeleteTarget(null);setError(doctorProfileError(e));reload(true);}
-    finally{lock.current=false;setBusy(false);}
+    }catch(e){if(operationEpoch===seq.current){setDeleteTarget(null);setError(doctorProfileError(e));reload(true);}}
+    finally{lock.current=false;if(operationEpoch===seq.current)setBusy(false);}
   }
   async function openDocument(document:DoctorDocument){
     try{
