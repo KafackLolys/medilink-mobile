@@ -183,3 +183,14 @@ Le backend `GET /auth/profile` retourne actuellement `address:null` et `verified
 - [Contrats, droits et recette Android](docs/MOBILE_DOCTOR_DASHBOARD.md).
 
 La PR #3 ayant été fusionnée entre-temps, les prompts de la phase médecin continuent sur **la branche historique identique** dans la [PR #4](https://github.com/KafackLolys/medilink-mobile/pull/4) en brouillon.
+
+## Prompt 16 — Besoins et propositions médecin
+
+- `/medecin/besoins` : annuaire patient accessible uniquement aux **médecins professionnellement vérifiés**, filtres `q`, `specialty`, `priority`, `mode` et pagination réelle `GET /needs/doctor`.
+- `/medecin/besoins/[id]` : détail depuis `GET /needs/doctor/:id`, ville/quartier et pièces jointes volontairement partagées ; **jamais** les coordonnées, adresses précises ou dossiers privés du patient.
+- Formulaire de proposition, date/heure futures, mode et tarif XAF validés, aperçu puis `POST /needs/doctor/:id/proposals`, gestion du conflit 409 et sans double envoi.
+- `/medecin/propositions` : liste paginée, six statuts et compteurs réels du backend ; annulation via `PATCH /needs/doctor/proposals/:id/cancel` **seulement** pour `pending` et `sent`, confirmation et relecture après action.
+- Aucun stockage local persistant d'informations médicales ; écrans purgés à leur sortie, contrôles serveur de rôle/ownership toujours appliqués.
+- Tests `npm run test:doctor-needs` et CI ; [contrats, règles et recette Android](docs/MOBILE_DOCTOR_NEEDS_PROPOSALS.md).
+
+L'intégration avec un véritable compte médecin, l'ouverture de documents signés sur téléphone et la comparaison responsive Vercel restent à valider avant fusion.
