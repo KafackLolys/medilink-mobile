@@ -124,7 +124,11 @@ export class SessionManager {
     const epoch = ++this.generation;
     const candidate = parseTokens(response, this.now());
     this.tokens = null;
-    this.publish({ status: 'loading', role: null });
+    // Keep guest auth routes mounted while login/profile verification is running.
+    // If replacing an active account, immediately hide its protected routes.
+    if (this.state.status === 'authenticated') {
+      this.publish({ status: 'unauthenticated', role: null });
+    }
     try {
       const user = await this.verifiedProfile(candidate);
       if (epoch !== this.generation) return;
