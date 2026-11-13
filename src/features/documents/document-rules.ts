@@ -46,3 +46,16 @@ export function documentTransferError(error:unknown):string{
 export function pickerOutcome<T>(response:{canceled:boolean;assets?:T[]|null}):T|null{
  return response.canceled?null:response.assets?.[0]??null;
 }
+
+export type PatientDocumentSummary={id:string;type:string;title:string;filename:string};
+export function filterPatientDocuments<T extends PatientDocumentSummary>(
+ docs:T[],query:string,category:string,labels:Record<string,string>):T[]{
+ const q=query.trim().toLocaleLowerCase('fr');
+ return docs.filter(doc=>(category==='all'||doc.type===category)
+  &&(!q||[doc.title,doc.filename,labels[doc.type]??''].some(value=>value.toLocaleLowerCase('fr').includes(q))));
+}
+export function pagePatientDocuments<T>(docs:T[],page:number,pageSize=6){
+ const totalPages=Math.max(1,Math.ceil(docs.length/pageSize));
+ const currentPage=Math.min(Math.max(Number.isInteger(page)?page:1,1),totalPages);
+ return {items:docs.slice((currentPage-1)*pageSize,currentPage*pageSize),page:currentPage,totalPages,total:docs.length};
+}
