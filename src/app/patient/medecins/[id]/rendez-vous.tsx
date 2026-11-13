@@ -35,7 +35,6 @@ export default function PatientBooking() {
       if(!ac.signal.aborted&&version===seq.current){
         setData({status:'success',doctor});
         setMode(old=>doctor.modes.includes(old as ConsultationMode)?old:'');
-        setError('');
       }
     }).catch(e=>{
       if(!ac.signal.aborted&&version===seq.current)
@@ -116,9 +115,9 @@ export default function PatientBooking() {
             <ThemedText type="small" themeColor="textSecondary">
               Les plages hebdomadaires sont indicatives : les créneaux déjà pris ne sont pas publiés.
             </ThemedText>
-            <Input label="Date (AAAA-MM-JJ)" value={date} onChangeText={setDate}
+            <Input label="Date (AAAA-MM-JJ)" value={date} onChangeText={v=>{setDate(v);setError('');}}
               placeholder="2026-11-20" maxLength={10} keyboardType="numbers-and-punctuation" editable={!busy}/>
-            <Input label="Heure (HH:mm, format 24 h)" value={time} onChangeText={setTime}
+            <Input label="Heure (HH:mm, format 24 h)" value={time} onChangeText={v=>{setTime(v);setError('');}}
               placeholder="09:30" maxLength={5} keyboardType="numbers-and-punctuation" editable={!busy}/>
             <ThemedText type="small" themeColor="textSecondary">Fuseau local de votre appareil : {zone}</ThemedText>
             {date && doctor.blockedDates?.includes(date)?<ThemedText themeColor="danger">
@@ -140,7 +139,7 @@ export default function PatientBooking() {
             <ThemedText type="subtitle" accessibilityRole="header">Mode de consultation</ThemedText>
             {doctor.modes.length?doctor.modes.map(item=><Pressable key={item}
               accessibilityRole="radio" accessibilityLabel={item==='home'?'À domicile':'Téléconsultation'}
-              accessibilityState={{selected:mode===item,disabled:busy}} disabled={busy} onPress={()=>setMode(item)}
+              accessibilityState={{selected:mode===item,disabled:busy}} disabled={busy} onPress={()=>{setMode(item);setError('');}}
               style={[styles.choice,{borderColor:mode===item?theme.primary:theme.border,
                 backgroundColor:mode===item?theme.infoSurface:theme.backgroundElement}]}>
               <ThemedText type="smallBold">{item==='home'?'À domicile':'Téléconsultation'}</ThemedText>
