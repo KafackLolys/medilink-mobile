@@ -41,7 +41,7 @@ Prompt 02 : le starter « Home / Explore » a été retiré de la navigation et 
 
 ## Branche commune
 
-Continuer **tous les prompts** dans `docs/mobile-audit-parity-2026-11-13` et conserver la [Pull Request #1](https://github.com/KafackLolys/medilink-mobile/pull/1) comme PR de référence jusqu'à la fin du projet. Ne pas fusionner prématurément.
+Continuer **tous les prompts** dans `docs/mobile-audit-parity-2026-11-13` et conserver la [Pull Request #2](https://github.com/KafackLolys/medilink-mobile/pull/2) pour les travaux restants (la PR #1 ayant déjà été fusionnée). Ne pas fusionner prématurément.
 
 ## Vérification lors du prompt 02
 
@@ -104,3 +104,7 @@ Voir [MOBILE_API_CLIENT.md](docs/MOBILE_API_CLIENT.md) pour l'usage, le réseau 
 - [Contrats, scénarios et limites](docs/MOBILE_RECOVERY_ONBOARDING.md).
 
 La revue responsive de la version Vercel et les tests sur émulateur Android restent à confirmer ; **aucun scénario E2E n'est déclaré réussi** dans ce lot.
+
+## Pull Request de continuité
+
+La PR #1 a été fusionnée le **13 novembre 2026**. Pour préserver la règle de **branche unique**, les commits non fusionnés et les prompts suivants sont suivis par la [PR #2](https://github.com/KafackLolys/medilink-mobile/pull/2), **sur la même branche** `docs/mobile-audit-parity-2026-11-13`. Ne pas créer une nouvelle branche par prompt. La PR #2 reste en brouillon jusqu'à validation technique et fonctionnelle.
