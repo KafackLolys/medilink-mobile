@@ -2,7 +2,7 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import {DOCUMENT_MIME_TYPES,MAX_MEDICAL_FILE_BYTES,validateMedicalFile,
  documentCategoryAllowed,validateDocumentTitle,signedPreviewUrl,
- documentTransferError,pickerOutcome,filterPatientDocuments,pagePatientDocuments} from './document-rules.ts';
+ documentTransferError,pickerOutcome,filterPatientDocuments,pagePatientDocuments,resolveMedicalSelection} from './document-rules.ts';
 
 const file={uri:'content://com.android.providers.downloads.documents/document/1',name:'bilan.pdf',
  mimeType:'application/pdf',size:1024};
@@ -72,4 +72,15 @@ test('patient document search/filter and pagination do not fabricate server data
  const page=pagePatientDocuments(docs,2,2);
  assert.deepEqual(page,{items:[docs[2]],page:2,totalPages:2,total:3});
  assert.equal(pagePatientDocuments([],10).page,1);
+});
+
+test('Android access denied and picker cancellation never expose sensitive file paths',async()=>{
+ const denied=await resolveMedicalSelection(async()=>{throw new Error('Permission denied /private/patient/secret.pdf');},'patient');
+ assert.equal(denied.file,null);
+ assert.match(denied.error,/refusé/);
+ assert.doesNotMatch(denied.error,/secret.pdf/);
+ const cancelled=await resolveMedicalSelection(async()=>({canceled:true,assets:[]}), 'doctor');
+ assert.deepEqual(cancelled,{file:null,error:null});
+ const accepted=await resolveMedicalSelection(async()=>({canceled:false,assets:[file]}),'doctor');
+ assert.deepEqual(accepted,{file,error:null});
 });
