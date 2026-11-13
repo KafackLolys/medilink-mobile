@@ -1,5 +1,5 @@
 import { Link } from 'expo-router';
-import { View } from 'react-native';
+import { Pressable, View } from 'react-native';
 import { AuthShell } from '@/components/auth/auth-shell';
 import { Card } from '@/components/ui/primitives';
 import { ThemedText } from '@/components/themed-text';
@@ -9,10 +9,10 @@ export default function ChooseRole() {
   return <AuthShell title="Créer votre compte" subtitle="Qui êtes-vous ? Votre espace s’adapte à votre profil.">
     <View style={{ gap: Spacing.three }}>
       <Link href={{ pathname: '/register', params: { role: 'patient' } }} asChild>
-        <View accessible accessibilityRole="link">
+        <Pressable accessibilityRole="link">
           <Card><ThemedText type="subtitle">Je suis patient</ThemedText>
             <ThemedText themeColor="textSecondary">Trouver un médecin ou publier un besoin médical.</ThemedText></Card>
-        </View>
+        </Pressable>
       </Link>
       <Link href={{ pathname: '/register', params: { role: 'doctor' } }} asChild>
         <View accessible accessibilityRole="link">
