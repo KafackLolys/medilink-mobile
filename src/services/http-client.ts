@@ -1,3 +1,4 @@
+import { abortableDelay, retryDecision, type RetryPolicy } from '../features/network/network-policy.ts';
 export type HttpMethod = 'GET' | 'POST' | 'PUT' | 'PATCH' | 'DELETE';
 export type HttpErrorKind =
   | 'unauthorized' | 'forbidden' | 'not_found' | 'conflict' | 'validation'
@@ -37,6 +38,8 @@ export type HttpRequestOptions = {
   timeoutMs?: number;
   authenticated?: boolean;
   headers?: Record<string, string>;
+  /** Never implicit. Opt in only for GET endpoints without side effects. */
+  retryPolicy?: RetryPolicy;
 };
 
 const statusKinds: Record<number, HttpErrorKind> = {
@@ -173,7 +176,33 @@ export function createHttpClient(options: HttpClientOptions) {
     }
   }
 
-  return { request };
+  async function resilientRequest<T>(path: string, config: HttpRequestOptions = {}): Promise<T> {
+    const method=config.method??'GET';
+    if(config.retryPolicy==='safe-get'&&method!=='GET')
+      throw new Error('Un retry automatique est autorisé uniquement sur une lecture GET explicite.');
+    const identity=options.getSessionKey?.();
+    let attempt=0;
+    for(;;){
+      if(config.signal?.aborted)throw new HttpError('Requête annulée.','cancelled');
+      if(identity!==options.getSessionKey?.())
+        throw new HttpError('La session a changé.','cancelled');
+      try{
+        return await request<T>(path,config);
+      }catch(error){
+        if(!(error instanceof HttpError))throw error;
+        if(config.signal?.aborted||identity!==options.getSessionKey?.())
+          throw new HttpError('Requête annulée.','cancelled');
+        const decision=retryDecision({method,policy:config.retryPolicy??'none',
+          attempt,kind:error.kind,status:error.status,cancelled:error.kind==='cancelled'});
+        if(!decision.retry)throw error;
+        attempt++;
+        try{await abortableDelay(decision.delayMs,config.signal??new AbortController().signal);}
+        catch{throw new HttpError('Requête annulée.','cancelled');}
+      }
+    }
+  }
+
+  return { request: resilientRequest };
 }
 
 /**
