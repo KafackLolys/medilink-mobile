@@ -37,12 +37,12 @@ export function MessagingScreen({role}:{role:MessagingRole}){
   const lifecycle=useRef(0),listSeq=useRef(0),threadSeq=useRef(0);
   const scope=useRef<ConversationScope|null>(null),conversationRef=useRef('');
   const listAbort=useRef<AbortController|null>(null),threadAbort=useRef<AbortController|null>(null);
-  const sending=useRef(false),listRef=useRef<FlatList<ConversationMessage>|null>(null);
+  const sending=useRef<{epoch:number;id:string}|null>(null),listRef=useRef<FlatList<ConversationMessage>|null>(null);
   const allowed=session.status==='authenticated'&&session.role===role&&canUseMessaging(session.role);
 
   function purge(){
     lifecycle.current++;
-    scope.current=null;conversationRef.current='';
+    scope.current=null;conversationRef.current='';sending.current=null;
     listAbort.current?.abort();threadAbort.current?.abort();
     listSeq.current++;threadSeq.current++;
     setList({status:'loading'});setThread({status:'idle'});
@@ -164,7 +164,7 @@ export function MessagingScreen({role}:{role:MessagingRole}){
     const checked=validateMessage(draft);
     if(checked.error){setSendError(checked.error);return;}
     const expected={...scope.current},id=selected;
-    sending.current=true;setSendState('sending');setSendError('');
+    sending.current={epoch:expected.epoch,id};setSendState('sending');setSendError('');
     try{
       // Never optimistically insert or retry a POST with uncertain network outcome.
       const result=await messagesApi.send(id,checked.text);
@@ -179,7 +179,7 @@ export function MessagingScreen({role}:{role:MessagingRole}){
       if(matchesMessagingScope(expected,scope.current)&&conversationRef.current===id)
         setSendError(messagingError(e)+' Vérifiez le fil avant un nouvel envoi.');
     }finally{
-      sending.current=false;
+      if(sending.current?.epoch===expected.epoch&&sending.current.id===id)sending.current=null;
       if(matchesMessagingScope(expected,scope.current))setSendState('idle');
     }
   }
