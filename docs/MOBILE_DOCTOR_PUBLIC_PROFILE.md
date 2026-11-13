@@ -20,7 +20,7 @@ Il n'existe pas d'endpoint public de lecture des avis individuels sur ce médeci
 - Route protégée patient `/patient/medecins/:id`, paramètre id encodé par le service.
 - Profil complet : initiales (pas de photo dans le contrat), identité, badge vérifié, spécialité, expérience, présentation, lieu, tarif indicatif, modes de consultation et horaires hebdomadaires réellement retournés.
 - Dates bloquées présentées sans aucune raison privée ; ne déduit **pas** la disponibilité exacte d'un créneau, qui est confirmée au moment de la réservation par NestJS.
-- CTA « Consulter les rendez-vous » affiché si le médecin a au moins un mode et un horaire actif ; la destination `/patient/medecins/:id/rendez-vous` reste le placeholder technique du prompt 12, pas un formulaire de réservation opérationnel.
+- CTA « Consulter les rendez-vous » toujours accessible comme sur le web, avec un avertissement si aucun mode/horaire n'est renseigné ; la destination `/patient/medecins/:id/rendez-vous` reste le placeholder technique du prompt 12, pas un formulaire de réservation opérationnel.
 - Vérification indépendante des rendez-vous personnels terminés via `GET /appointments`, comme `doctor-rating-section` du web. Chaque rendez-vous appartient au patient authentifié ; possibilité d'ouvrir sa fiche. Aucun formulaire d'avis non raccordé n'a été ajouté ; la règle de **un seul avis par rendez-vous** demeure appliquée côté backend.
 - Chargement progressif et indépendant, rechargement par glissement, annulation et génération anti-réponses tardives, erreurs et 404 sans fuite de données.
 
