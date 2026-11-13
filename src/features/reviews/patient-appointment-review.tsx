@@ -62,7 +62,7 @@ export function PatientAppointmentReview({appointment}:{appointment:PatientAppoi
   </ThemedText>
   {state.status==='loading'?<LoadingState label="Vérification d’un avis existant…"/>:
    state.status==='error'?<ErrorState title="Avis indisponible" description={state.message} onRetry={load}/>:
-   state.review?<View style={{gap:Spacing.two}}>
+   state.status==='success'&&state.review?<View style={{gap:Spacing.two}}>
      <Badge label={'Avis publié · '+state.review.rating+'/5'} tone="success"/>
      {state.review.comment?<ThemedText>{state.review.comment}</ThemedText>:null}
      <ThemedText type="small" themeColor="textSecondary">Un deuxième avis sur cette consultation n’est pas autorisé.</ThemedText>
