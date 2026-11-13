@@ -1,5 +1,5 @@
 import { create } from 'zustand';
-import type { AccountRole } from '@/types/api';
+import type { AccountRole, AccountStatus } from '@/types/domain';
 
 /**
  * Navigation-only state published exclusively by SessionManager after API
@@ -8,7 +8,7 @@ import type { AccountRole } from '@/types/api';
 export type NavigationSession =
   | { status: 'loading'; role: null }
   | { status: 'unauthenticated'; role: null }
-  | { status: 'authenticated'; role: AccountRole };
+  | { status: 'authenticated'; role: AccountRole; accountStatus: AccountStatus };
 
 type SessionState = {
   session: NavigationSession;
