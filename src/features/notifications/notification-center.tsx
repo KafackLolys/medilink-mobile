@@ -107,7 +107,7 @@ export function NotificationCenter({role}:{role:'patient'|'doctor'}){
        <Button label="Précédent" variant="outline" disabled={page<=1} onPress={()=>setPage(x=>Math.max(1,x-1))}/>
        <ThemedText type="small">Page {value.page} / {value.totalPages}</ThemedText>
        <Button label="Suivant" variant="outline" disabled={page>=value.totalPages} onPress={()=>setPage(x=>x+1)}/>
-     </View>:null}
+     </View>:undefined}
    />
  </SafeAreaView>;
 }
