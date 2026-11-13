@@ -10,6 +10,7 @@ Les modèles médicaux, règles métier et endpoints n'ont pas été modifiés ;
 
 | Composant | Constat | Correction |
 | --- | --- | --- |
+| `src/constants/theme.ts` | Bleu primaire sur surface d'information claire : **4,24:1**, inférieur à AA pour du texte normal | Surface d'information claire ajustée de `#DBEAFE` à `#EFF6FF`, ratio mesuré **4,75:1** ; test automatique des principales paires clair/sombre à minimum **4,5:1** |
 | `src/components/ui/primitives.tsx` | Libellés longs pouvaient déborder de boutons/badges ; actions de retour insuffisamment annoncées ; scroll gêné par les onglets | `flexShrink` sur texte bouton, badge adaptable sans hauteur figée et taille 14 scalable, avatar annoncé une seule fois, retour avec hint et cible **48 points**, header qui peut renvoyer son action à la ligne ; `Screen` protège la fin du formulaire avec `BottomTabInset` et permet d'écarter le clavier au glissement |
 | `src/components/ui/form-fields.tsx` | Les erreurs et labels étaient principalement présentés visuellement | `aria-invalid`, `aria-describedby` vers le message d'erreur, erreur annoncée, descriptions sur switches/sélections, **48 points** pour le bouton de visibilité du mot de passe et les choix radio ; typages vérifiés sur React Native 0.88 |
 | `src/components/ui/overlays.tsx` | Confirmation sur petits écrans ou police agrandie pouvait dépasser la hauteur, Android retour pouvait fermer une opération en cours, toasts sur la barre de statut | Modales `KeyboardAvoidingView` et `ScrollView` limitées à l'écran, respect des safe areas, actions flexibles, Android Back autorisé uniquement lorsque `busy=false`, toasts décalés selon l'encoche/status bar |
@@ -50,7 +51,7 @@ npm run lint
 npm run doctor
 ```
 
-GitHub Actions exécute npm ci, `typecheck` et les tests unitaires, y compris `test:ux`. Le test `test:ux` est **structurel** ; il valide la présence des composants, routes et attributs importants, **pas la lisibilité réelle**, la précision du TalkBack ni les contrastes mesurés à l'écran. Le workflow GitHub Actions n'inclut pas encore un contrôle lint/Expo Doctor.
+GitHub Actions exécute npm ci, `typecheck` et les tests unitaires, y compris `test:ux`. Le test `test:ux` valide la structure du code **et calcule les ratios WCAG AA des principales paires texte/fond du thème**. Il ne valide pas la lisibilité des compositions réelles à l'écran, la précision de TalkBack ni les contrastes après overlays/images/rendu natif. Le workflow GitHub Actions n'inclut pas encore un contrôle lint/Expo Doctor.
 
 ### Checklist de recette Android non effectuée
 
