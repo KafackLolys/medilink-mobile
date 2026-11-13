@@ -1,7 +1,7 @@
 import type { ReactNode } from 'react';
 import { ActivityIndicator, Image, Pressable, ScrollView, StyleSheet, View, type ImageSourcePropType, type PressableProps, type ViewStyle } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { MinimumTouchTarget, Radius, Spacing, Typography } from '@/constants/theme';
+import { BottomTabInset, MinimumTouchTarget, Radius, Spacing, Typography } from '@/constants/theme';
 import { useTheme } from '@/hooks/use-theme';
 import { ThemedText } from '@/components/themed-text';
 
@@ -77,7 +77,8 @@ export function Screen({ children, scroll = true, style }: { children: ReactNode
   const theme = useTheme();
   return (
     <SafeAreaView style={[styles.screen, { backgroundColor: theme.background }, style]} edges={['top', 'bottom', 'left', 'right']}>
-      {scroll ? <ScrollView keyboardShouldPersistTaps="handled" contentContainerStyle={styles.scrollContent}>{children}</ScrollView> :
+      {scroll ? <ScrollView keyboardShouldPersistTaps="handled" keyboardDismissMode="on-drag"
+        contentContainerStyle={styles.scrollContent}>{children}</ScrollView> :
         <View style={styles.content}>{children}</View>}
     </SafeAreaView>
   );
@@ -106,7 +107,7 @@ const styles = StyleSheet.create({
   card: { borderWidth: 1, borderRadius: Radius.xlarge, padding: Spacing.three, gap: Spacing.two },
   badge: { alignSelf: 'flex-start', maxWidth: '100%', borderRadius: Radius.pill, paddingHorizontal: 12, paddingVertical: 6 },
   screen: { flex: 1 },
-  scrollContent: { padding: Spacing.three, paddingBottom: Spacing.six, gap: Spacing.three, width: '100%', maxWidth: 800, alignSelf: 'center' },
+  scrollContent: { padding: Spacing.three, paddingBottom: BottomTabInset + Spacing.three, gap: Spacing.three, width: '100%', maxWidth: 800, alignSelf: 'center' },
   content: { flex: 1, padding: Spacing.three, gap: Spacing.three },
   header: { flexDirection: 'row', alignItems: 'center', flexWrap: 'wrap', gap: Spacing.two, minHeight: 56 },
   back: { width: MinimumTouchTarget, height: MinimumTouchTarget, justifyContent: 'center', alignItems: 'center', borderWidth: 1, borderRadius: Radius.large },
