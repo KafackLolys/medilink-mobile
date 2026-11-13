@@ -39,3 +39,4 @@ jobs:
       - run: npm run test:doctor-agenda
       - run: npm run test:doctor-profile-edit
       - run: npm run test:messaging
+      - run: npm run test:notifications
