@@ -262,3 +262,14 @@ Les échanges E2E entre vrais comptes, le clavier sur appareil Android, le lint,
 - Tests `npm run test:geo` ajoutés au projet et à la CI ; [audit, contraintes exactes et recette Android](docs/MOBILE_GEO_INTERVENTION_ZONES.md).
 
 La vraie carte GPS n'est pas réalisable sans coordonnées professionnelles validées renvoyées par l'API ; les tests réels Android et la comparaison visuelle responsive restent à compléter avant fusion.
+
+## Prompt 23 — Avis et historiques de consultations
+
+- Patient : avis sur le **rendez-vous** via `GET/POST /appointments/:id/review` ; un seul avis par consultation `completed`, note entière 1–5, commentaire optionnel ≤2 000 caractères. Consultation de l'avis avant envoi, verrou anti-double-soumission, relecture après résultat réseau incertain et **aucune tentative POST automatique**.
+- `/patient/historique` : historique natif des consultations terminées du compte authentifié, filtres Toutes/Ce mois/Cette année et accès aux détails pour consulter ou déposer un avis. Depuis la fiche du médecin, les rendez-vous terminés avec celui-ci permettent de retrouver le formulaire d'évaluation.
+- Médecin : `/medecin/avis` récupère `GET /doctors/me/reviews`, affiche **uniquement** les notes, la distribution et les totaux renvoyés par le serveur, et filtre les avis par étoiles. Identité patient minimisée par l'API.
+- `/medecin/historique` : rendez-vous du médecin `GET /appointments/doctor`, historique limité aux statuts `completed`, filtres par période, note et nombre d'avis du vrai profil professionnel. Aucun indicateur de performance ou avis fictif.
+- Contrôles par rôle et propriétaire côté API, données purgées au changement de vue/compte, erreurs neutres et accès par les agendas natifs.
+- Tests `npm run test:reviews` dans la CI ; [contrat exact, permissions, limites et recette Android](docs/MOBILE_REVIEWS_HISTORY.md).
+
+À valider sur téléphone : création de vrais avis, double POST sur deux appareils, isolement intercomptes, lectures des évaluations et historiques, lint, Expo Doctor et comparaison au web.
