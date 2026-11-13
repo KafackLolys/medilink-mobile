@@ -46,7 +46,7 @@ for (const [status, kind] of [[401, 'unauthorized'], [403, 'forbidden'], [404, '
 test('onUnauthorized callback invoked on protected 401 only', async () => {
   let count = 0;
   const client = createHttpClient({ baseUrl: 'https://api.example.com',
-    onUnauthorized: () => { count++; }, fetchImpl: async () => response(401, { message: 'Expired' }) });
+    getAccessToken: () => 'expired-token', onUnauthorized: () => { count++; return false; }, fetchImpl: async () => response(401, { message: 'Expired' }) });
   await assert.rejects(client.request('/private'), { kind: 'unauthorized' });
   await assert.rejects(client.request('/public', { authenticated: false }), { kind: 'unauthorized' });
   assert.equal(count, 1);
