@@ -44,3 +44,4 @@ jobs:
       - run: npm run test:geo
       - run: npm run test:reviews
       - run: npm run test:admin
+      - run: npm run test:network
