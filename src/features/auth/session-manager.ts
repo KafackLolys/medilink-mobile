@@ -174,7 +174,7 @@ export class SessionManager {
         if (!valid) return;
         const user = await this.verifiedProfile(valid);
         if (epoch !== this.generation) return;
-        this.publish({ status: 'authenticated', role: user.role });
+        this.publish({ status: 'authenticated', role: user.role, accountStatus: user.status });
       } catch {
         if (epoch === this.generation) {
           try { await this.clear(); }
