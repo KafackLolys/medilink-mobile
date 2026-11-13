@@ -43,7 +43,8 @@
     "lint": "expo lint",
     "typecheck": "tsc --noEmit",
     "doctor": "npx expo-doctor",
-    "check": "npm run typecheck && npm run lint"
+    "check": "npm run typecheck && npm run lint && npm run test:http",
+    "test:http": "node --experimental-strip-types --test src/services/http-client.test.mjs"
   },
   "private": true
 }
