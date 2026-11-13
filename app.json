@@ -38,6 +38,13 @@
         {
           "configureAndroidBackup": true
         }
+      ],
+      [
+        "expo-notifications",
+        {
+          "defaultChannel": "medilink-updates",
+          "color": "#208AEF"
+        }
       ]
     ],
     "experiments": {
