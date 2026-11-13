@@ -76,6 +76,8 @@ export default function DoctorAppointmentsScreen(){
         tintColor={theme.primary} colors={[theme.primary]}/>}
       ListHeaderComponent={<View style={styles.header}>
         <Header title="Mes rendez-vous" subtitle="Consultez vos rendez-vous et leurs statuts réels."/>
+        <Link href="/medecin/historique"><ThemedText type="linkPrimary">Historique des consultations ›</ThemedText></Link>
+        <Link href="/medecin/avis"><ThemedText type="linkPrimary">Avis reçus ›</ThemedText></Link>
         <Link href="/medecin/disponibilites" asChild>
           <Pressable accessibilityRole="link" style={[styles.link,{backgroundColor:theme.infoSurface}]}>
             <ThemedText type="smallBold" themeColor="primary">Gérer mes disponibilités ›</ThemedText>
