@@ -75,7 +75,7 @@ export default function EditNeedScreen(){
     {state.status==='loading'?<LoadingState label="Chargement du formulaire…" />:
       state.status==='not-found'?<ErrorState title="Demande introuvable"/>:
       state.status==='error'?<ErrorState title="Impossible de charger la demande" onRetry={load}/>:
-      !canEditNeed(state.need.status)?<Card>
+      state.status==='success' && !canEditNeed(state.need.status)?<Card>
         <ThemedText themeColor="textSecondary">Cette demande ne peut plus être modifiée dans son état actuel.</ThemedText>
       </Card>:fields?<View style={{gap:Spacing.three}}>
         <NeedFields value={fields} set={set} errors={errors} disabled={busy}/>
