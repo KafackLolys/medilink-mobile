@@ -31,7 +31,11 @@ export async function activateLogin(response: LoginResponse, signal?: AbortSigna
   try {
     // Never grant a role from local parameters: revalidate with NestJS.
     const profile = await authApi.profile(signal);
-    if (signal?.aborted || attempt !== generation) return;
+    if (signal?.aborted) {
+      if (attempt === generation) clearEphemeralSession();
+      return;
+    }
+    if (attempt !== generation) return;
     if (profile.user.id !== response.user.id ||
       !['patient', 'doctor', 'admin'].includes(profile.user.role) ||
       profile.user.status === 'suspended' || profile.user.status === 'deleted') {
