@@ -134,6 +134,14 @@ export default function DoctorDirectoryScreen() {
           <Header title="Trouver un médecin"
             subtitle="Profils vérifiés et secteur d’intervention des professionnels." />
           <Card>
+            <ThemedText type="smallBold">Recherche géographique sans GPS</ThemedText>
+            <ThemedText type="small" themeColor="textSecondary">
+              Indiquez une ville ou un quartier pour filtrer les profils. L’API ne fournit
+              actuellement aucune coordonnée vérifiée : la liste reste disponible sans permission
+              de localisation, sans estimation de distance ni marqueurs placés arbitrairement.
+            </ThemedText>
+          </Card>
+          <Card>
             <Input label="Rechercher" value={query} onChangeText={setQuery} editable={!refreshing}
               placeholder="Nom ou spécialité" returnKeyType="search" onSubmitEditing={search}
               hint="La recherche peut également retrouver une localisation." />
