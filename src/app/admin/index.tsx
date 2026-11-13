@@ -202,7 +202,7 @@ export default function AdminHome(){
    </Card>}
    ListEmptyComponent={state.status==='loading'?<LoadingState label="Chargement des comptes administrés…"/>:
     state.status==='error'?<ErrorState title="Comptes indisponibles" description={state.message} onRetry={()=>load()}/>:
-    state.status==='forbidden'?null:
+    state.status==='forbidden'?undefined:
     <EmptyState title="Aucun compte trouvé" description="Modifiez les filtres ou la recherche."/>}
    ListFooterComponent={result?<View style={styles.footer}>
     <View style={styles.buttons}>
@@ -210,7 +210,7 @@ export default function AdminHome(){
      <Button label="Suivant" variant="outline" disabled={page>=result.totalPages||saving} onPress={()=>setPage(p=>p+1)}/>
     </View>
     <LogoutButton/>
-   </View>:null}
+   </View>:undefined}
   />
   <Modal visible={!!edit} title={edit?.type==='status'?'Modifier le statut du compte':'Modifier la vérification'}
    description="Vous préparez une opération administrative. Une seconde confirmation sera nécessaire."
