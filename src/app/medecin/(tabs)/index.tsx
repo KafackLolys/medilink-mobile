@@ -166,7 +166,7 @@ export default function DoctorDashboardScreen() {
   const isVerified = doctorCanAccessPatientNeeds(profile?.verificationStatus);
   const metrics = doctorDashboardMetrics(data);
   const needs = data.needs.status === 'success' ? data.needs.value.items : null;
-  const appointments = data.appointments.status === 'success' ? data.appointments.value : null;
+  const proposals = data.proposals.status === 'success' ? data.proposals.value.items : null;
   const messages = data.conversations.status === 'success' ? data.conversations.value : null;
   const week = data.weekly.status === 'success' ? enabledDoctorWeek(data.weekly.value) : null;
   const failed = (Object.keys(data) as Array<keyof DoctorDashboardData>)
@@ -285,6 +285,31 @@ export default function DoctorDashboardScreen() {
               </Card>
             ) : <EmptyState title="Aucune demande pertinente"
               description="Aucune demande accessible actuellement. Actualisez pour vérifier les nouveautés." />}
+        </View> : null}
+
+        {isVerified ? <View style={styles.section}>
+          <SectionHeading title="Propositions récentes" href={DOCTOR_ROUTE.proposals} />
+          {data.proposals.status === 'loading' ? <LoadingState label="Chargement de mes propositions…" /> :
+            data.proposals.status === 'error' ? <FailedSection label="vos propositions" onRetry={() => load(true)}
+              restricted={data.proposals.reason === 'restricted'} /> :
+            proposals?.length ? proposals.slice(0, 3).map(proposal =>
+              <Card key={proposal.id}>
+                <ThemedText type="smallBold">{proposal.needTitle}</ThemedText>
+                <View style={styles.sectionHead}>
+                  <Badge label={proposal.status === 'accepted' ? 'Acceptée'
+                    : proposal.status === 'rejected' ? 'Refusée'
+                    : proposal.status === 'cancelled' ? 'Annulée'
+                    : proposal.status === 'expired' ? 'Expirée'
+                    : 'En cours'} tone={proposal.status === 'accepted' ? 'success' :
+                      proposal.status === 'rejected' || proposal.status === 'cancelled' ? 'danger' : 'info'} />
+                  <ThemedText themeColor="textSecondary" type="small">
+                    {proposal.city} · {proposal.district}
+                  </ThemedText>
+                </View>
+                <ThemedText numberOfLines={2} themeColor="textSecondary" type="small">{proposal.message}</ThemedText>
+              </Card>
+            ) : <EmptyState title="Aucune proposition envoyée"
+              description="Les propositions que vous aurez réellement envoyées apparaîtront ici." />}
         </View> : null}
 
         <View style={styles.section}>
