@@ -92,3 +92,15 @@ Voir [MOBILE_API_CLIENT.md](docs/MOBILE_API_CLIENT.md) pour l'usage, le réseau 
 - Dépendance : `expo-secure-store@~58.0.3` et configuration de l'exclusion Android Auto Backup. Installer via `npm ci` dans un environnement connecté.
 
 **Attention :** les tests Node, les vérifications TypeScript/lint et la compilation Android restent à exécuter sur un runner disposant de npm et du SDK. Les tests dans le dépôt n'impliquent pas qu'ils ont réussi.
+
+## Prompt 08 — Récupération et introduction
+
+- `/forgot-password` utilise le contrat réel `POST /auth/reset-password` (e-mail Firebase uniquement), sans OTP ni SMS.
+- La confirmation reste neutre, que l'adresse soit enregistrée ou non. Aucun détail backend de compte n'est affiché.
+- L'écran d'accueil public présente les trois étapes du service, sans données médicales de démonstration, puis propose connexion et inscription.
+- `/account-status` distingue seulement une vérification e-mail explicitement indiquée par le backend d'un refus générique; un compte suspendu/supprimé reste non identifiable dans les erreurs.
+- Le rôle et le statut d'un médecin `pending` restent issus du backend. La notice de validation en attente ne modifie aucune permission serveur.
+- Tests : `npm run test:onboarding`, inclus dans `npm run check` et la CI de la PR.
+- [Contrats, scénarios et limites](docs/MOBILE_RECOVERY_ONBOARDING.md).
+
+La revue responsive de la version Vercel et les tests sur émulateur Android restent à confirmer ; **aucun scénario E2E n'est déclaré réussi** dans ce lot.
