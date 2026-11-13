@@ -128,3 +128,14 @@ Le site Vercel reste la référence pour la parité responsive ; aucune consulta
 - [Contrats et scénarios de recette](docs/MOBILE_DOCTOR_DIRECTORY.md).
 
 La validation visuelle responsive authentifiée sur Vercel et les tests sur téléphone Android avec le compte patient restent à effectuer.
+
+## Prompt 11 — Profil public du médecin
+
+- `/patient/medecins/[id]` charge le profil vérifié depuis `GET /doctors/:id`.
+- Données professionnelles uniquement : identité, présentation, localisation, prix indicatif, notes agrégées, modes de consultation, calendrier hebdomadaire et dates bloquées publiques.
+- Aucun document de validation, téléphone, e-mail, matricule ou avis individuel n'est exposé à partir de la fiche publique.
+- Les consultations terminées sont identifiées depuis les seuls rendez-vous du patient ; l'avis reste soumis à l'autorisation serveur et sera intégré avec la fonctionnalité rendez-vous.
+- `src/features/patient/doctor-profile.ts` : liste autorisée des champs et logique d'affichage, validée par `npm run test:doctor-profile`.
+- [Contrat, limites, tests et recette](docs/MOBILE_DOCTOR_PUBLIC_PROFILE.md).
+
+La PR #2 a été fusionnée pendant le développement ; la **PR #3** reprend les changements ultérieurs sur la même branche unique, sans nouvelle branche. La comparaison responsive Vercel et le parcours authentifié Android restent à exécuter.
