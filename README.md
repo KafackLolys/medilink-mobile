@@ -148,3 +148,16 @@ La PR #2 a été fusionnée pendant le développement ; la **PR #3** reprend les
 - Aucune persistance locale de symptômes, adresse ou documents médicaux ; formulaire temporaire en mémoire.
 - Tests des transitions, champs et fichiers : `npm run test:needs`, inclus dans la CI.
 - Voir [MOBILE_PATIENT_NEEDS.md](docs/MOBILE_PATIENT_NEEDS.md) pour contrats, confidentialité et recette.
+
+## Prompt 13 — Réservation et suivi des rendez-vous patient
+
+- `/patient/medecins/[id]/rendez-vous` : formulaire de date/heure souhaitées, mode réel du médecin, motif facultatif et confirmation via `POST /appointments`.
+- Les plages hebdomadaires et dates bloquées viennent uniquement de `GET /doctors/:id`. L'API n'expose **aucun endpoint public de créneaux libres garantis**. Les conflits sont décidés par le serveur et affichés sans fuite de détails.
+- Fuseau IANA du téléphone, ISO UTC à l'envoi, contrôle des heures futures et d'une consultation entière dans la plage réelle.
+- `/patient/rendez-vous` : liste authentifiée `GET /appointments`, filtres de statuts, retour depuis un détail et pull-to-refresh.
+- `/patient/rendez-vous/[id]` : lecture protégée du rendez-vous, suivi et accès aux messages.
+- **Pas de bouton d'annulation patient** : `PATCH /appointments/:id/status` est réservé au médecin par l'API actuelle.
+- Tests : `npm run test:appointments`, inclus dans `npm run check` et la CI.
+- [Contrats, conflits et recette Android](docs/MOBILE_PATIENT_APPOINTMENTS.md).
+
+La création E2E avec un vrai compte, les essais sur Android et la comparaison responsive avec Vercel restent obligatoires avant fusion.
