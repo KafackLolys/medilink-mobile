@@ -2,7 +2,8 @@ import { useCallback, useRef, useState } from 'react';
 import { Link, useFocusEffect } from 'expo-router';
 import { Linking, Pressable, RefreshControl, ScrollView, StyleSheet, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import * as DocumentPicker from 'expo-document-picker';
+import { chooseMedicalDocument, previewMedicalDocument } from '@/features/documents/document-actions';
+import { documentTransferError, validateDocumentTitle } from '@/features/documents/document-rules';
 import { Avatar, Badge, Button, Card, Header } from '@/components/ui/primitives';
 import { Input, SelectField } from '@/components/ui/form-fields';
 import { ErrorState, LoadingState } from '@/components/ui/states';
@@ -115,29 +116,24 @@ export default function PatientProfileScreen() {
 
   async function chooseDocument(){
     if(documentBusy||mutationLock.current)return;
-    try{
-      const picked=await DocumentPicker.getDocumentAsync({
-        type:[...DOCUMENT_MIMES],multiple:false,copyToCacheDirectory:true,
-      });
-      if(picked.canceled||!picked.assets.length)return;
-      const file=picked.assets[0];
-      const problem=validatePatientFile(file);
-      if(problem){setActionError(problem);setSelectedFile(null);return;}
-      setSelectedFile({uri:file.uri,name:file.name,mimeType:file.mimeType!,size:file.size!});
-      setDocumentTitle('');setActionError('');
-    }catch{setActionError('Impossible de sélectionner ce document. Réessayez.');}
+    const picked=await chooseMedicalDocument('patient');
+    if(picked.error){setActionError(picked.error);setSelectedFile(null);return;}
+    if(!picked.file)return; // The system picker was cancelled; do not show an error.
+    setSelectedFile({uri:picked.file.uri,name:picked.file.name,mimeType:picked.file.mimeType!,size:picked.file.size!});
+    setDocumentTitle('');setActionError('');
   }
   async function uploadDocument(){
     if(mutationLock.current||!selectedFile||session.status!=='authenticated'||session.role!=='patient')return;
-    const issue=validatePatientFile(selectedFile);
+    const issue=validatePatientFile(selectedFile)||validateDocumentTitle(documentTitle,'patient');
     if(issue){setActionError(issue);return;}
     mutationLock.current=true;setDocumentBusy(true);setActionError('');
     try{
       const file:NativeUploadFile={uri:selectedFile.uri,name:selectedFile.name,type:selectedFile.mimeType};
-      await patientsApi.uploadDocument(file,documentType,documentTitle.trim()||undefined);
+      const result=await patientsApi.uploadDocument(file,documentType,documentTitle.trim()||undefined);
+      if(!result?.id||result.type!==documentType)throw new Error('Réponse de document invalide.');
       setSelectedFile(null);setDocumentTitle('');setNotice('Document ajouté.');
       load(true);
-    }catch(e){setActionError(patientProfileError(e));}
+    }catch(e){setActionError(documentTransferError(e));}
     finally{mutationLock.current=false;setDocumentBusy(false);}
   }
   async function deleteDocument(){
@@ -150,12 +146,8 @@ export default function PatientProfileScreen() {
     finally{mutationLock.current=false;setDocumentBusy(false);}
   }
   async function openDocument(document:PatientDocument){
-    try{
-      if(!document.downloadUrl)throw new Error('Missing signed URL');
-      const url=new URL(document.downloadUrl);
-      if(url.protocol!=='https:')throw new Error('Unsafe link');
-      await Linking.openURL(document.downloadUrl);
-    }catch{setActionError('Lien indisponible ou expiré. Actualisez les documents pour renouveler son accès.');}
+    const opened=await previewMedicalDocument(document.downloadUrl);
+    if(!opened)setActionError('Lien sécurisé indisponible ou expiré. Actualisez les documents pour renouveler son accès.');
   }
 
   if(session.status!=='authenticated'||session.role!=='patient')return <SafeAreaView
@@ -268,6 +260,8 @@ export default function PatientProfileScreen() {
             onPress={()=>{void chooseDocument();}}/>
           {selectedFile?<View style={{gap:Spacing.two}}>
             <ThemedText type="smallBold">{selectedFile.name}</ThemedText>
+            <ThemedText type="small" themeColor="textSecondary">{(selectedFile.size/1024/1024).toFixed(2)} Mo · {selectedFile.mimeType}</ThemedText>
+            <ThemedText type="small" themeColor="textSecondary">Aperçu avant envoi : vérifiez le nom, le format, la taille et la catégorie. Le contenu n'est pas copié durablement dans le cache de l'application.</ThemedText>
             <SelectField label="Type de document" value={documentType}
               onChange={x=>setDocumentType(x as PatientDocumentType)}
               options={Object.entries(DOCUMENT_TYPES).map(([value,label])=>({label,value}))}/>
@@ -277,6 +271,7 @@ export default function PatientProfileScreen() {
             <Button label="Annuler le choix" variant="outline" disabled={documentBusy}
               onPress={()=>{setSelectedFile(null);setDocumentTitle('');}}/>
           </View>:null}
+          {documentBusy?<ThemedText type="small" themeColor="textSecondary">Transfert sécurisé en cours… progression chiffrée non fournie par l'API.</ThemedText>:null}
           {actionError?<ThemedText themeColor="danger" accessibilityRole="alert">{actionError}</ThemedText>:null}
         </>}
       </Card>
