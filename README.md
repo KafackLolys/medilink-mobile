@@ -172,3 +172,14 @@ La création E2E avec un vrai compte, les essais sur Android et la comparaison r
 - [Contrat, restrictions de modification et recette médicale Android](docs/MOBILE_PATIENT_MEDICAL_PROFILE.md).
 
 Le backend `GET /auth/profile` retourne actuellement `address:null` et `verified:false` pour le patient : le mobile ne fabrique ni adresse ni statut. Le parcours E2E réel et la comparaison responsive Vercel restent à valider.
+
+## Prompt 15 — Accueil médecin Android
+
+- `/medecin` : tableau de bord natif alimenté par les endpoints réels `GET /doctors/me`, `/needs/doctor`, `/needs/doctor/proposals`, `/appointments/doctor`, `/availabilities/me/weekly`, `/availabilities/me/blocked` et `/messages/conversations`.
+- Le profil professionnel **verified** est impératif avant toute interrogation des besoins et propositions patients. Les statuts `pending`, `rejected`, `suspended` affichent un panneau d'accès limité, sans compteur trompeur.
+- Cartes d'actions prioritaires, résumés tirés des totaux paginés du serveur, prochains rendez-vous et consultations du jour en heure Africa/Douala, plages actives et conversations. Les données factices des modules web `doctor-dashboard-data` / `doctor-portal-data` ne sont pas utilisées.
+- Chargement progressif par source, erreurs partielles, états vides, pull-to-refresh et purge de l'état de l'écran à la navigation.
+- Modèles testables dans `src/features/doctor/doctor-dashboard.ts` et tests `npm run test:doctor-dashboard` intégrés à GitHub Actions.
+- [Contrats, droits et recette Android](docs/MOBILE_DOCTOR_DASHBOARD.md).
+
+La PR #3 ayant été fusionnée entre-temps, les prompts de la phase médecin continuent sur **la branche historique identique** dans la [PR #4](https://github.com/KafackLolys/medilink-mobile/pull/4) en brouillon.
