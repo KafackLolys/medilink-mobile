@@ -187,3 +187,40 @@ test('a new account invalidates retry of the old account request', async () => {
   await assert.rejects(client.request('/private'), { kind: 'unauthorized' });
   assert.equal(count, 1);
 });
+
+test('401 again after retry revokes the rejected access token', async () => {
+  let token = 'expired';
+  let invalidated = null;
+  let attempts = 0;
+  const client = createHttpClient({
+    baseUrl: 'https://api.example.com',
+    getAccessToken: () => token,
+    getSessionKey: () => 'same-account',
+    onUnauthorized: () => { token = 'refreshed'; return true; },
+    onRetryUnauthorized: rejected => { invalidated = rejected; },
+    fetchImpl: async () => { attempts++; return response(401, { message: 'Forbidden' }); },
+  });
+  await assert.rejects(client.request('/private'), { kind: 'unauthorized' });
+  assert.equal(invalidated, 'refreshed');
+  assert.equal(attempts, 2);
+});
+
+test('old successful response is discarded after an account switch', async () => {
+  const gate = (() => {
+    let resolve;
+    const promise = new Promise(r => { resolve = r; });
+    return { promise, resolve };
+  })();
+  let generation = 'A';
+  const client = createHttpClient({
+    baseUrl: 'https://api.example.com',
+    getAccessToken: () => 'token-A',
+    getSessionKey: () => generation,
+    fetchImpl: async () => { await gate.promise; return response(200, { secret: 'old account' }); },
+  });
+  const pending = client.request('/private');
+  await Promise.resolve();
+  generation = 'B';
+  gate.resolve();
+  await assert.rejects(pending, { kind: 'cancelled' });
+});
