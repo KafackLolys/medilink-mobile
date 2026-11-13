@@ -117,3 +117,14 @@ La PR #1 a été fusionnée le **13 novembre 2026**. Pour préserver la règle d
 - [Correspondance Web/API/mobile et recette Android](docs/MOBILE_PATIENT_DASHBOARD.md).
 
 Le site Vercel reste la référence pour la parité responsive ; aucune consultation visuelle authentifiée n'a pu être réalisée depuis ce runtime. Un test réel avec le compte patient autorisé reste indispensable avant validation E2E.
+
+## Prompt 10 — Annuaire de médecins
+
+- `/patient/medecins` : annuaire natif `FlatList`, filtres réellement pris en charge par l'API `GET /doctors` : `q`, `city`, `specialty` (100 caractères maximum).
+- Les spécialités sont issues de l'API. Aucune pagination côté serveur, donc pas de pseudo-pagination sur l'app.
+- Cartes avec nom, spécialité, statut vérifié, secteur, modes, expérience, note si disponible, avatars par initiales : aucune photo n'est exposée par le contrat courant.
+- Requêtes annulables, protection contre réponses périmées, actualisation native, états vides et erreurs.
+- Mapping/test : `src/features/patient/doctor-directory.ts` et `npm run test:doctors`.
+- [Contrats et scénarios de recette](docs/MOBILE_DOCTOR_DIRECTORY.md).
+
+La validation visuelle responsive authentifiée sur Vercel et les tests sur téléphone Android avec le compte patient restent à effectuer.
