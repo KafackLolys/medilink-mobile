@@ -3,7 +3,7 @@ import { secureSessionStorage } from './secure-storage';
 import { authApi } from '@/services/auth';
 import { apiRequest, configureHttpAuth, resetHttpAuth } from '@/services/http';
 import { useNavigationSession } from '@/store/navigation-session';
-import type { LoginResponse } from '@/types/domain';
+import type { AuthenticatedUser, LoginResponse } from '@/types/domain';
 
 /**
  * Authenticated HTTP profile/logout requests use explicit credentials so the
@@ -13,7 +13,7 @@ export const sessionManager = new SessionManager({
   storage: secureSessionStorage,
   endpoints: {
     refresh: refreshToken => authApi.refresh(refreshToken),
-    profile: idToken => apiRequest('/auth/profile', {
+    profile: idToken => apiRequest<{ user: AuthenticatedUser }>('/auth/profile', {
       authenticated: false,
       headers: { Authorization: 'Bearer ' + idToken },
     }),
