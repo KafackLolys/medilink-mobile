@@ -76,6 +76,15 @@ export class SessionManager {
   get sessionKey(): string { return String(this.generation); }
   get idToken(): string | null { return this.tokens?.idToken ?? null; }
 
+  async validAccessToken(): Promise<string | null> {
+    if (!this.tokens || this.state.status !== 'authenticated') return null;
+    // Refresh before expiry; clock drift and latency are accounted for by 60s.
+    if (this.tokens.expiresAt <= this.now() + 60_000) {
+      if (!(await this.refresh())) return null;
+    }
+    return this.tokens?.idToken ?? null;
+  }
+
   private publish(state: SessionSnapshot) {
     this.state = state;
     this.options.hooks.publish(state);
