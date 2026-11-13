@@ -1,9 +1,9 @@
-import { useCallback, useRef, useState } from 'react';
+import { useCallback, useMemo, useRef, useState } from 'react';
 import { Link, useFocusEffect } from 'expo-router';
 import { Linking, Pressable, RefreshControl, ScrollView, StyleSheet, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { chooseMedicalDocument, previewMedicalDocument } from '@/features/documents/document-actions';
-import { documentTransferError, validateDocumentTitle } from '@/features/documents/document-rules';
+import { documentTransferError, validateDocumentTitle, filterPatientDocuments, pagePatientDocuments } from '@/features/documents/document-rules';
 import { Avatar, Badge, Button, Card, Header } from '@/components/ui/primitives';
 import { Input, SelectField } from '@/components/ui/form-fields';
 import { ErrorState, LoadingState } from '@/components/ui/states';
@@ -80,6 +80,7 @@ export default function PatientProfileScreen() {
       // Profile and medical data must not survive navigation or account switching.
       setResources(initial());setDraft(null);setEditing(false);
       setSelectedFile(null);setDocumentTitle('');setPrivateVisible(false);
+      setDocumentSearch('');setDocumentFilter('all');setDocumentPage(1);
     };
   },[load,session.status,session.role]));
 
@@ -87,6 +88,12 @@ export default function PatientProfileScreen() {
   const view=profile?viewPatientProfile(profile):null;
   const visibleHealth=resources.health.status==='success'?resources.health.value:null;
   const documents=resources.documents.status==='success'?resources.documents.value:null;
+  const [documentSearch,setDocumentSearch]=useState('');
+  const [documentFilter,setDocumentFilter]=useState('all');
+  const [documentPage,setDocumentPage]=useState(1);
+  const filteredDocuments=useMemo(()=>filterPatientDocuments(documents??[],documentSearch,documentFilter,DOCUMENT_TYPES),
+    [documents,documentSearch,documentFilter]);
+  const pagedDocuments=useMemo(()=>pagePatientDocuments(filteredDocuments,documentPage),[filteredDocuments,documentPage]);
 
   function beginEdit(){
     if(!profile)return;
@@ -239,9 +246,12 @@ export default function PatientProfileScreen() {
         {!privateVisible?<ThemedText themeColor="textSecondary">
           La liste est masquée pour préserver la confidentialité.
         </ThemedText>:<>
+          <Input label="Rechercher un document" value={documentSearch} maxLength={100} onChangeText={value=>{setDocumentSearch(value);setDocumentPage(1);}}/>
+          <SelectField label="Filtrer par catégorie" value={documentFilter} onChange={value=>{setDocumentFilter(value);setDocumentPage(1);}}
+            options={[{label:'Toutes les catégories',value:'all'},...Object.entries(DOCUMENT_TYPES).map(([value,label])=>({value,label}))]}/>
           {resources.documents.status==='loading'?<LoadingState label="Chargement de vos documents…" />:
             resources.documents.status==='error'?<ErrorState title="Documents indisponibles" onRetry={()=>load()}/>:
-            documents?.length?documents.map(item=><View key={item.id} style={[styles.entry,{borderColor:theme.border}]}>
+            pagedDocuments.items.length?pagedDocuments.items.map(item=><View key={item.id} style={[styles.entry,{borderColor:theme.border}]}>
               <ThemedText type="smallBold">{item.title||item.filename}</ThemedText>
               <ThemedText type="small" themeColor="textSecondary">
                 {DOCUMENT_TYPES[item.type as PatientDocumentType]??'Document médical'} · {Math.ceil(item.sizeBytes/1024)} Ko
@@ -251,7 +261,12 @@ export default function PatientProfileScreen() {
                 <ThemedText type="small" themeColor="textSecondary">Lien temporaire non disponible.</ThemedText>}
               <Button label="Supprimer ce document" variant="danger" disabled={documentBusy}
                 onPress={()=>setDeleteId(item.id)}/>
-            </View>):<ThemedText themeColor="textSecondary">Aucun document médical enregistré.</ThemedText>}
+            </View>):<ThemedText themeColor="textSecondary">Aucun document ne correspond aux critères.</ThemedText>}
+          {pagedDocuments.totalPages>1?<View style={{flexDirection:'row',alignItems:'center',justifyContent:'space-between',gap:Spacing.two}}>
+            <Button label="Précédent" variant="outline" disabled={pagedDocuments.page<=1} onPress={()=>setDocumentPage(p=>Math.max(1,p-1))}/>
+            <ThemedText type="small">{pagedDocuments.page} / {pagedDocuments.totalPages}</ThemedText>
+            <Button label="Suivant" variant="outline" disabled={pagedDocuments.page>=pagedDocuments.totalPages} onPress={()=>setDocumentPage(p=>p+1)}/>
+          </View>:null}
           <ThemedText type="smallBold">Ajouter un document</ThemedText>
           <ThemedText type="small" themeColor="textSecondary">
             PDF, JPEG, PNG ou WebP, 10 Mo maximum. Ne sélectionnez que des documents que vous souhaitez envoyer.
