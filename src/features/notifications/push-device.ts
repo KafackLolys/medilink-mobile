@@ -1,5 +1,6 @@
 import { Platform } from 'react-native';
 import * as Notifications from 'expo-notifications';
+import { AndroidImportance } from 'expo-notifications';
 import * as SecureStore from 'expo-secure-store';
 import * as Device from 'expo-device';
 import { authApi } from '@/services/auth';
@@ -29,7 +30,7 @@ async function ensurePermission(request:boolean):Promise<boolean>{
  if(Platform.OS!=='android'||!Device.isDevice)return false;
  await Notifications.setNotificationChannelAsync(PUSH_CHANNEL,{
   name:'Actualités Medilink',
-  importance:Notifications.AndroidImportance.DEFAULT,
+  importance:AndroidImportance.DEFAULT,
   vibrationPattern:[0,220,110,220],
   enableVibrate:true,
  });
