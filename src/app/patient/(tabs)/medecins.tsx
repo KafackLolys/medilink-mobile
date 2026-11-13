@@ -57,6 +57,8 @@ export default function DoctorDirectoryScreen() {
   const session = useNavigationSession(s => s.session);
   const connectivity = normalizeConnectivity(useNetworkState());
   const previousConnectivity = useRef(connectivity);
+  const networkQualityRef = useRef(connectivity);
+  networkQualityRef.current = connectivity;
   const [query, setQuery] = useState('');
   const [city, setCity] = useState('');
   const [specialty, setSpecialty] = useState('');
@@ -73,6 +75,15 @@ export default function DoctorDirectoryScreen() {
     const request = new AbortController();
     controller.current = request;
     const id = ++sequence.current;
+    if(networkQualityRef.current==='offline'){
+      const cached=getStalePublicDoctorDirectory(filters,{kind:'network'},'patient');
+      if(cached){
+        setSpecialties(cached.specialties);
+        setState({status:'success',doctors:cached.doctors,stale:true});
+      }else setState({status:'error',doctors:[]});
+      setRefreshing(false);
+      return;
+    }
     if (pull) setRefreshing(true);
     else setState({ status: 'loading', doctors: [] });
     void doctorsApi.list(filters, request.signal).then(payload => {
