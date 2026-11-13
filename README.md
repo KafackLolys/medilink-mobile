@@ -296,3 +296,15 @@ Une recette avec un véritable admin actif et un compte refusé reste nécessair
 - [Audit technique et recette réseau Android](docs/MOBILE_NETWORK_RESILIENCE.md).
 
 Reste à effectuer avant fusion : tests instrumentés en mode avion/données mobiles lentes, vérification sur un vrai Android, lint, Expo Doctor et contrôle visuel.
+
+## Prompt 26 — UX, accessibilité et finitions Android
+
+- Revue de l’inventaire des routes d’authentification, publiques, patient, médecin et admin, ainsi que des composants transversaux. **Audit statique du code**, pas encore une certification visuelle ou TalkBack sur téléphone.
+- Composants communs : boutons et badges compatibles avec l’agrandissement des caractères, labels flexibles, en-têtes adaptables, avatars annoncés sans doublon, contrôles tactiles de **48 points**.
+- Champs : erreurs associées aux saisies, labels et hints accessibles, bouton d’affichage du mot de passe de 48 points, sélections radio et interrupteurs annoncés.
+- Modales : contenu défilable et clavier géré, safe areas respectées, confirmation sensible non fermable par retour Android pendant une mutation. Toasts et bannière hors connexion décalés sous la barre de statut Android.
+- Messagerie : retour matériel Android d’un fil vers sa liste de conversations, libellés explicites et compositeur adaptable. `Screen` évite que les derniers champs soient masqués par les onglets et autorise l’effacement du clavier au scroll.
+- Nouveau `npm run test:ux` dans `npm run check` et GitHub Actions : tests structurels de l’inventaire, protections par rôle, états, navigation, safe areas et accessibilité.
+- [**Checklist par écran, correctifs vérifiés dans le code, limites et recette Android**](docs/MOBILE_UX_ACCESSIBILITY_AUDIT.md).
+
+**Reste obligatoire avant fusion** : TalkBack, polices 150/200 %, navigation au bouton retour et clavier Android réel, petits écrans, contrastes visuels, lint, Expo Doctor et comparaison avec le site.
