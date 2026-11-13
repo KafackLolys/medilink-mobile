@@ -13,7 +13,7 @@ import { appointmentsApi } from '@/services/appointments';
 import type { ConsultationMode, DoctorDirectoryItem } from '@/types/domain';
 import { Spacing, Radius, MinimumTouchTarget } from '@/constants/theme';
 import { mapPublicDoctor } from '@/features/patient/doctor-profile';
-import { appointmentError, getDeviceTimeZone, matchingOpeningHours, makeBookingRequest } from '@/features/patient/appointment-booking';
+import { appointmentError, getDeviceTimeZone, matchingOpeningHours, makeBookingRequest, appointmentDetailRoute, APPOINTMENT_LIST_ROUTE } from '@/features/patient/appointment-booking';
 
 type DoctorState = {status:'loading'|'error'|'not-found'} | {status:'success'; doctor:DoctorDirectoryItem};
 export default function PatientBooking() {
@@ -72,12 +72,12 @@ export default function PatientBooking() {
         <Badge tone="success" label="Demande envoyée"/>
         <Header title="Votre demande de rendez-vous a été transmise"
           subtitle="Le médecin doit confirmer. Vous pouvez suivre son statut dans vos rendez-vous."/>
-        <Link href={{pathname:'/patient/rendez-vous/[id]',params:{id:created}}} asChild>
+        <Link href={appointmentDetailRoute(created)} asChild>
           <Pressable accessibilityRole="link" style={[styles.cta,{backgroundColor:theme.primary}]}>
             <ThemedText style={{color:theme.onPrimary,fontWeight:'700'}}>Voir le rendez-vous</ThemedText>
           </Pressable>
         </Link>
-        <Button variant="outline" label="Mes rendez-vous" onPress={()=>router.replace('/patient/rendez-vous')}/>
+        <Button variant="outline" label="Mes rendez-vous" onPress={()=>router.replace(APPOINTMENT_LIST_ROUTE)}/>
       </Card>
     </ScrollView>
   </SafeAreaView>;
