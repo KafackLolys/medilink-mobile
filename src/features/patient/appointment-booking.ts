@@ -74,3 +74,9 @@ export function formatAppointmentDate(value:string,timeZone:string):string {
 }
 /** Patient is read-only: only the doctor's own appointment status endpoint can change statuses. */
 export function canPatientChangeAppointmentStatus(_status: AppointmentStatus): boolean { return false; }
+
+export const APPOINTMENT_LIST_ROUTE = '/patient/rendez-vous' as const;
+export const appointmentDetailRoute = (id: string) => ({
+  pathname: '/patient/rendez-vous/[id]' as const,
+  params: { id },
+});
