@@ -5,7 +5,7 @@ export const authApi = {
   login: (email: string, password: string, signal?: AbortSignal) =>
     apiRequest<LoginResponse>('/auth/login', { method: 'POST', authenticated: false, body: { email, password }, signal }),
   register: (data: RegisterRequest, signal?: AbortSignal) =>
-    apiRequest<{ user: AuthenticatedUser; message?: string }>('/auth/register', { method: 'POST', authenticated: false, body: data, signal }),
+    apiRequest<LoginResponse>('/auth/register', { method: 'POST', authenticated: false, body: data, signal }),
   refresh: (refreshToken: string, signal?: AbortSignal) =>
     apiRequest<TokenResponse>('/auth/refresh', { method: 'POST', authenticated: false, body: { refreshToken }, signal }),
   profile: (signal?: AbortSignal) => apiRequest<{ user: AuthenticatedUser; patient?: unknown }>('/auth/profile', { signal }),
