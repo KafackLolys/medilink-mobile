@@ -186,7 +186,7 @@ export default function DoctorDashboardScreen() {
         accessibilityLabel="Actualiser le tableau de bord médecin" />}>
       <View style={[styles.hero, { backgroundColor: theme.infoSurface }]}>
         <ThemedText type="smallBold" themeColor="primary">ESPACE PROFESSIONNEL</ThemedText>
-        <Header title="Bonjour Docteur 👋"
+        <Header action={<Link href="/medecin/notifications"><ThemedText type="smallBold" themeColor="primary">Notifications</ThemedText></Link>} title="Bonjour Docteur 👋"
           subtitle="Votre activité et vos consultations, à partir des données Medilink." />
         {profile ? <View style={styles.identity}>
           <Avatar name={profile.name} size={52} />
