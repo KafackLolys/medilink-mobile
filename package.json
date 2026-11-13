@@ -32,7 +32,8 @@
     "expo-secure-store": "~58.0.3",
     "expo-document-picker": "~58.0.4",
     "expo-notifications": "~58.1.9",
-    "expo-network": "~58.0.5"
+    "expo-network": "~58.0.5",
+    "expo-dev-client": "~58.0.20"
   },
   "devDependencies": {
     "@types/react": "~19.3.0",
@@ -69,7 +70,9 @@
     "test:reviews": "node --experimental-strip-types --test src/features/reviews/reviews-model.test.mjs",
     "test:admin": "node --experimental-strip-types --test src/features/admin/admin-model.test.mjs",
     "test:network": "node --experimental-strip-types --test src/features/network/network-policy.test.mjs",
-    "test:ux": "node --test src/features/ux/ux-audit.test.mjs"
+    "test:ux": "node --test src/features/ux/ux-audit.test.mjs",
+    "release:validate": "node scripts/validate-android-release.cjs",
+    "release:validate:strict": "node scripts/validate-android-release.cjs --strict"
   },
   "private": true
 }
