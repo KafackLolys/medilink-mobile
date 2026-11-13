@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState } from 'react';
-import { Link } from 'expo-router';
+import { Link, useRouter } from 'expo-router';
+import { loginAccountIssue } from '@/features/auth/account-states';
 import { View } from 'react-native';
 import { AuthShell } from '@/components/auth/auth-shell';
 import { Button } from '@/components/ui/primitives';
@@ -11,6 +12,7 @@ import { authErrorMessage, validateLogin } from '@/features/auth/validation';
 import { Spacing } from '@/constants/theme';
 
 export default function LoginScreen() {
+  const router = useRouter();
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [errors, setErrors] = useState<Record<string, string>>({});
@@ -34,7 +36,11 @@ export default function LoginScreen() {
       if (!controller.signal.aborted) await activateLogin(response, controller.signal);
       // Protected Expo Router stack moves to the verified role's home.
     } catch (error) {
-      if (!controller.signal.aborted) setErrors({ form: authErrorMessage(error, 'login') });
+      if (!controller.signal.aborted) {
+        const issue = loginAccountIssue(error);
+        if (issue) router.replace({ pathname: '/account-status', params: { issue } });
+        else setErrors({ form: authErrorMessage(error, 'login') });
+      }
     } finally {
       locked.current = false;
       if (!controller.signal.aborted) setPending(false);
