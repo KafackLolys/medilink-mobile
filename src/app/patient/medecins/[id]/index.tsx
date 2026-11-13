@@ -155,18 +155,16 @@ export default function PublicDoctorProfile() {
           </Card>
           <Card>
             <ThemedText type="subtitle" accessibilityRole="header">Rendez-vous</ThemedText>
-            {summary.canOpenBooking ? <>
-              <ThemedText themeColor="textSecondary" type="small">
-                Les horaires affichés sont indicatifs : aucune disponibilité de réservation n’est garantie avant confirmation serveur.
+            <ThemedText themeColor="textSecondary" type="small">
+              {summary.canOpenBooking
+                ? 'Les horaires affichés sont indicatifs : la disponibilité doit être confirmée par le serveur.'
+                : 'Aucun mode ou horaire réservable n’est actuellement renseigné. Le calendrier reste consultable, sans réservation garantie.'}
+            </ThemedText>
+            <Link href={detailsHref} style={[styles.cta, { backgroundColor: theme.primary }]}>
+              <ThemedText style={{ color: theme.onPrimary, textAlign: 'center', fontWeight: '700' }}>
+                Consulter les rendez-vous
               </ThemedText>
-              <Link href={detailsHref} style={[styles.cta, { backgroundColor: theme.primary }]}>
-                <ThemedText style={{ color: theme.onPrimary, textAlign: 'center', fontWeight: '700' }}>
-                  Consulter les rendez-vous
-                </ThemedText>
-              </Link>
-            </> : <ThemedText themeColor="textSecondary">
-              Le médecin doit renseigner un mode et des plages horaires avant de proposer des rendez-vous.
-            </ThemedText>}
+            </Link>
           </Card>
           <Card>
             <ThemedText type="subtitle" accessibilityRole="header">Évaluer ce médecin</ThemedText>
