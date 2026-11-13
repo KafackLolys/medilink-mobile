@@ -23,7 +23,8 @@ export interface HttpClientOptions {
   timeoutMs?: number;
   fetchImpl?: typeof fetch;
   getAccessToken?: TokenProvider;
-  onUnauthorized?: () => void | Promise<void>;
+  onUnauthorized?: (presentedToken: string | null) => boolean | Promise<boolean>;
+  getSessionKey?: () => string;
 }
 
 export type HttpRequestOptions = {
@@ -114,33 +115,43 @@ export function createHttpClient(options: HttpClientOptions) {
       } else if (config.body !== undefined) {
         headers['Content-Type'] = 'application/json';
       }
+      const sessionKey = options.getSessionKey?.();
+      let presentedToken: string | null = null;
       if (config.authenticated !== false) {
-        const token = await options.getAccessToken?.();
-        if (token) headers.Authorization = 'Bearer ' + token;
+        presentedToken = (await options.getAccessToken?.()) ?? null;
+        if (presentedToken) headers.Authorization = 'Bearer ' + presentedToken;
       }
-      if (controller.signal.aborted) throw new HttpError(timedOut ? 'Délai de connexion dépassé.' : 'Requête annulée.', timedOut ? 'timeout' : 'cancelled');
-      const response = await fetcher(url.toString(), {
-        method: config.method ?? 'GET',
-        headers,
-        body: config.formData ?? (config.body === undefined ? undefined : JSON.stringify(config.body)),
-        signal: controller.signal,
-      });
-      const raw = response.status === 204 ? '' : await response.text();
-      let payload: unknown;
-      if (raw) {
-        try { payload = JSON.parse(raw); }
-        catch {
-          if (response.ok) throw new HttpError('Réponse JSON du serveur invalide.', 'invalid_response', response.status);
-          payload = undefined;
+      for (let attempt = 0; attempt < 2; attempt++) {
+        if (controller.signal.aborted) throw new HttpError(timedOut ? 'Délai de connexion dépassé.' : 'Requête annulée.', timedOut ? 'timeout' : 'cancelled');
+        const response = await fetcher(url.toString(), {
+          method: config.method ?? 'GET',
+          headers,
+          body: config.formData ?? (config.body === undefined ? undefined : JSON.stringify(config.body)),
+          signal: controller.signal,
+        });
+        const raw = response.status === 204 ? '' : await response.text();
+        let payload: unknown;
+        if (raw) {
+          try { payload = JSON.parse(raw); }
+          catch {
+            if (response.ok) throw new HttpError('Réponse JSON du serveur invalide.', 'invalid_response', response.status);
+            payload = undefined;
+          }
         }
+        if (response.ok) return payload as T;
+        const failure = new HttpError(extractMessage(payload, response.status), classifyStatus(response.status), response.status, payload);
+        if (response.status !== 401 || config.authenticated === false || attempt > 0 || !presentedToken) throw failure;
+        let restored = false;
+        try { restored = (await options.onUnauthorized?.(presentedToken)) ?? false; }
+        catch { restored = false; }
+        if (!restored || controller.signal.aborted || sessionKey !== options.getSessionKey?.()) throw failure;
+        const fresh = (await options.getAccessToken?.()) ?? null;
+        if (!fresh || fresh === presentedToken || sessionKey !== options.getSessionKey?.()) throw failure;
+        presentedToken = fresh;
+        headers.Authorization = 'Bearer ' + fresh;
       }
-      if (!response.ok) {
-        if (response.status === 401 && config.authenticated !== false) {
-          try { await options.onUnauthorized?.(); } catch { /* Do not mask the original 401. */ }
-        }
-        throw new HttpError(extractMessage(payload, response.status), classifyStatus(response.status), response.status, payload);
-      }
-      return payload as T;
+      throw new HttpError('Requête non autorisée.', 'unauthorized', 401);
+
     } catch (cause) {
       if (cause instanceof HttpError) throw cause;
       if (timedOut) throw new HttpError('Délai de connexion dépassé.', 'timeout');
