@@ -6,19 +6,23 @@ import { createHttpClient, type HttpRequestOptions } from './http-client';
  * This module deliberately does not persist or synthesize credentials.
  */
 let accessTokenProvider: (() => string | null | Promise<string | null>) | null = null;
-let unauthorizedHandler: (() => void | Promise<void>) | null = null;
+let unauthorizedHandler: ((presentedToken: string | null) => boolean | Promise<boolean>) | null = null;
+let sessionKeyProvider: (() => string) | null = null;
 
 export function configureHttpAuth(options: {
   getAccessToken: () => string | null | Promise<string | null>;
-  onUnauthorized?: () => void | Promise<void>;
+  onUnauthorized?: (presentedToken: string | null) => boolean | Promise<boolean>;
+  getSessionKey?: () => string;
 }): void {
   accessTokenProvider = options.getAccessToken;
   unauthorizedHandler = options.onUnauthorized ?? null;
+  sessionKeyProvider = options.getSessionKey ?? null;
 }
 
 export function resetHttpAuth(): void {
   accessTokenProvider = null;
   unauthorizedHandler = null;
+  sessionKeyProvider = null;
 }
 
 let client: ReturnType<typeof createHttpClient> | null = null;
@@ -26,7 +30,8 @@ function getClient() {
   return client ?? (client = createHttpClient({
     baseUrl: getApiBaseUrl(),
     getAccessToken: () => accessTokenProvider?.() ?? null,
-    onUnauthorized: () => unauthorizedHandler?.(),
+    onUnauthorized: token => unauthorizedHandler?.(token) ?? false,
+    getSessionKey: () => sessionKeyProvider?.() ?? 'guest',
   }));
 }
 
