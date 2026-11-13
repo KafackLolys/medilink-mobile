@@ -194,3 +194,14 @@ La PR #3 ayant été fusionnée entre-temps, les prompts de la phase médecin co
 - Tests `npm run test:doctor-needs` et CI ; [contrats, règles et recette Android](docs/MOBILE_DOCTOR_NEEDS_PROPOSALS.md).
 
 L'intégration avec un véritable compte médecin, l'ouverture de documents signés sur téléphone et la comparaison responsive Vercel restent à valider avant fusion.
+
+## Prompt 17 — Agenda et disponibilités médecin
+
+- `/medecin/disponibilites` : paramètres natifs de consultations à domicile/téléconsultation (`PUT /availabilities/me/modes`), durée de 15/20/30/45/60 min (`PATCH /availabilities/me/duration`), calendrier complet des sept jours (`PUT /availabilities/me/weekly`) avec heure à la minute, ajout/suppression de dates bloquées (`POST/DELETE /availabilities/me/blocked`) et confirmation avant retrait.
+- Les horaires sont remplacés **ensemble** par le contrat backend ; création, modification et désactivation d'une plage se font sur l'ensemble des sept jours, pas via une route PATCH/DELETE individuelle inexistante.
+- `/medecin/rendez-vous` : agenda `GET /appointments/doctor`, filtres et mise à jour de statut `PATCH /appointments/:id/status` après confirmation et relecture. Le serveur vérifie le médecin propriétaire et l'enum, mais **n'impose pas de matrice de transition** supplémentaire.
+- Calendrier et sélecteur horaire React Native natifs sans nouvelle dépendance ; prévention des dates bloquées dupliquées, heures invalides, modes/durées refusés ; aucune disponibilité inventée.
+- Tests `npm run test:doctor-agenda` et CI pour le cycle création/modification/désactivation des plages, dates bloquées, droits et dates.
+- [Contrats exacts, cas limites de fuseau et recette Android](docs/MOBILE_DOCTOR_AGENDA_AVAILABILITY.md).
+
+L'essai sur un véritable appareil, l'écriture réelle des disponibilités, les conflits de rendez-vous et la comparaison responsive restent à faire avant fusion.
