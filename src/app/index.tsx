@@ -1,31 +1,22 @@
-import { StyleSheet, View } from 'react-native';
-import { SafeAreaView } from 'react-native-safe-area-context';
-
+import { Redirect, Link } from 'expo-router';
+import { Screen, Header, Card } from '@/components/ui/primitives';
 import { ThemedText } from '@/components/themed-text';
-import { ThemedView } from '@/components/themed-view';
+import { roleHome, useNavigationSession } from '@/store/navigation-session';
 
-/**
- * Temporary technical entry point. Actual public/authenticated screens will
- * replace it after the required responsive review of the deployed web app.
- */
 export default function Index() {
+  const session = useNavigationSession(state => state.session);
+  if (session.status === 'authenticated') return <Redirect href={roleHome(session.role)} />;
   return (
-    <ThemedView style={styles.root}>
-      <SafeAreaView style={styles.safeArea}>
-        <View style={styles.content}>
-          <ThemedText type="title">Medilink</ThemedText>
-          <ThemedText themeColor="textSecondary" style={styles.description}>
-            L'application Android est en préparation.
-          </ThemedText>
-        </View>
-      </SafeAreaView>
-    </ThemedView>
+    <Screen>
+      <Header title="Medilink" subtitle="Application Android — navigation en préparation" />
+      <Card>
+        <ThemedText>
+          La connexion et les parcours métier seront reliés à l'API dans les prochaines étapes.
+        </ThemedText>
+        <Link href="/login"><ThemedText themeColor="primary" type="linkPrimary">Se connecter</ThemedText></Link>
+        <Link href="/register"><ThemedText themeColor="primary" type="linkPrimary">Créer un compte</ThemedText></Link>
+        <Link href="/aide"><ThemedText themeColor="primary" type="linkPrimary">Aide</ThemedText></Link>
+      </Card>
+    </Screen>
   );
 }
-
-const styles = StyleSheet.create({
-  root: { flex: 1 },
-  safeArea: { flex: 1, justifyContent: 'center', paddingHorizontal: 24 },
-  content: { alignItems: 'center', gap: 16 },
-  description: { textAlign: 'center' },
-});
