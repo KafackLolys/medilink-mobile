@@ -16,7 +16,7 @@ export default function Index() {
           La connexion et les parcours métier seront reliés à l'API dans les prochaines étapes.
         </ThemedText>
         <Link href="/login"><ThemedText themeColor="primary" type="linkPrimary">Se connecter</ThemedText></Link>
-        <Link href="/register"><ThemedText themeColor="primary" type="linkPrimary">Créer un compte</ThemedText></Link>
+        <Link href="/choose-role"><ThemedText themeColor="primary" type="linkPrimary">Créer un compte</ThemedText></Link>
         <Link href="/aide"><ThemedText themeColor="primary" type="linkPrimary">Aide</ThemedText></Link>
       </Card>
     </Screen>
