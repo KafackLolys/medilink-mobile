@@ -25,6 +25,7 @@ export interface HttpClientOptions {
   getAccessToken?: TokenProvider;
   onUnauthorized?: (presentedToken: string | null) => boolean | Promise<boolean>;
   getSessionKey?: () => string;
+  onRetryUnauthorized?: (token: string | null) => void | Promise<void>;
 }
 
 export type HttpRequestOptions = {
@@ -141,8 +142,14 @@ export function createHttpClient(options: HttpClientOptions) {
             payload = undefined;
           }
         }
+        if (config.authenticated !== false && sessionKey !== options.getSessionKey?.()) {
+          throw new HttpError('La session a changé pendant la réponse.', 'cancelled');
+        }
         if (response.ok) return payload as T;
         const failure = new HttpError(extractMessage(payload, response.status), classifyStatus(response.status), response.status, payload);
+        if (response.status === 401 && attempt > 0 && config.authenticated !== false) {
+          try { await options.onRetryUnauthorized?.(presentedToken); } catch { /* Preserve 401. */ }
+        }
         if (response.status !== 401 || config.authenticated === false || attempt > 0 || !presentedToken) throw failure;
         let restored = false;
         try { restored = (await options.onUnauthorized?.(presentedToken)) ?? false; }
