@@ -89,7 +89,7 @@ export default function DoctorNeedDetailScreen(){
   return <SafeAreaView edges={['top','left','right']}
     style={{flex:1,backgroundColor:theme.background}}>
     <ScrollView contentContainerStyle={styles.content} keyboardShouldPersistTaps="handled"
-      refreshControl={<RefreshControl refreshing={refreshing} onRefresh={()=>active&&load(true)}
+      refreshControl={<RefreshControl refreshing={refreshing} onRefresh={()=>{if(active)load(true);}}
         colors={[theme.primary]} tintColor={theme.primary}/>}>
       <Link href="/medecin/besoins"><ThemedText type="linkPrimary">‹ Retour aux besoins</ThemedText></Link>
       <Header title="Détail de la demande"
