@@ -67,11 +67,26 @@ test('React Native multipart file descriptors use uri, and no Content-Type bound
   let init;
   const client = createHttpClient({ baseUrl: 'https://api.example.com',
     fetchImpl: async (_url, options) => { init = options; return response(200, { ok: true }); } });
-  const form = makeMultipart({ type: 'prescription' }, [{ field: 'file', file: { uri: 'file:///tmp/test.pdf', name: 'test.pdf', type: 'application/pdf' } }]);
-  await client.request('/patients/me/documents', { method: 'POST', formData: form, headers: { 'Content-Type': 'multipart/form-data' } });
-  assert.equal(init.headers['Content-Type'], undefined);
-  assert.equal(init.body, form);
-  assert.equal(form.get('type'), 'prescription');
+  // Node's standard FormData rejects React Native's { uri, name, type } file
+  // descriptor; substitute the native-compatible FormData contract for this test.
+  const OriginalFormData = globalThis.FormData;
+  class NativeFormData {
+    fields = [];
+    append(name, value) { this.fields.push({ name, value }); }
+    get(name) { return this.fields.find(item => item.name === name)?.value ?? null; }
+  }
+  globalThis.FormData = NativeFormData;
+  try {
+    const file = { uri: 'file:///tmp/test.pdf', name: 'test.pdf', type: 'application/pdf' };
+    const form = makeMultipart({ type: 'prescription' }, [{ field: 'file', file }]);
+    await client.request('/patients/me/documents', { method: 'POST', formData: form, headers: { 'Content-Type': 'multipart/form-data' } });
+    assert.equal(init.headers['Content-Type'], undefined);
+    assert.equal(init.body, form);
+    assert.equal(form.get('type'), 'prescription');
+    assert.equal(form.get('file'), file);
+  } finally {
+    globalThis.FormData = OriginalFormData;
+  }
 });
 
 test('already aborted signal never calls fetch', async () => {
