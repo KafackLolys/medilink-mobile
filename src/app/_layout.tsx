@@ -21,6 +21,7 @@ export default function RootLayout() {
             <Stack.Screen name="(public)" />
             <Stack.Screen name="+not-found" />
             <Stack.Screen name="unauthorized" />
+            <Stack.Screen name="account-status" />
             <Stack.Screen name="dev/design-system" />
             <Stack.Protected guard={session.status === 'unauthenticated'}>
               <Stack.Screen name="(auth)" />
