@@ -35,6 +35,7 @@ configureHttpAuth({
   getAccessToken: () => sessionManager.validAccessToken(),
   getSessionKey: () => sessionManager.sessionKey,
   onUnauthorized: token => sessionManager.onUnauthorized(token),
+  onRetryUnauthorized: token => sessionManager.invalidateRejectedToken(token),
 });
 
 export function activateLogin(response: LoginResponse, signal?: AbortSignal) {
