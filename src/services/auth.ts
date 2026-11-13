@@ -1,5 +1,5 @@
 import { apiRequest } from './http';
-import type { AuthenticatedUser, LoginResponse, RegisterRequest, TokenResponse } from '@/types/domain';
+import type { AuthenticatedUser, LoginResponse, RegisterRequest } from '@/types/domain';
 
 export const authApi = {
   login: (email: string, password: string, signal?: AbortSignal) =>
@@ -7,7 +7,7 @@ export const authApi = {
   register: (data: RegisterRequest, signal?: AbortSignal) =>
     apiRequest<LoginResponse>('/auth/register', { method: 'POST', authenticated: false, body: data, signal }),
   refresh: (refreshToken: string, signal?: AbortSignal) =>
-    apiRequest<TokenResponse>('/auth/refresh', { method: 'POST', authenticated: false, body: { refreshToken }, signal }),
+    apiRequest<LoginResponse>('/auth/refresh', { method: 'POST', authenticated: false, body: { refreshToken }, signal }),
   profile: (signal?: AbortSignal) => apiRequest<{ user: AuthenticatedUser; patient?: unknown }>('/auth/profile', { signal }),
   updateAdminProfile: (data: { firstName: string; lastName: string; phone: string }, signal?: AbortSignal) =>
     apiRequest<{ user: AuthenticatedUser }>('/auth/admin/profile', { method: 'PATCH', body: data, signal }),
