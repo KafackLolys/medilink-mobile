@@ -35,13 +35,13 @@ Les modules Expo doivent être installés par `npx expo install <package>`, apr�
 
 ## État de développement
 
-Prompt 02 : le starter « Home / Explore » a été retiré de la navigation et un écran technique temporaire a remplacé « Welcome to Expo ». Un Stack Expo Router est configuré. Les assets et composants techniques existants restent préservés. Aucune page métier, authentification ou communication avec l'API n'est encore implémentée.
+**État actuel (prompts 1–26 et 29–30) :** les parcours métier patient, médecin, administration et les services transversaux sont présents dans le code et testés en CI. Les profils EAS sont configurés. **Aucun APK/AAB n'a été généré ; la publication Android reste bloquée** par les identifiants EAS/Firebase, le branding officiel, les pages légales, le durcissement de certains contrôles backend et la recette E2E sur téléphone. Voir [matrice finale](docs/MOBILE_PARITY_MATRIX.md), [build Android](docs/ANDROID_RELEASE_BUILD.md) et [PV de recette](docs/ANDROID_FINAL_ACCEPTANCE.md).
 
 **Avant la création de chaque écran** : examiner la vue responsive sur https://medilink-nu-ten.vercel.app/ (360 / 390 / 430 px) avec le rôle approprié, puis comparer avec la page Next.js et les contrôleurs backend. Ne pas prétendre avoir réalisé cette inspection si l'accès navigateur était impossible. Les identifiants des trois comptes de test sont transmis séparément, jamais dans Git.
 
 ## Branche commune
 
-Continuer **tous les prompts** dans `docs/mobile-audit-parity-2026-11-13` et conserver la [Pull Request #2](https://github.com/KafackLolys/medilink-mobile/pull/2) pour les travaux restants (la PR #1 ayant déjà été fusionnée). Ne pas fusionner prématurément.
+Poursuivre les corrections sur la branche **`docs/mobile-audit-parity-2026-11-13`** et la [Pull Request #4](https://github.com/KafackLolys/medilink-mobile/pull/4), toujours ouverte en brouillon. **Ne pas fusionner avant clôture de la recette Android et de la revue sécurité.**
 
 ## Vérification lors du prompt 02
 
@@ -308,3 +308,13 @@ Reste à effectuer avant fusion : tests instrumentés en mode avion/données mob
 - [**Checklist par écran, correctifs vérifiés dans le code, limites et recette Android**](docs/MOBILE_UX_ACCESSIBILITY_AUDIT.md).
 
 **Reste obligatoire avant fusion** : TalkBack, polices 150/200 %, navigation au bouton retour et clavier Android réel, petits écrans, contrastes visuels, lint, Expo Doctor et comparaison avec le site.
+
+## Prompts 29–30 — Distribution Android et recette finale
+
+- `eas.json` : development APK avec Expo Dev Client, preview APK interne, production AAB Google Play ; signature EAS et versionCode remote increment. `app.config.js` exige les paramètres Android/Firebase/EAS réels et une URL d'API valide. **Aucun package ni project ID factice n'a été ajouté.**
+- `app.json` : nom Medilink, version `1.0.0`, versionCode initial `1` à confirmer au Play Console, scheme `medilinkmobile` maintenu, permissions réduites (aucun GPS/caméra/stockage global).
+- `expo-dev-client` SDK 58, `eslint-config-expo`, `eslint.config.js` ajoutés ; patches Expo conformes à Expo Doctor, qualité vérifiée par `.github/workflows/release-quality.yml` (npm ci, précontrôle, TypeScript, Expo Doctor, lint, tests).
+- `scripts/validate-android-release.cjs` : contrôle structurel `npm run release:validate`, et contrôle strict de la configuration Firebase/package/branding `npm run release:validate:strict`, avec refus si les prérequis sont absents.
+- [Procédure EAS Build et installation](docs/ANDROID_RELEASE_BUILD.md) · [Matrice complète de parité](docs/MOBILE_PARITY_MATRIX.md) · [Recette Android à signer](docs/ANDROID_FINAL_ACCEPTANCE.md) · [Notes version candidate **source**](docs/ANDROID_RELEASE_NOTES.md).
+
+**Verdict 13/11/2026 : NON PRÊT À PUBLIER.** Aucun APK/AAB signé ni `artifactUrl` vérifié. Les fichiers image de lancement contiennent encore des éléments Expo et des pages publiques légales sont provisoires ; aucune recette médicale Android réelle ou certification de conformité n'a été réalisée.
