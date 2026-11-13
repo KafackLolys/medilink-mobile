@@ -3,7 +3,7 @@ import assert from 'node:assert/strict';
 import {
   APPOINTMENT_LABELS, matchingOpeningHours, makeBookingRequest,
   appointmentError, filterAppointments, canPatientChangeAppointmentStatus,
-  formatAppointmentDate,
+  formatAppointmentDate, APPOINTMENT_LIST_ROUTE, appointmentDetailRoute,
 } from './appointment-booking.ts';
 
 const doctor = {
@@ -71,4 +71,13 @@ test('patient only sees own read-only appointment statuses',()=>{
 test('appointment follow-up displays dates in a chosen IANA zone',()=>{
   assert.match(formatAppointmentDate('2026-11-13T08:30:00.000Z','Africa/Douala'),/09:30/);
   assert.equal(formatAppointmentDate('invalid','Africa/Douala'),'Date indisponible');
+});
+
+test('navigation goes from an appointment detail back to the patient list',()=>{
+  assert.equal(APPOINTMENT_LIST_ROUTE,'/patient/rendez-vous');
+  assert.deepEqual(appointmentDetailRoute('appointment-123'),{
+    pathname:'/patient/rendez-vous/[id]',params:{id:'appointment-123'},
+  });
+  // The details screen uses the same list route as the booking success screen.
+  assert.notEqual(appointmentDetailRoute('appointment-123').pathname,APPOINTMENT_LIST_ROUTE);
 });
