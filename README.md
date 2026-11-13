@@ -205,3 +205,15 @@ L'intégration avec un véritable compte médecin, l'ouverture de documents sign
 - [Contrats exacts, cas limites de fuseau et recette Android](docs/MOBILE_DOCTOR_AGENDA_AVAILABILITY.md).
 
 L'essai sur un véritable appareil, l'écriture réelle des disponibilités, les conflits de rendez-vous et la comparaison responsive restent à faire avant fusion.
+
+## Prompt 18 — Profil professionnel médecin et justificatifs
+
+- `/medecin/profil` : écran natif réel de profil médecin, vérification professionnelle, identité, spécialité principale/secondaires, numéro d'inscription, qualifications, réputation, modes de consultation et documents.
+- `PATCH /doctors/me` : modification **uniquement** de `bio` (600 caractères max), `yearsOfExperience` (0–80), `consultationFee` (0–100 000 000) et `professionalAddress` (≤255 caractères). Les autres informations restent en lecture seule tant qu'aucun endpoint ne permet leur modification.
+- `POST /doctors/me/documents` : envoi multipart d'un justificatif sélectionné via `expo-document-picker` au format PDF/JPEG/PNG/WebP, taille entre 1 octet et 10 Mo, maximum 50 documents par profil ; vérification réelle des signatures MIME côté serveur. Les nouveaux documents sont `pending`, jamais approuvés automatiquement.
+- `DELETE /doctors/me/documents/:id` : suppression après confirmation. **Attention : la suppression d'un justificatif approuvé remet le médecin au statut professionnel `pending` dans l'API actuelle.** L'écran avertit et recharge le profil.
+- Sélecteur système sans permission Android globale de stockage, liens de consultation HTTPS signés temporaires, contrôle du rôle `doctor`, prévention des doubles opérations, purge de l'écran à la déconnexion et protection contre les réponses obsolètes.
+- Tests `npm run test:doctor-profile-edit` en GitHub Actions.
+- [Contrats exacts, restrictions de sécurité et recette Android](docs/MOBILE_DOCTOR_PROFESSIONAL_PROFILE.md).
+
+Les tests avec un compte médecin sur appareil physique, l'upload et la suppression E2E, l'analyse du rendu responsive du site et Expo Doctor restent à valider avant fusion.
