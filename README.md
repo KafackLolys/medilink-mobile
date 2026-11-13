@@ -108,3 +108,12 @@ La revue responsive de la version Vercel et les tests sur émulateur Android res
 ## Pull Request de continuité
 
 La PR #1 a été fusionnée le **13 novembre 2026**. Pour préserver la règle de **branche unique**, les commits non fusionnés et les prompts suivants sont suivis par la [PR #2](https://github.com/KafackLolys/medilink-mobile/pull/2), **sur la même branche** `docs/mobile-audit-parity-2026-11-13`. Ne pas créer une nouvelle branche par prompt. La PR #2 reste en brouillon jusqu'à validation technique et fonctionnelle.
+
+## Prompt 09 — Tableau de bord patient
+
+- `src/app/patient/(tabs)/index.tsx` : dashboard React Native relié aux vrais endpoints authentifiés `/auth/profile`, `/needs`, `/appointments`, `/notifications`, `/messages/conversations`.
+- Actions rapides, synthèses calculées uniquement à partir des réponses, demandes et prochain rendez-vous, aperçu des messages et notifications, chargement indépendant, pull-to-refresh, états vides et erreurs.
+- `src/features/patient/dashboard-model.ts` : agrégation pure et sans données fictives, testée avec `npm run test:patient`.
+- [Correspondance Web/API/mobile et recette Android](docs/MOBILE_PATIENT_DASHBOARD.md).
+
+Le site Vercel reste la référence pour la parité responsive ; aucune consultation visuelle authentifiée n'a pu être réalisée depuis ce runtime. Un test réel avec le compte patient autorisé reste indispensable avant validation E2E.
