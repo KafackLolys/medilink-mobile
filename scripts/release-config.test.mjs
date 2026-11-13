@@ -3,6 +3,7 @@ import assert from 'node:assert/strict';
 import {spawnSync} from 'node:child_process';
 import {readFileSync} from 'node:fs';
 import {join} from 'node:path';
+import {createRequire} from 'node:module';
 const root=join(import.meta.dirname,'..');
 const app=JSON.parse(readFileSync(join(root,'app.json'),'utf8')).expo;
 const eas=JSON.parse(readFileSync(join(root,'eas.json'),'utf8'));
@@ -55,4 +56,28 @@ test('strict build gate fails closed without real approved credentials and brand
  assert.match(run.stderr,/Fichier Android Firebase absent/);
  assert.match(run.stderr,/marque non approuvés/);
  assert.doesNotMatch(run.stderr,/token|firebase.privateKey/i);
+});
+
+test('production build cannot bypass branding and versionCode approval',()=>{
+ const require=createRequire(import.meta.url);
+ const previous=Object.fromEntries(['EAS_BUILD_PROFILE','MEDILINK_ANDROID_PACKAGE','MEDILINK_GOOGLE_SERVICES_FILE','MEDILINK_EAS_PROJECT_ID','EXPO_PUBLIC_API_BASE_URL','MEDILINK_BRANDING_APPROVED','MEDILINK_VERSION_CODE_APPROVED']
+   .map(k=>[k,process.env[k]]));
+ try{
+  Object.assign(process.env,{
+   EAS_BUILD_PROFILE:'production',MEDILINK_ANDROID_PACKAGE:'cm.medilink.test',
+   MEDILINK_GOOGLE_SERVICES_FILE:'/secure/example.json',
+   MEDILINK_EAS_PROJECT_ID:'12345678-1234-4123-8123-123456789abc',
+   EXPO_PUBLIC_API_BASE_URL:'https://api.medilink.test',
+  });
+  delete process.env.MEDILINK_BRANDING_APPROVED;
+  delete process.env.MEDILINK_VERSION_CODE_APPROVED;
+  const setup=require('../app.config.js');
+  assert.throws(()=>setup({config:app}),/production bloqué/);
+  process.env.MEDILINK_BRANDING_APPROVED='true';
+  assert.throws(()=>setup({config:app}),/production bloqué/);
+ }finally{
+  for(const [key,value] of Object.entries(previous)){
+   if(value===undefined)delete process.env[key];else process.env[key]=value;
+  }
+ }
 });
