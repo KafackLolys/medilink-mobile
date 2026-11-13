@@ -59,7 +59,7 @@ export default function DoctorProfessionalProfile() {
       focusEpoch.current++;seq.current++;controller.current?.abort();setState({status:'loading'});
       setEditing(false);setDraft({...EMPTY_FORM});setFormErrors({});
       setPicked(null);setDeleteTarget(null);setDocumentType('medical_license');
-      setError('');setNotice('');setRefreshing(false);
+      setError('');setNotice('');setRefreshing(false);setBusy(false);
     };
   },[session.status,session.role,reload]));
 
