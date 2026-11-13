@@ -11,7 +11,7 @@ export default function TabsLayout() {
       </NativeTabs.Trigger>
       <NativeTabs.Trigger name="medecins">
         <NativeTabs.Trigger.Label>Médecins</NativeTabs.Trigger.Label>
-        <NativeTabs.Trigger.Icon md="medical-services" />
+        <NativeTabs.Trigger.Icon md="medical_services" />
       </NativeTabs.Trigger>
       <NativeTabs.Trigger name="demandes">
         <NativeTabs.Trigger.Label>Demandes</NativeTabs.Trigger.Label>
