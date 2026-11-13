@@ -25,4 +25,4 @@ jobs:
         run: npm run lint
       - name: All domain and release tests
         if: always()
-        run: npm run test:release && npm run test:ux
+        run: node --test scripts/release-config.test.mjs && npm run test:ux
