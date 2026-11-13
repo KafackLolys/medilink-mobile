@@ -1,98 +1,48 @@
-import * as Device from 'expo-device';
-import { Platform, StyleSheet } from 'react-native';
-import { SafeAreaView } from 'react-native-safe-area-context';
-
-import { AnimatedIcon } from '@/components/animated-icon';
-import { HintRow } from '@/components/hint-row';
+import { Link, Redirect } from 'expo-router';
+import { View } from 'react-native';
+import { Screen, Header, Card } from '@/components/ui/primitives';
 import { ThemedText } from '@/components/themed-text';
-import { ThemedView } from '@/components/themed-view';
-import { WebBadge } from '@/components/web-badge';
-import { BottomTabInset, MaxContentWidth, Spacing } from '@/constants/theme';
+import { roleHome, useNavigationSession } from '@/store/navigation-session';
+import { LoadingState } from '@/components/ui/states';
+import { Spacing } from '@/constants/theme';
 
-function getDevMenuHint() {
-  if (Platform.OS === 'web') {
-    return <ThemedText type="small">use browser devtools</ThemedText>;
-  }
-  if (Device.isDevice) {
-    return (
-      <ThemedText type="small">
-        shake device or press <ThemedText type="code">m</ThemedText> in terminal
-      </ThemedText>
-    );
-  }
-  const shortcut = Platform.OS === 'android' ? 'cmd+m (or ctrl+m)' : 'cmd+d';
+const INTRO_STEPS = [
+  { title: 'Trouvez un médecin', body: 'Consultez les profils et les disponibilités proposées.' },
+  { title: 'Décrivez votre besoin', body: 'Présentez votre situation pour recevoir des propositions.' },
+  { title: 'Organisez votre rendez-vous', body: 'Choisissez le mode et la date adaptés avec le professionnel.' },
+] as const;
+
+/** Public introduction only; it never invents doctor or appointment data. */
+export default function Index() {
+  const session = useNavigationSession(state => state.session);
+  if (session.status === 'loading') return <Screen><LoadingState label="Vérification de votre session…" /></Screen>;
+  if (session.status === 'authenticated') return <Redirect href={roleHome(session.role)} />;
+
   return (
-    <ThemedText type="small">
-      press <ThemedText type="code">{shortcut}</ThemedText>
-    </ThemedText>
+    <Screen>
+      <View style={{ gap: Spacing.two }}>
+        <ThemedText type="smallBold" themeColor="primary">MEDILINK</ThemedText>
+        <Header title="La santé, plus proche de vous"
+          subtitle="Trouvez un médecin ou publiez un besoin médical, depuis votre téléphone." />
+      </View>
+      {INTRO_STEPS.map((step, index) => (
+        <Card key={step.title}>
+          <ThemedText type="smallBold" themeColor="primary">Étape {index + 1}</ThemedText>
+          <ThemedText type="subtitle">{step.title}</ThemedText>
+          <ThemedText themeColor="textSecondary">{step.body}</ThemedText>
+        </Card>
+      ))}
+      <Card>
+        <Link href="/login" accessibilityRole="link">
+          <ThemedText type="linkPrimary">Se connecter</ThemedText>
+        </Link>
+        <Link href="/choose-role" accessibilityRole="link">
+          <ThemedText type="linkPrimary">Créer un compte</ThemedText>
+        </Link>
+        <Link href="/aide">
+          <ThemedText themeColor="textSecondary" type="small">Besoin d’aide ?</ThemedText>
+        </Link>
+      </Card>
+    </Screen>
   );
 }
-
-export default function HomeScreen() {
-  return (
-    <ThemedView style={styles.container}>
-      <SafeAreaView style={styles.safeArea}>
-        <ThemedView style={styles.heroSection}>
-          <AnimatedIcon />
-          <ThemedText type="title" style={styles.title}>
-            Welcome to&nbsp;Expo
-          </ThemedText>
-        </ThemedView>
-
-        <ThemedText type="code" style={styles.code}>
-          get started
-        </ThemedText>
-
-        <ThemedView type="backgroundElement" style={styles.stepContainer}>
-          <HintRow
-            title="Try editing"
-            hint={<ThemedText type="code">src/app/index.tsx</ThemedText>}
-          />
-          <HintRow title="Dev tools" hint={getDevMenuHint()} />
-          <HintRow
-            title="Fresh start"
-            hint={<ThemedText type="code">npm run reset-project</ThemedText>}
-          />
-        </ThemedView>
-
-        {Platform.OS === 'web' && <WebBadge />}
-      </SafeAreaView>
-    </ThemedView>
-  );
-}
-
-const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    justifyContent: 'center',
-    flexDirection: 'row',
-  },
-  safeArea: {
-    flex: 1,
-    paddingHorizontal: Spacing.four,
-    alignItems: 'center',
-    gap: Spacing.three,
-    paddingBottom: BottomTabInset + Spacing.three,
-    maxWidth: MaxContentWidth,
-  },
-  heroSection: {
-    alignItems: 'center',
-    justifyContent: 'center',
-    flex: 1,
-    paddingHorizontal: Spacing.four,
-    gap: Spacing.four,
-  },
-  title: {
-    textAlign: 'center',
-  },
-  code: {
-    textTransform: 'uppercase',
-  },
-  stepContainer: {
-    gap: Spacing.three,
-    alignSelf: 'stretch',
-    paddingHorizontal: Spacing.three,
-    paddingVertical: Spacing.four,
-    borderRadius: Spacing.four,
-  },
-});

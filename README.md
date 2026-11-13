@@ -1,56 +1,130 @@
-# Welcome to your Expo app 👋
+# Medilink Android
 
-This is an [Expo](https://expo.dev) project created with [`create-expo-app`](https://www.npmjs.com/package/create-expo-app).
+Application Android Medilink développée avec **Expo SDK 58**, **React Native 0.88**, **React 19**, **Expo Router** et TypeScript.
 
-## Get started
+## Références
 
-1. Install dependencies
+- Site web et référence responsive : https://medilink-nu-ten.vercel.app/
+- Frontend : https://github.com/KafackLolys/medilink
+- Backend : https://github.com/KafackLolys/medilink-api
+- [Matrice de parité](docs/MOBILE_PARITY_MATRIX.md) et [architecture](docs/MOBILE_ARCHITECTURE.md)
 
-   ```bash
-   npm install
-   ```
+## Installation
 
-2. Start the app
-
-   ```bash
-   npx expo start
-   ```
-
-In the output, you'll find options to open the app in a
-
-- [development build](https://docs.expo.dev/develop/development-builds/introduction/)
-- [Android emulator](https://docs.expo.dev/workflow/android-studio-emulator/)
-- [iOS simulator](https://docs.expo.dev/workflow/ios-simulator/)
-- [Expo Go](https://expo.dev/go), a limited sandbox for trying out app development with Expo
-
-You can start developing by editing the files inside the **src/app** directory. This project uses [file-based routing](https://docs.expo.dev/router/introduction).
-
-## Get a fresh project
-
-When you're ready, run:
-
-```bash
-npm run reset-project
+```sh
+npm ci
+cp .env.example .env.local
+# Renseigner l'URL HTTPS effective de l'API NestJS dans .env.local.
+npm run start
 ```
 
-This command will move the starter code to the **example** directory and create a blank **src/app** directory where you can start developing.
+Sous PowerShell : `Copy-Item .env.example .env.local`.
 
-### Other setup steps
+La variable `EXPO_PUBLIC_API_BASE_URL` est **publique** : jamais de mot de passe, secret ou jeton dedans. L'URL du frontend Next.js n'est pas nécessairement l'URL du backend. Le téléphone Android doit pouvoir joindre cette URL.
 
-- To set up ESLint for linting, run `npx expo lint`, or follow our guide on ["Using ESLint and Prettier"](https://docs.expo.dev/guides/using-eslint/)
-- If you'd like to set up unit testing, follow our guide on ["Unit Testing with Jest"](https://docs.expo.dev/develop/unit-testing/)
-- Learn more about the TypeScript setup in this template in our guide on ["Using TypeScript"](https://docs.expo.dev/guides/typescript/)
+## Contrôles de qualité
 
-## Learn more
+```sh
+npm run typecheck
+npm run lint
+npm run doctor
+npm run check
+```
 
-To learn more about developing your project with Expo, look at the following resources:
+Les modules Expo doivent être installés par `npx expo install <package>`, après lecture de la [documentation SDK 58](https://docs.expo.dev/versions/v58.0.0/). Voir `AGENTS.md`.
 
-- [Expo documentation](https://docs.expo.dev/): Learn fundamentals, or go into advanced topics with our [guides](https://docs.expo.dev/guides).
-- [Learn Expo tutorial](https://docs.expo.dev/tutorial/introduction/): Follow a step-by-step tutorial where you'll create a project that runs on Android, iOS, and the web.
+## État de développement
 
-## Join the community
+Prompt 02 : le starter « Home / Explore » a été retiré de la navigation et un écran technique temporaire a remplacé « Welcome to Expo ». Un Stack Expo Router est configuré. Les assets et composants techniques existants restent préservés. Aucune page métier, authentification ou communication avec l'API n'est encore implémentée.
 
-Join our community of developers creating universal apps.
+**Avant la création de chaque écran** : examiner la vue responsive sur https://medilink-nu-ten.vercel.app/ (360 / 390 / 430 px) avec le rôle approprié, puis comparer avec la page Next.js et les contrôleurs backend. Ne pas prétendre avoir réalisé cette inspection si l'accès navigateur était impossible. Les identifiants des trois comptes de test sont transmis séparément, jamais dans Git.
 
-- [Expo on GitHub](https://github.com/expo/expo): View our open source platform and contribute.
-- [Discord community](https://chat.expo.dev): Chat with Expo users and ask questions.
+## Branche commune
+
+Continuer **tous les prompts** dans `docs/mobile-audit-parity-2026-11-13` et conserver la [Pull Request #2](https://github.com/KafackLolys/medilink-mobile/pull/2) pour les travaux restants (la PR #1 ayant déjà été fusionnée). Ne pas fusionner prématurément.
+
+## Vérification lors du prompt 02
+
+Contrôle statique des fichiers via GitHub et documentation Expo SDK 58 / Expo Router. La session d'exécution ne disposait pas d'une copie locale npm du dépôt ni d'accès au registre npm. `npm ci`, lint, typecheck, Expo Doctor et Android n'ont pas été exécutés, et ne sont donc pas déclarés réussis.
+
+## Prompt 03 — Design system natif
+
+Les tokens Medilink de `src/constants/theme.ts` reprennent la palette de marque du web (`#2563EB` primaire, `#0D9488` secondaire, `#F8FAFC` surface, `#1E293B` texte) avec mode sombre contrasté et tailles Android accessibles.
+
+Composants réutilisables : `src/components/ui/primitives.tsx` (Button, Card, Badge, Avatar, Screen, Header), `form-fields.tsx` (Input, PasswordField, SelectField, ToggleField), `states.tsx` (EmptyState, ErrorState, LoadingState), `overlays.tsx` (Modal, ToastProvider, useToast). Le fournisseur des toasts est installé dans `src/app/_layout.tsx`.
+
+Galerie interactive **locale** : route `/dev/design-system`, indisponible en production (redirection). Elle n'effectue aucun appel API et ne contient aucune donnée médicale réelle. Consulter [MOBILE_DESIGN_SYSTEM.md](docs/MOBILE_DESIGN_SYSTEM.md) pour les tokens et limites.
+
+Les contrôles de type/lint/build sur appareil nécessitent une installation effective de `node_modules` et restent à exécuter dans un environnement connecté. Le site responsive Vercel demeure une condition préalable à la validation des vrais écrans métier.
+
+## Prompt 05 — Client HTTP et services typés
+
+Le transport `src/services/http-client.ts` prend en charge timeouts, annulations, 401/403/404/409/422/500, erreurs réseau, JSON et multipart React Native. `src/services/http.ts` expose `apiRequest` et un futur point d'intégration aux tokens sécurisés.
+
+Les types partagés sont dans `src/types/domain.ts` et les services API dans `src/services/{auth,doctors,patients,needs,appointments,availabilities,messages,notifications,admin,integration}.ts`. Aucun faux endpoint ni réponse simulée en production.
+
+```sh
+npm run test:http
+npm run check
+```
+
+Voir [MOBILE_API_CLIENT.md](docs/MOBILE_API_CLIENT.md) pour l'usage, le réseau émulateur/téléphone/production et les contraintes de confidentialité. Les tests ont été **rédigés mais non exécutés** dans l'environnement de modification : la validation sur un checkout connecté reste obligatoire.
+
+## Prompt 06 — Connexion et inscription publiques
+
+- `/login` : authentification par e-mail/mot de passe, messages d'erreur et anti-double envoi.
+- `/choose-role` : choix patient ou médecin exclusivement.
+- `/register` : coordonnées, mot de passe confirmé, consentement ; spécialité et numéro professionnel pour les médecins ; confirmation de l'e-mail exigée par l'API.
+- Les requêtes utilisent `POST /auth/login`, `POST /auth/register` et `GET /auth/profile` sans mock de données.
+- Un profil NestJS revalidé détermine le rôle effectif avant la navigation. Les identifiants ne sont jamais inclus dans le code ou dans les tests.
+- **Session temporaire en mémoire** : à remplacer au prompt 07 par un stockage sécurisé et un rafraîchissement des tokens, après vérification des contrats.
+- Tests locaux : `npm run test:auth` (validateurs et erreurs) ; pipeline PR : `.github/workflows/android-validation.yml`.
+- [Documentation et plan de recette](docs/MOBILE_PUBLIC_AUTH.md). La vérification responsive authentifiée sur le site Vercel et les tests sur véritable appareil restent à exécuter.
+
+## Prompt 07 — Session mobile sécurisée
+
+- Tokens `idToken` et `refreshToken` conservés dans **Expo SecureStore** (Android Keystore), jamais dans AsyncStorage, l'URL ou Zustand.
+- `src/features/auth/session-manager.ts` : restauration au démarrage, validation auprès de `/auth/refresh` et `/auth/profile`, expiration proactive, refresh single-flight, verrou de génération contre l'écrasement d'une nouvelle session, déconnexion et purge des données locales.
+- `src/services/http-client.ts` : retry unique sur 401, abandon des réponses tardives d'un ancien compte et invalidation du token si le retry échoue encore.
+- `src/components/auth/logout-button.tsx` : déconnexion depuis les profils patient et médecin et depuis l'espace administrateur.
+- Documentation : [MOBILE_SECURE_SESSION.md](docs/MOBILE_SECURE_SESSION.md).
+- Tests : `npm run test:session`, `npm run test:http`, puis `npm run check`.
+- Dépendance : `expo-secure-store@~58.0.3` et configuration de l'exclusion Android Auto Backup. Installer via `npm ci` dans un environnement connecté.
+
+**Attention :** les tests Node, les vérifications TypeScript/lint et la compilation Android restent à exécuter sur un runner disposant de npm et du SDK. Les tests dans le dépôt n'impliquent pas qu'ils ont réussi.
+
+## Prompt 08 — Récupération et introduction
+
+- `/forgot-password` utilise le contrat réel `POST /auth/reset-password` (e-mail Firebase uniquement), sans OTP ni SMS.
+- La confirmation reste neutre, que l'adresse soit enregistrée ou non. Aucun détail backend de compte n'est affiché.
+- L'écran d'accueil public présente les trois étapes du service, sans données médicales de démonstration, puis propose connexion et inscription.
+- `/account-status` distingue seulement une vérification e-mail explicitement indiquée par le backend d'un refus générique; un compte suspendu/supprimé reste non identifiable dans les erreurs.
+- Le rôle et le statut d'un médecin `pending` restent issus du backend. La notice de validation en attente ne modifie aucune permission serveur.
+- Tests : `npm run test:onboarding`, inclus dans `npm run check` et la CI de la PR.
+- [Contrats, scénarios et limites](docs/MOBILE_RECOVERY_ONBOARDING.md).
+
+La revue responsive de la version Vercel et les tests sur émulateur Android restent à confirmer ; **aucun scénario E2E n'est déclaré réussi** dans ce lot.
+
+## Pull Request de continuité
+
+La PR #1 a été fusionnée le **13 novembre 2026**. Pour préserver la règle de **branche unique**, les commits non fusionnés et les prompts suivants sont suivis par la [PR #2](https://github.com/KafackLolys/medilink-mobile/pull/2), **sur la même branche** `docs/mobile-audit-parity-2026-11-13`. Ne pas créer une nouvelle branche par prompt. La PR #2 reste en brouillon jusqu'à validation technique et fonctionnelle.
+
+## Prompt 09 — Tableau de bord patient
+
+- `src/app/patient/(tabs)/index.tsx` : dashboard React Native relié aux vrais endpoints authentifiés `/auth/profile`, `/needs`, `/appointments`, `/notifications`, `/messages/conversations`.
+- Actions rapides, synthèses calculées uniquement à partir des réponses, demandes et prochain rendez-vous, aperçu des messages et notifications, chargement indépendant, pull-to-refresh, états vides et erreurs.
+- `src/features/patient/dashboard-model.ts` : agrégation pure et sans données fictives, testée avec `npm run test:patient`.
+- [Correspondance Web/API/mobile et recette Android](docs/MOBILE_PATIENT_DASHBOARD.md).
+
+Le site Vercel reste la référence pour la parité responsive ; aucune consultation visuelle authentifiée n'a pu être réalisée depuis ce runtime. Un test réel avec le compte patient autorisé reste indispensable avant validation E2E.
+
+## Prompt 10 — Annuaire de médecins
+
+- `/patient/medecins` : annuaire natif `FlatList`, filtres réellement pris en charge par l'API `GET /doctors` : `q`, `city`, `specialty` (100 caractères maximum).
+- Les spécialités sont issues de l'API. Aucune pagination côté serveur, donc pas de pseudo-pagination sur l'app.
+- Cartes avec nom, spécialité, statut vérifié, secteur, modes, expérience, note si disponible, avatars par initiales : aucune photo n'est exposée par le contrat courant.
+- Requêtes annulables, protection contre réponses périmées, actualisation native, états vides et erreurs.
+- Mapping/test : `src/features/patient/doctor-directory.ts` et `npm run test:doctors`.
+- [Contrats et scénarios de recette](docs/MOBILE_DOCTOR_DIRECTORY.md).
+
+La validation visuelle responsive authentifiée sur Vercel et les tests sur téléphone Android avec le compte patient restent à effectuer.
