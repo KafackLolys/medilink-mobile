@@ -16,7 +16,8 @@ export function validateRegistration(form: RegisterForm): FieldErrors {
   if (!form.firstName.trim()) errors.firstName = 'Saisissez votre prénom.';
   if (!form.lastName.trim()) errors.lastName = 'Saisissez votre nom.';
   if (form.phone.replace(/\D/g, '').length < 8) errors.phone = 'Saisissez un numéro avec indicatif du pays.';
-  if (form.password.length < 8) errors.password = 'Au moins 8 caractères sont nécessaires.';
+  const strongGroups = [form.password.length >= 8, /[a-z]/.test(form.password) && /[A-Z]/.test(form.password), /\\d/.test(form.password), /[^A-Za-z0-9]/.test(form.password)].filter(Boolean).length;
+  if (strongGroups < 3) errors.password = 'Utilisez 8 caractères minimum, avec majuscule, chiffre ou symbole.';
   if (form.confirmPassword !== form.password) errors.confirmPassword = 'Les mots de passe ne correspondent pas.';
   if (form.role !== 'patient' && form.role !== 'doctor') errors.role = 'Choisissez patient ou médecin.';
   if (form.role === 'doctor') {
