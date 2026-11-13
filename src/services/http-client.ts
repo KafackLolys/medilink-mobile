@@ -135,7 +135,9 @@ export function createHttpClient(options: HttpClientOptions) {
         }
       }
       if (!response.ok) {
-        if (response.status === 401 && config.authenticated !== false) await options.onUnauthorized?.();
+        if (response.status === 401 && config.authenticated !== false) {
+          try { await options.onUnauthorized?.(); } catch { /* Do not mask the original 401. */ }
+        }
         throw new HttpError(extractMessage(payload, response.status), classifyStatus(response.status), response.status, payload);
       }
       return payload as T;
