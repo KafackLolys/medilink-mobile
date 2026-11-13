@@ -1,56 +1,48 @@
-# Welcome to your Expo app 👋
+# Medilink Android
 
-This is an [Expo](https://expo.dev) project created with [`create-expo-app`](https://www.npmjs.com/package/create-expo-app).
+Application Android Medilink développée avec **Expo SDK 58**, **React Native 0.88**, **React 19**, **Expo Router** et TypeScript.
 
-## Get started
+## Références
 
-1. Install dependencies
+- Site web et référence responsive : https://medilink-nu-ten.vercel.app/
+- Frontend : https://github.com/KafackLolys/medilink
+- Backend : https://github.com/KafackLolys/medilink-api
+- [Matrice de parité](docs/MOBILE_PARITY_MATRIX.md) et [architecture](docs/MOBILE_ARCHITECTURE.md)
 
-   ```bash
-   npm install
-   ```
+## Installation
 
-2. Start the app
-
-   ```bash
-   npx expo start
-   ```
-
-In the output, you'll find options to open the app in a
-
-- [development build](https://docs.expo.dev/develop/development-builds/introduction/)
-- [Android emulator](https://docs.expo.dev/workflow/android-studio-emulator/)
-- [iOS simulator](https://docs.expo.dev/workflow/ios-simulator/)
-- [Expo Go](https://expo.dev/go), a limited sandbox for trying out app development with Expo
-
-You can start developing by editing the files inside the **src/app** directory. This project uses [file-based routing](https://docs.expo.dev/router/introduction).
-
-## Get a fresh project
-
-When you're ready, run:
-
-```bash
-npm run reset-project
+```sh
+npm ci
+cp .env.example .env.local
+# Renseigner l'URL HTTPS effective de l'API NestJS dans .env.local.
+npm run start
 ```
 
-This command will move the starter code to the **example** directory and create a blank **src/app** directory where you can start developing.
+Sous PowerShell : `Copy-Item .env.example .env.local`.
 
-### Other setup steps
+La variable `EXPO_PUBLIC_API_BASE_URL` est **publique** : jamais de mot de passe, secret ou jeton dedans. L'URL du frontend Next.js n'est pas nécessairement l'URL du backend. Le téléphone Android doit pouvoir joindre cette URL.
 
-- To set up ESLint for linting, run `npx expo lint`, or follow our guide on ["Using ESLint and Prettier"](https://docs.expo.dev/guides/using-eslint/)
-- If you'd like to set up unit testing, follow our guide on ["Unit Testing with Jest"](https://docs.expo.dev/develop/unit-testing/)
-- Learn more about the TypeScript setup in this template in our guide on ["Using TypeScript"](https://docs.expo.dev/guides/typescript/)
+## Contrôles de qualité
 
-## Learn more
+```sh
+npm run typecheck
+npm run lint
+npm run doctor
+npm run check
+```
 
-To learn more about developing your project with Expo, look at the following resources:
+Les modules Expo doivent être installés par `npx expo install <package>`, après lecture de la [documentation SDK 58](https://docs.expo.dev/versions/v58.0.0/). Voir `AGENTS.md`.
 
-- [Expo documentation](https://docs.expo.dev/): Learn fundamentals, or go into advanced topics with our [guides](https://docs.expo.dev/guides).
-- [Learn Expo tutorial](https://docs.expo.dev/tutorial/introduction/): Follow a step-by-step tutorial where you'll create a project that runs on Android, iOS, and the web.
+## État de développement
 
-## Join the community
+Prompt 02 : le starter « Home / Explore » a été retiré de la navigation et un écran technique temporaire a remplacé « Welcome to Expo ». Un Stack Expo Router est configuré. Les assets et composants techniques existants restent préservés. Aucune page métier, authentification ou communication avec l'API n'est encore implémentée.
 
-Join our community of developers creating universal apps.
+**Avant la création de chaque écran** : examiner la vue responsive sur https://medilink-nu-ten.vercel.app/ (360 / 390 / 430 px) avec le rôle approprié, puis comparer avec la page Next.js et les contrôleurs backend. Ne pas prétendre avoir réalisé cette inspection si l'accès navigateur était impossible. Les identifiants des trois comptes de test sont transmis séparément, jamais dans Git.
 
-- [Expo on GitHub](https://github.com/expo/expo): View our open source platform and contribute.
-- [Discord community](https://chat.expo.dev): Chat with Expo users and ask questions.
+## Branche commune
+
+Continuer **tous les prompts** dans `docs/mobile-audit-parity-2026-11-13` et conserver la [Pull Request #1](https://github.com/KafackLolys/medilink-mobile/pull/1) comme PR de référence jusqu'à la fin du projet. Ne pas fusionner prématurément.
+
+## Vérification lors du prompt 02
+
+Contrôle statique des fichiers via GitHub et documentation Expo SDK 58 / Expo Router. La session d'exécution ne disposait pas d'une copie locale npm du dépôt ni d'accès au registre npm. `npm ci`, lint, typecheck, Expo Doctor et Android n'ont pas été exécutés, et ne sont donc pas déclarés réussis.
