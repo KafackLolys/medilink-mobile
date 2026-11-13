@@ -9,7 +9,7 @@ export type DoctorVerificationStatus = 'pending' | 'verified' | 'rejected' | 'su
 export type AccountStatus = 'active' | 'pending' | 'suspended' | 'deleted';
 
 export interface AuthenticatedUser {
-  id: string; role: AccountRole; email: string; phone: string; status: AccountStatus;
+  id: string; role: AccountRole; email: string | null; phone: string | null; status: AccountStatus;
   firstName?: string; lastName?: string; specialty?: string | null;
   registrationNumber?: string | null; emailVerified?: boolean; phoneVerified?: boolean;
 }
