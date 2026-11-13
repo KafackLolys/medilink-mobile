@@ -1,5 +1,6 @@
 import { apiRequest } from './http';
 import type { AuthenticatedUser, LoginResponse, RegisterRequest } from '@/types/domain';
+import type { PatientProfileData } from '@/features/patient/patient-medical-profile';
 
 export const authApi = {
   login: (email: string, password: string, signal?: AbortSignal) =>
@@ -8,7 +9,7 @@ export const authApi = {
     apiRequest<LoginResponse>('/auth/register', { method: 'POST', authenticated: false, body: data, signal }),
   refresh: (refreshToken: string, signal?: AbortSignal) =>
     apiRequest<LoginResponse>('/auth/refresh', { method: 'POST', authenticated: false, body: { refreshToken }, signal }),
-  profile: (signal?: AbortSignal) => apiRequest<{ user: AuthenticatedUser; patient?: unknown }>('/auth/profile', { signal }),
+  profile: (signal?: AbortSignal) => apiRequest<PatientProfileData>('/auth/profile', { signal }),
   updateAdminProfile: (data: { firstName: string; lastName: string; phone: string }, signal?: AbortSignal) =>
     apiRequest<{ user: AuthenticatedUser }>('/auth/admin/profile', { method: 'PATCH', body: data, signal }),
   logout: (signal?: AbortSignal) => apiRequest<void>('/auth/logout', { method: 'POST', signal }),
