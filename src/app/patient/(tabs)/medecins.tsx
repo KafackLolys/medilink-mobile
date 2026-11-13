@@ -57,8 +57,6 @@ export default function DoctorDirectoryScreen() {
   const session = useNavigationSession(s => s.session);
   const connectivity = normalizeConnectivity(useNetworkState());
   const previousConnectivity = useRef(connectivity);
-  const networkQualityRef = useRef(connectivity);
-  networkQualityRef.current = connectivity;
   const [query, setQuery] = useState('');
   const [city, setCity] = useState('');
   const [specialty, setSpecialty] = useState('');
@@ -75,7 +73,7 @@ export default function DoctorDirectoryScreen() {
     const request = new AbortController();
     controller.current = request;
     const id = ++sequence.current;
-    if(networkQualityRef.current==='offline'){
+    if(connectivity==='offline'){
       const cached=getStalePublicDoctorDirectory(filters,{kind:'network'},'patient');
       if(cached){
         setSpecialties(cached.specialties);
@@ -102,7 +100,7 @@ export default function DoctorDirectoryScreen() {
     }).finally(() => {
       if (!request.signal.aborted && sequence.current === id) setRefreshing(false);
     });
-  }, []);
+  }, [connectivity]);
 
   useFocusEffect(useCallback(() => {
     if (session.status === 'authenticated' && session.role === 'patient') load(applied);
