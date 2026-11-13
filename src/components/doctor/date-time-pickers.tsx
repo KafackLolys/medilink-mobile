@@ -77,7 +77,7 @@ export function NativeTimePicker({label,value,onChange,disabled=false}:{
   const hour=Math.floor(mins/60),minute=mins%60;
   const control=(name:string,val:number,plus:()=>void,minus:()=>void)=><View style={styles.adjust}>
     <Button label="−" variant="outline" onPress={minus}/>
-    <ThemedText type="subtitle" textAlign="center">{String(val).padStart(2,'0')}</ThemedText>
+    <ThemedText type="subtitle" style={{textAlign:"center"}}>{String(val).padStart(2,'0')}</ThemedText>
     <Button label="+" variant="outline" onPress={plus}/>
   </View>;
   return <View style={{gap:Spacing.two}}>
@@ -98,7 +98,7 @@ export function NativeTimePicker({label,value,onChange,disabled=false}:{
               {control('Minutes',minute,()=>setChosen(fromMinutes(mins+1)),()=>setChosen(fromMinutes(mins-1)))}
             </View>
           </View>
-          <ThemedText type="subtitle" textAlign="center">{chosen}</ThemedText>
+          <ThemedText type="subtitle" style={{textAlign:"center"}}>{chosen}</ThemedText>
           <Button label="Utiliser cette heure" onPress={()=>{onChange(chosen);setOpen(false);}}/>
           <Button label="Annuler" variant="outline" onPress={()=>setOpen(false)}/>
         </View>
