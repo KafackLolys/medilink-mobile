@@ -161,3 +161,14 @@ La PR #2 a été fusionnée pendant le développement ; la **PR #3** reprend les
 - [Contrats, conflits et recette Android](docs/MOBILE_PATIENT_APPOINTMENTS.md).
 
 La création E2E avec un vrai compte, les essais sur Android et la comparaison responsive avec Vercel restent obligatoires avant fusion.
+
+## Prompt 14 — Profil patient et dossier médical
+
+- `/patient/profil` : véritable interface React Native, identité et coordonnées issues de `GET /auth/profile`, données de santé via `GET /patients/me/conditions`, documents via `GET /patients/me/documents`.
+- `PATCH /integration/patient/profile` permet de modifier le nom, le téléphone, le groupe sanguin et, lorsqu'une adresse existante est réellement exposée, ville/quartier. L'e-mail, le genre, la date de naissance et les conditions médicales sont en lecture seule.
+- `POST /patients/me/documents` et `DELETE /patients/me/documents/:id` : ajout/suppression de documents du patient, confirmation destructrice, fichiers PDF/JPEG/PNG/WebP ≤10 Mo, liens signés temporaires.
+- Dossier médical masqué par défaut, sources chargées indépendamment, états vides et erreurs par section, relecture après mutation. Aucune donnée médicale enregistrée dans AsyncStorage.
+- `src/features/patient/patient-medical-profile.ts` : mapping strict des réponses, validation des champs et fichiers ; tests `npm run test:patient-profile` en CI.
+- [Contrat, restrictions de modification et recette médicale Android](docs/MOBILE_PATIENT_MEDICAL_PROFILE.md).
+
+Le backend `GET /auth/profile` retourne actuellement `address:null` et `verified:false` pour le patient : le mobile ne fabrique ni adresse ni statut. Le parcours E2E réel et la comparaison responsive Vercel restent à valider.
