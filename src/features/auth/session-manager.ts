@@ -171,10 +171,14 @@ export class SessionManager {
         if (epoch !== this.generation) return;
         this.publish({ status: 'authenticated', role: user.role });
       } catch {
-        if (epoch === this.generation) await this.clear();
+        if (epoch === this.generation) {
+          try { await this.clear(); }
+          catch { this.publish({ status: 'unauthenticated', role: null }); }
+        }
       }
     })();
-    const wrapped = flight.finally(() => { if (this.bootFlight === wrapped) this.bootFlight = null; });
+    let wrapped: Promise<void>;
+    wrapped = flight.finally(() => { if (this.bootFlight === wrapped) this.bootFlight = null; });
     this.bootFlight = wrapped;
     return wrapped;
   }
@@ -204,11 +208,16 @@ export class SessionManager {
       }
     })();
     this.refreshGeneration = epoch;
-    this.refreshFlight = flight.finally(() => {
+    let wrapped: Promise<boolean>;
+    wrapped = flight.finally(() => {
       if (this.refreshFlight === wrapped) this.refreshFlight = null;
     });
-    const wrapped = this.refreshFlight;
+    this.refreshFlight = wrapped;
     return wrapped;
+  }
+
+  async invalidateRejectedToken(token: string | null): Promise<void> {
+    if (token && this.tokens?.idToken === token) await this.clear();
   }
 
   async onUnauthorized(presentedToken: string | null): Promise<boolean> {
