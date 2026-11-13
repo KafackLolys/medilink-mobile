@@ -154,6 +154,9 @@ export function createHttpClient(options: HttpClientOptions) {
           try { await options.onRetryUnauthorized?.(presentedToken); } catch { /* Preserve 401. */ }
         }
         if (response.status !== 401 || config.authenticated === false || attempt > 0 || !presentedToken) throw failure;
+        // A 401 means the request was rejected, but never auto-replay a medical mutation.
+        // Let callers inspect authoritative state before a manual, confirmed retry.
+        if ((config.method ?? 'GET') !== 'GET') throw failure;
         let restored = false;
         try { restored = (await options.onUnauthorized?.(presentedToken)) ?? false; }
         catch { restored = false; }
