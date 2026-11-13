@@ -252,3 +252,13 @@ Les échanges E2E entre vrais comptes, le clavier sur appareil Android, le lint,
 - [Contrat complet, confidentialité, limitations backend et recette Android](docs/MOBILE_MEDICAL_DOCUMENTS.md).
 
 À vérifier sur **vrai téléphone Android** : permission d'accès aux documents, transfert multipart direct depuis les URI `content://`, consultation des liens signés, écrans et rotation. Le backend patient doit encore valider les signatures réelles de fichiers et les catégories de documents comme le backend médecin.
+
+## Prompt 22 — Recherche géographique et zones d'intervention
+
+- Annuaire patient : filtres manuels réellement supportés par `GET /doctors` (`q`, `specialty`, `city`), sans permission de localisation et sans géocodage artificiel. Les profils retournent ville et quartiers déclarés, **pas de coordonnées GPS** ; seule la liste est disponible aujourd'hui, aucune carte positionnée fictivement.
+- `/medecin/zone-intervention` : formulaire Android de gestion des zones `GET/PUT /integration/doctor/zone`, ville obligatoire (≤100 caractères), jusqu'à 40 quartiers (≤100 chacun), rayon entier 1–250 km, distance maximale entière 1–500 km au moins égale au rayon. Relecture du serveur après sauvegarde.
+- Aucun `expo-location`, aucune permission fine/coarse/background et **aucun suivi permanent** : le backend ne possède ni endpoint de distance GPS ni coordonnées validées pour les médecins. Refuser la localisation ne bloque aucune fonctionnalité prise en charge.
+- Contrôles du rôle médecin, suppression d'état au changement de compte, validation stricte des coordonnées futures éventuelles, erreurs privées non divulguées.
+- Tests `npm run test:geo` ajoutés au projet et à la CI ; [audit, contraintes exactes et recette Android](docs/MOBILE_GEO_INTERVENTION_ZONES.md).
+
+La vraie carte GPS n'est pas réalisable sans coordonnées professionnelles validées renvoyées par l'API ; les tests réels Android et la comparaison visuelle responsive restent à compléter avant fusion.
