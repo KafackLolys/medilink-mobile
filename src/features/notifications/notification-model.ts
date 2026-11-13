@@ -31,7 +31,7 @@ export function destinationForNotification(url:string|null|undefined,role:string
   if(/^\/patient\/rendez-vous\/[A-Za-z0-9_-]+$/.test(path)||/^\/patient\/demandes\/[A-Za-z0-9_-]+$/.test(path))return path;
   return null;
  }
- if(path==='/medecin'||path==='/medecin/messages')return parsed.searchParams.get('conversation')?'/medecin/messages?conversation='+encodeURIComponent(parsed.searchParams.get('conversation')!):path;
+ if(path==='/medecin'||path==='/medecin/messages')return parsed.searchParams.get('conversation')?'/medecin/messages?conversation='+encodeURIComponent(parsed.searchParams.get('conversation')!):parsed.searchParams.get('tab')==='messages'?'/medecin/messages':path;
  if(['/medecin/rendez-vous','/medecin/besoins','/medecin/propositions','/medecin/notifications'].includes(path))return path;
  if(/^\/medecin\/besoins\/[A-Za-z0-9_-]+$/.test(path))return path;
  return null;
