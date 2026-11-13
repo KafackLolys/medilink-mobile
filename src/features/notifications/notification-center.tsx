@@ -1,4 +1,4 @@
-import { useCallback, useRef, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import { useFocusEffect, useRouter } from 'expo-router';
 import { FlatList, RefreshControl, View, StyleSheet } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
@@ -9,6 +9,7 @@ import { useTheme } from '@/hooks/use-theme';
 import { useNavigationSession } from '@/store/navigation-session';
 import { Spacing } from '@/constants/theme';
 import { notificationsApi } from '@/services/notifications';
+import { registerPushDevice, subscribeNotifications } from '@/features/notifications/push-device';
 import { destinationForNotification, parseNotificationPage, notificationError, canUseNotifications, NOTIFICATION_PAGE_SIZE } from '@/features/notifications/notification-model';
 import type { NotificationPage, UserNotification } from '@/types/domain';
 
@@ -17,6 +18,7 @@ export function NotificationCenter({role}:{role:'patient'|'doctor'}){
  const theme=useTheme(),router=useRouter(),session=useNavigationSession(s=>s.session);
  const [state,setState]=useState<State>({status:'loading'}),[page,setPage]=useState(1);
  const [refreshing,setRefreshing]=useState(false),[busy,setBusy]=useState<string|null>(null),[error,setError]=useState('');
+ const [pushBusy,setPushBusy]=useState(false),[pushNotice,setPushNotice]=useState('');
  const controller=useRef<AbortController|null>(null),sequence=useRef(0),mutation=useRef(false),lifecycle=useRef(0);
  const allowed=session.status==='authenticated'&&session.role===role&&canUseNotifications(session.role);
  const load=useCallback((pull=false)=>{
@@ -29,11 +31,20 @@ export function NotificationCenter({role}:{role:'patient'|'doctor'}){
      if(!ac.signal.aborted&&version===sequence.current)setState({status:'error',message:notificationError(cause)});
    }).finally(()=>{if(!ac.signal.aborted&&version===sequence.current)setRefreshing(false);});
  },[page]);
+ useEffect(()=>subscribeNotifications(()=>{if(allowed)load(true);}),[allowed,load]);
  useFocusEffect(useCallback(()=>{
    lifecycle.current++;
    if(allowed)load();else setState({status:'loading'});
    return()=>{lifecycle.current++;sequence.current++;controller.current?.abort();setState({status:'loading'});setError('');setBusy(null);setRefreshing(false);};
  },[allowed,load]));
+ async function activatePush(){
+   if(pushBusy||!allowed)return;
+   setPushBusy(true);setPushNotice('');
+   try{const registered=await registerPushDevice(true);
+     setPushNotice(registered?'Notifications Android activées pour ce compte.':'Permission refusée ou configuration FCM indisponible. Le centre de notifications reste accessible.');
+   }catch{setPushNotice('Activation push indisponible. Vérifiez la configuration Firebase du build Android.');}
+   finally{setPushBusy(false);}
+ }
  async function markRead(item:UserNotification,open=false){
    if(mutation.current||!allowed)return;
    const epoch=lifecycle.current;
@@ -67,6 +78,8 @@ export function NotificationCenter({role}:{role:'patient'|'doctor'}){
      refreshControl={<RefreshControl refreshing={refreshing} onRefresh={()=>load(true)} colors={[theme.primary]} tintColor={theme.primary}/>}
      ListHeaderComponent={<View style={styles.header}>
        <Header title="Notifications" subtitle="Événements et mises à jour associés à votre compte Medilink."/>
+       <Button label="Activer les notifications Android" variant="outline" loading={pushBusy} onPress={()=>{void activatePush();}}/>
+       {pushNotice?<ThemedText type="small" themeColor="textSecondary" accessibilityRole="alert">{pushNotice}</ThemedText>:null}
        {value?<View style={styles.summary}>
          <Badge label={value.unreadCount+' non lue(s)'} tone={value.unreadCount?'info':'neutral'}/>
          <Button variant="outline" label="Tout marquer comme lu" loading={busy==='all'} disabled={value.unreadCount===0||busy!==null} onPress={()=>{void markAll();}}/>
