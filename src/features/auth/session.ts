@@ -32,7 +32,7 @@ export const sessionManager = new SessionManager({
 });
 
 configureHttpAuth({
-  getAccessToken: () => sessionManager.idToken,
+  getAccessToken: () => sessionManager.validAccessToken(),
   getSessionKey: () => sessionManager.sessionKey,
   onUnauthorized: token => sessionManager.onUnauthorized(token),
 });
