@@ -93,8 +93,9 @@ export class SessionManager {
     this.tokens = null;
     this.publish({ status: 'unauthenticated', role: null });
     await this.options.hooks.purge();
-    // Ordered queue: a late old write must not reinstate an old token.
-    await this.enqueueWrite(() => this.options.storage.clear());
+    // The epoch may have changed while waiting for a cache purge.
+    if (this.generation !== expected) return;
+    await this.enqueueWrite(() => this.generation === expected ? this.options.storage.clear() : Promise.resolve());
   }
 
   async clear(): Promise<void> {
@@ -117,7 +118,8 @@ export class SessionManager {
     this.publish({ status: 'loading', role: null });
     try {
       const user = await this.verifiedProfile(candidate);
-      if (epoch !== this.generation || signal?.aborted) return;
+      if (epoch !== this.generation) return;
+      if (signal?.aborted) { await this.clear(); return; }
       // Persist BEFORE opening protected routes. A write failure means no session.
       await this.enqueueWrite(() => this.options.storage.write(candidate));
       if (epoch !== this.generation || signal?.aborted) {
@@ -159,8 +161,9 @@ export class SessionManager {
         if (epoch === this.generation) await this.clear();
       }
     })();
-    this.bootFlight = flight.finally(() => { if (this.bootFlight === flight) this.bootFlight = null; });
-    return this.bootFlight;
+    const wrapped = flight.finally(() => { if (this.bootFlight === wrapped) this.bootFlight = null; });
+    this.bootFlight = wrapped;
+    return wrapped;
   }
 
   async refresh(): Promise<boolean> {
