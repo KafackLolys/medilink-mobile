@@ -29,3 +29,4 @@ jobs:
       - run: npm run test:session
       - run: npm run test:onboarding
       - run: npm run test:patient
+      - run: npm run test:doctors
