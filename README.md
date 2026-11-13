@@ -239,3 +239,16 @@ Les échanges E2E entre vrais comptes, le clavier sur appareil Android, le lint,
 - Tests `npm run test:notifications` dans GitHub Actions. [Contrat, permissions, contraintes de sécurité et recette sur appareil](docs/MOBILE_ANDROID_NOTIFICATIONS.md).
 
 **Limites :** aucun envoi/réception FCM sur appareil n'a été testé faute de configuration Firebase Android réelle ; la déconnexion hors ligne ne peut garantir une désinscription serveur immédiate. La recette sur build Android, le lint et Expo Doctor restent à exécuter.
+
+## Prompt 21 — Gestion des documents médicaux patient/médecin
+
+- Parcours commun de sélection par Android SAF (`expo-document-picker`) avec `copyToCacheDirectory:false` : **pas de copie locale systématique**, pas de permission globale de stockage ni de permission caméra.
+- Validation avant transfert : PDF, JPEG, PNG, WebP, **1 octet à 10 Mo**, titres et noms limités, catégories propres au patient ou au médecin, **50 justificatifs maximum seulement côté médecin**.
+- Métadonnées consultables avant envoi, consultation d'un document enregistré via **URL HTTPS signée et temporaire** dans `expo-web-browser`, sans téléchargement volontaire vers un cache permanent de l'app.
+- Upload multipart du vrai backend `POST /patients/me/documents` / `POST /doctors/me/documents`, attente avec indicateur **non chiffré** (aucun progrès mesurable exposé), suppression confirmée via les endpoints DELETE réels, relecture après mutation.
+- Documents patient : recherche, catégories et pagination locale par 6 comme sur le site web. Changement de compte et retours tardifs neutralisés.
+- Suppression d'un justificatif médecin approuvé : avertissement de possible retour du profil à `pending`.
+- Tests `npm run test:documents` dans GitHub Actions : MIME/taille, catégories, refus de permissions, erreurs confidentielles, URL signées, filtre et pagination.
+- [Contrat complet, confidentialité, limitations backend et recette Android](docs/MOBILE_MEDICAL_DOCUMENTS.md).
+
+À vérifier sur **vrai téléphone Android** : permission d'accès aux documents, transfert multipart direct depuis les URI `content://`, consultation des liens signés, écrans et rotation. Le backend patient doit encore valider les signatures réelles de fichiers et les catégories de documents comme le backend médecin.
