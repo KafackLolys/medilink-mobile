@@ -236,3 +236,20 @@ test('a failed local data purge cannot preserve a signed-out secure token', asyn
   assert.equal(persisted, null);
   assert.equal(manager.snapshot.status, 'unauthenticated');
 });
+
+test('a pending doctor may sign in but remains marked pending', async () => {
+  const x = fixture({ profile: async () => ({ user: { ...user('u1', 'doctor'), status: 'pending' } }) });
+  await x.manager.login(response('u1', 'id-pending', 'refresh-pending', 'doctor'));
+  assert.equal(x.manager.snapshot.status, 'authenticated');
+  assert.equal(x.manager.snapshot.role, 'doctor');
+  assert.equal(x.manager.snapshot.accountStatus, 'pending');
+});
+
+for (const status of ['suspended', 'deleted']) {
+  test('a ' + status + ' profile cannot activate protected routes', async () => {
+    const x = fixture({ profile: async () => ({ user: { ...user('u1'), status } }) });
+    await assert.rejects(x.manager.login(response()), /inactif/i);
+    assert.equal(x.manager.snapshot.status, 'unauthenticated');
+    assert.equal(x.persisted, null);
+  });
+}
