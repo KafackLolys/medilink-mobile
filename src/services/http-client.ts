@@ -120,6 +120,9 @@ export function createHttpClient(options: HttpClientOptions) {
       if (config.authenticated !== false) {
         presentedToken = (await options.getAccessToken?.()) ?? null;
         if (presentedToken) headers.Authorization = 'Bearer ' + presentedToken;
+        if (sessionKey !== options.getSessionKey?.()) {
+          throw new HttpError('La session a changé pendant la requête.', 'cancelled');
+        }
       }
       for (let attempt = 0; attempt < 2; attempt++) {
         if (controller.signal.aborted) throw new HttpError(timedOut ? 'Délai de connexion dépassé.' : 'Requête annulée.', timedOut ? 'timeout' : 'cancelled');
