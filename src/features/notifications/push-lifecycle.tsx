@@ -36,13 +36,13 @@ export function PushNotificationLifecycle(){
     if(!target||!notificationId)return;
     const destination=destinationForNotification(target,role);
     if(!destination)return;
-    // Never trust the push payload alone. Verify notification ownership against
-    // the authenticated user and the server-side notification list.
+    // Never trust the push payload alone. PATCH /notifications/:id/read verifies
+    // the authenticated Firebase UID owns this notification, even if it is old.
     try{
       const profile=await authApi.profile();
       if(!valid()||profile.user.role!==role)return;
-      const list=await notificationsApi.list(1,50);
-      if(!valid()||!list.items.some(item=>item.id===notificationId))return;
+      const acknowledgement=await notificationsApi.read(notificationId);
+      if(!valid()||acknowledgement.id!==notificationId||!acknowledgement.readAt)return;
       if(handled===notificationId)return;
       handled=notificationId;
       router.push(destination as never);
