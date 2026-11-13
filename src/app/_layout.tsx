@@ -1,4 +1,6 @@
+import { useEffect } from 'react';
 import { DarkTheme, DefaultTheme, Stack, ThemeProvider } from 'expo-router';
+import { restoreSession } from '@/features/auth/session';
 import { useColorScheme } from 'react-native';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
 import { ToastProvider } from '@/components/ui/overlays';
@@ -8,6 +10,7 @@ export default function RootLayout() {
   const colorScheme = useColorScheme();
   const session = useNavigationSession(state => state.session);
   const verified = session.status === 'authenticated';
+  useEffect(() => { void restoreSession(); }, []);
 
   return (
     <SafeAreaProvider>
