@@ -185,7 +185,7 @@ export default function DoctorDirectoryScreen() {
               </Pressable>
             </Link>
           </Card>
-        </View> : null}
+        </View> : undefined}
       />
     </SafeAreaView>
   );
