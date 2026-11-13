@@ -65,6 +65,7 @@ export class SessionManager {
   private refreshGeneration = -1;
   private writeChain: Promise<void> = Promise.resolve();
   private bootFlight: Promise<void> | null = null;
+  private bootCompleted = false;
 
   constructor(options: SessionManagerOptions) {
     this.options = options;
@@ -101,10 +102,13 @@ export class SessionManager {
     if (this.generation !== expected) return;
     this.tokens = null;
     this.publish({ status: 'unauthenticated', role: null });
-    await this.options.hooks.purge();
-    // The epoch may have changed while waiting for a cache purge.
-    if (this.generation !== expected) return;
-    await this.enqueueWrite(() => this.generation === expected ? this.options.storage.clear() : Promise.resolve());
+    try { await this.options.hooks.purge(); }
+    finally {
+      // Storage must be cleared even if another cache purge handler fails.
+      if (this.generation === expected) {
+        await this.enqueueWrite(() => this.generation === expected ? this.options.storage.clear() : Promise.resolve());
+      }
+    }
   }
 
   async clear(): Promise<void> {
@@ -151,6 +155,7 @@ export class SessionManager {
 
   bootstrap(): Promise<void> {
     if (this.bootFlight) return this.bootFlight;
+    if (this.bootCompleted) return Promise.resolve();
     const epoch = this.generation;
     const flight = (async () => {
       this.publish({ status: 'loading', role: null });
@@ -178,7 +183,12 @@ export class SessionManager {
       }
     })();
     let wrapped: Promise<void>;
-    wrapped = flight.finally(() => { if (this.bootFlight === wrapped) this.bootFlight = null; });
+    wrapped = flight.finally(() => {
+      if (this.bootFlight === wrapped) {
+        this.bootFlight = null;
+        this.bootCompleted = true;
+      }
+    });
     this.bootFlight = wrapped;
     return wrapped;
   }
@@ -199,6 +209,10 @@ export class SessionManager {
         await this.enqueueWrite(() => this.options.storage.write(next));
         if (epoch !== this.generation || this.tokens?.refreshToken !== current.refreshToken) return false;
         this.tokens = next;
+        if (this.state.status === 'authenticated' && this.state.role !== result.user.role) {
+          await this.options.hooks.purge();
+          if (epoch === this.generation) this.publish({ status: 'authenticated', role: result.user.role });
+        }
         return true;
       } catch {
         if (epoch === this.generation && this.tokens?.refreshToken === current.refreshToken) {
