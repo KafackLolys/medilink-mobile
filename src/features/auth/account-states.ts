@@ -48,7 +48,7 @@ export function accountIssueMessage(issue: PublicAccountIssue): { title: string;
 export function loginAccountIssue(error: unknown): PublicAccountIssue | null {
   const e = error as { status?: number; message?: string } | null;
   if (e?.status !== 403) return null;
-  return typeof e.message === 'string' && /e-mail|email|adresse.+vérifi|vérifi.+adresse/i.test(e.message)
+  return typeof e.message === 'string' && /adresse e-mail.{0,80}vérifi|email.{0,80}verif|e-mail.{0,80}verif/i.test(e.message)
     ? 'verification'
     : 'restricted';
 }
