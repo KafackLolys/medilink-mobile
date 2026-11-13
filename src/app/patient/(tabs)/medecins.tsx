@@ -12,11 +12,14 @@ import { doctorsApi } from '@/services/doctors';
 import { doctorLocation, doctorModes, doctorRating, mapDoctorDirectory, normalizeDoctorFilters, type DoctorFilters } from '@/features/patient/doctor-directory';
 import type { DoctorDirectoryItem } from '@/types/domain';
 import { useNavigationSession } from '@/store/navigation-session';
+import { useNetworkState } from 'expo-network';
+import { normalizeConnectivity } from '@/features/network/network-policy.ts';
+import { getStalePublicDoctorDirectory, putPublicDoctorDirectory } from '@/features/network/public-directory-cache';
 
 type DirectoryState =
   | { status: 'loading'; doctors: DoctorDirectoryItem[] }
   | { status: 'error'; doctors: DoctorDirectoryItem[] }
-  | { status: 'success'; doctors: DoctorDirectoryItem[] };
+  | { status: 'success'; doctors: DoctorDirectoryItem[]; stale: boolean };
 
 function DoctorCard({ doctor }: { doctor: DoctorDirectoryItem }) {
   const theme = useTheme();
@@ -52,6 +55,8 @@ function DoctorCard({ doctor }: { doctor: DoctorDirectoryItem }) {
 export default function DoctorDirectoryScreen() {
   const theme = useTheme();
   const session = useNavigationSession(s => s.session);
+  const connectivity = normalizeConnectivity(useNetworkState());
+  const previousConnectivity = useRef(connectivity);
   const [query, setQuery] = useState('');
   const [city, setCity] = useState('');
   const [specialty, setSpecialty] = useState('');
@@ -73,11 +78,16 @@ export default function DoctorDirectoryScreen() {
     void doctorsApi.list(filters, request.signal).then(payload => {
       const mapped = mapDoctorDirectory(payload);
       if (request.signal.aborted || sequence.current !== id) return;
+      putPublicDoctorDirectory(filters,mapped);
       setSpecialties(mapped.specialties);
-      setState({ status: 'success', doctors: mapped.doctors });
-    }).catch(() => {
+      setState({ status: 'success', doctors: mapped.doctors, stale: false });
+    }).catch(error => {
       if (request.signal.aborted || sequence.current !== id) return;
-      setState({ status: 'error', doctors: [] });
+      const cached = getStalePublicDoctorDirectory(filters,error,'patient');
+      if (cached) {
+        setSpecialties(cached.specialties);
+        setState({ status: 'success', doctors: cached.doctors, stale: true });
+      } else setState({ status: 'error', doctors: [] });
     }).finally(() => {
       if (!request.signal.aborted && sequence.current === id) setRefreshing(false);
     });
@@ -88,6 +98,13 @@ export default function DoctorDirectoryScreen() {
     return () => { sequence.current++; controller.current?.abort(); };
   }, [session.status, session.role, applied, load]));
   useEffect(() => () => controller.current?.abort(), []);
+  useEffect(()=>{
+    const wasOffline=previousConnectivity.current==='offline';
+    previousConnectivity.current=connectivity;
+    // Only refresh a safe read on recovery; no appointment or medical mutation.
+    if(wasOffline && connectivity==='online' &&
+      session.status==='authenticated' && session.role==='patient')load(applied,true);
+  },[connectivity,session.status,session.role,applied,load]);
 
   const search = () => {
     try {
@@ -170,6 +187,11 @@ export default function DoctorDirectoryScreen() {
               <View style={{ flex: 1 }}><Button label="Effacer" variant="outline" onPress={reset} /></View>
             </View>
           </Card>
+          {state.status === 'success' && state.stale ? <Card>
+            <ThemedText themeColor="warning" type="smallBold">Annuaire enregistré temporairement — données potentiellement anciennes.</ThemedText>
+            <ThemedText type="small" themeColor="textSecondary">Disponibilités, tarifs et statuts doivent être confirmés en ligne avant une réservation.</ThemedText>
+            <Button label="Actualiser les médecins" variant="outline" onPress={() => load(applied,true)}/>
+          </Card>:null}
           {state.status === 'success' ? <ThemedText themeColor="textSecondary" accessibilityLiveRegion="polite">
             {state.doctors.length} {state.doctors.length === 1 ? 'médecin trouvé' : 'médecins trouvés'}
           </ThemedText> : null}
