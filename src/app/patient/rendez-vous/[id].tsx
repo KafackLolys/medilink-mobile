@@ -8,6 +8,7 @@ import { ThemedText } from '@/components/themed-text';
 import { useTheme } from '@/hooks/use-theme';
 import { useNavigationSession } from '@/store/navigation-session';
 import { appointmentsApi } from '@/services/appointments';
+import { PatientAppointmentReview } from '@/features/reviews/patient-appointment-review';
 import { APPOINTMENT_LABELS, formatAppointmentDate, getDeviceTimeZone, canPatientChangeAppointmentStatus, APPOINTMENT_LIST_ROUTE } from '@/features/patient/appointment-booking';
 import { Spacing } from '@/constants/theme';
 import type { PatientAppointment } from '@/types/domain';
@@ -75,7 +76,8 @@ export default function PatientAppointmentDetail(){
             <ThemedText type="linkPrimary">Retrouver mes consultations et évaluations</ThemedText>
           </Link>:null}
           <Link href="/patient/messages"><ThemedText type="linkPrimary">Accéder à mes messages</ThemedText></Link>
-        </Card></>:null}
+        </Card>
+        <PatientAppointmentReview key={appt.id} appointment={appt}/></>:null}
     </ScrollView>
   </SafeAreaView>;
 }
