@@ -30,7 +30,7 @@ export function PushNotificationLifecycle(){
   let handled:string|null=null;
   const handleResponse=async(response:Notifications.NotificationResponse)=>{
     if(!valid())return;
-    const data=response.notification.request.content.data;
+    const data=response.notification.request.content.data ?? {};
     const target=typeof data.url==='string'?data.url:null;
     const notificationId=typeof data.notificationId==='string'?data.notificationId:null;
     if(!target||!notificationId)return;
