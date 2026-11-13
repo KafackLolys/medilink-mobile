@@ -80,3 +80,31 @@ test('global offline banner respects status bar and protects local data',()=>{
  const auth=source('src/features/auth/session.ts');
  assert.match(auth,/clearPublicDoctorDirectoryCache\(\)/);
 });
+
+test('key light and dark theme text combinations meet WCAG AA 4.5:1',()=>{
+ const text=source('src/constants/theme.ts');
+ const match=text.match(/light:\s*\{([\s\S]*?)\},\s*dark:\s*\{([\s\S]*?)\}/);
+ assert.ok(match,'light and dark palette blocks exist');
+ const colors=block=>Object.fromEntries([...block.matchAll(/(\w+):\s*'(#[\da-fA-F]{6})'/g)].map(x=>[x[1],x[2]]));
+ const linear=x=>x<=0.04045?x/12.92:Math.pow((x+0.055)/1.055,2.4);
+ const luminance=hex=>{
+  const rgb=[1,3,5].map(i=>linear(parseInt(hex.slice(i,i+2),16)/255));
+  return rgb[0]*0.2126+rgb[1]*0.7152+rgb[2]*0.0722;
+ };
+ const ratio=(a,b)=>{
+  const x=luminance(a),y=luminance(b);
+  return (Math.max(x,y)+0.05)/(Math.min(x,y)+0.05);
+ };
+ const pairs=[['text','background'],['textSecondary','background'],
+  ['textSecondary','backgroundElement'],['primary','backgroundElement'],
+  ['onPrimary','primary'],['warning','warningSurface'],['danger','dangerSurface'],
+  ['success','successSurface'],['primary','infoSurface']];
+ for(const [name,block]of [['light',match[1]],['dark',match[2]]]){
+  const palette=colors(block);
+  for(const [foreground,background]of pairs){
+   assert.ok(palette[foreground]&&palette[background],name+' '+foreground+'/'+background);
+   const measured=ratio(palette[foreground],palette[background]);
+   assert.ok(measured>=4.5,name+' '+foreground+'/'+background+' contrast '+measured.toFixed(2)+':1');
+  }
+ }
+});
