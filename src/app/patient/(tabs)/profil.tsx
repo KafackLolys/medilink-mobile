@@ -50,7 +50,7 @@ export default function PatientProfileScreen() {
   const [documentBusy,setDocumentBusy]=useState(false);
   const [deleteId,setDeleteId]=useState<string|null>(null);
   const [actionError,setActionError]=useState('');
-  const seq=useRef(0),controller=useRef<AbortController|null>(null),mutationLock=useRef(false);
+  const seq=useRef(0),controller=useRef<AbortController|null>(null),mutationLock=useRef(false),documentEpoch=useRef(0);
 
   const load=useCallback((pull=false)=>{
     controller.current?.abort();
@@ -76,11 +76,12 @@ export default function PatientProfileScreen() {
   useFocusEffect(useCallback(()=>{
     if(session.status==='authenticated'&&session.role==='patient')load();
     return()=>{
-      seq.current++;controller.current?.abort();
+      documentEpoch.current++;seq.current++;controller.current?.abort();
       // Profile and medical data must not survive navigation or account switching.
       setResources(initial());setDraft(null);setEditing(false);
       setSelectedFile(null);setDocumentTitle('');setPrivateVisible(false);
       setDocumentSearch('');setDocumentFilter('all');setDocumentPage(1);
+      setDocumentBusy(false);setDeleteId(null);setActionError('');
     };
   },[load,session.status,session.role]));
 
@@ -123,7 +124,9 @@ export default function PatientProfileScreen() {
 
   async function chooseDocument(){
     if(documentBusy||mutationLock.current)return;
+    const epoch=documentEpoch.current;
     const picked=await chooseMedicalDocument('patient');
+    if(epoch!==documentEpoch.current)return;
     if(picked.error){setActionError(picked.error);setSelectedFile(null);return;}
     if(!picked.file)return; // The system picker was cancelled; do not show an error.
     setSelectedFile({uri:picked.file.uri,name:picked.file.name,mimeType:picked.file.mimeType!,size:picked.file.size!});
@@ -133,28 +136,33 @@ export default function PatientProfileScreen() {
     if(mutationLock.current||!selectedFile||session.status!=='authenticated'||session.role!=='patient')return;
     const issue=validatePatientFile(selectedFile)||validateDocumentTitle(documentTitle,'patient');
     if(issue){setActionError(issue);return;}
+    const epoch=documentEpoch.current;
     mutationLock.current=true;setDocumentBusy(true);setActionError('');
     try{
       const file:NativeUploadFile={uri:selectedFile.uri,name:selectedFile.name,type:selectedFile.mimeType};
       const result=await patientsApi.uploadDocument(file,documentType,documentTitle.trim()||undefined);
+      if(epoch!==documentEpoch.current)return;
       if(!result?.id||result.type!==documentType)throw new Error('Réponse de document invalide.');
       setSelectedFile(null);setDocumentTitle('');setNotice('Document ajouté.');
       load(true);
-    }catch(e){setActionError(documentTransferError(e));}
-    finally{mutationLock.current=false;setDocumentBusy(false);}
+    }catch(e){if(epoch===documentEpoch.current)setActionError(documentTransferError(e));}
+    finally{mutationLock.current=false;if(epoch===documentEpoch.current)setDocumentBusy(false);}
   }
   async function deleteDocument(){
     if(mutationLock.current||!deleteId||session.status!=='authenticated'||session.role!=='patient')return;
+    const epoch=documentEpoch.current;
     mutationLock.current=true;setDocumentBusy(true);setActionError('');
     try{
       await patientsApi.deleteDocument(deleteId);
+      if(epoch!==documentEpoch.current)return;
       setDeleteId(null);setNotice('Document supprimé.');load(true);
-    }catch(e){setActionError(patientProfileError(e));setDeleteId(null);}
-    finally{mutationLock.current=false;setDocumentBusy(false);}
+    }catch(e){if(epoch===documentEpoch.current){setActionError(documentTransferError(e));setDeleteId(null);}}
+    finally{mutationLock.current=false;if(epoch===documentEpoch.current)setDocumentBusy(false);}
   }
   async function openDocument(document:PatientDocument){
+    const epoch=documentEpoch.current;
     const opened=await previewMedicalDocument(document.downloadUrl);
-    if(!opened)setActionError('Lien sécurisé indisponible ou expiré. Actualisez les documents pour renouveler son accès.');
+    if(epoch===documentEpoch.current&&!opened)setActionError('Lien sécurisé indisponible ou expiré. Actualisez les documents pour renouveler son accès.');
   }
 
   if(session.status!=='authenticated'||session.role!=='patient')return <SafeAreaView
