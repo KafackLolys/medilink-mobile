@@ -8,21 +8,25 @@ import { createHttpClient, type HttpRequestOptions } from './http-client';
 let accessTokenProvider: (() => string | null | Promise<string | null>) | null = null;
 let unauthorizedHandler: ((presentedToken: string | null) => boolean | Promise<boolean>) | null = null;
 let sessionKeyProvider: (() => string) | null = null;
+let retryUnauthorizedHandler: ((token: string | null) => void | Promise<void>) | null = null;
 
 export function configureHttpAuth(options: {
   getAccessToken: () => string | null | Promise<string | null>;
   onUnauthorized?: (presentedToken: string | null) => boolean | Promise<boolean>;
   getSessionKey?: () => string;
+  onRetryUnauthorized?: (token: string | null) => void | Promise<void>;
 }): void {
   accessTokenProvider = options.getAccessToken;
   unauthorizedHandler = options.onUnauthorized ?? null;
   sessionKeyProvider = options.getSessionKey ?? null;
+  retryUnauthorizedHandler = options.onRetryUnauthorized ?? null;
 }
 
 export function resetHttpAuth(): void {
   accessTokenProvider = null;
   unauthorizedHandler = null;
   sessionKeyProvider = null;
+  retryUnauthorizedHandler = null;
 }
 
 let client: ReturnType<typeof createHttpClient> | null = null;
@@ -32,6 +36,7 @@ function getClient() {
     getAccessToken: () => accessTokenProvider?.() ?? null,
     onUnauthorized: token => unauthorizedHandler?.(token) ?? false,
     getSessionKey: () => sessionKeyProvider?.() ?? 'guest',
+    onRetryUnauthorized: token => retryUnauthorizedHandler?.(token),
   }));
 }
 
