@@ -21,11 +21,11 @@ const now=Date.parse('2026-11-12T00:00:00Z');
 test('creates an API contract payload using a real declared weekly window',()=>{
   const result=makeBookingRequest(doctor,{
     date:'2026-11-13',time:'09:30',consultationMode:'teleconsultation',reason:'Consultation de contrôle',
-  },now,'Africa/Douala');
+  },now,Intl.DateTimeFormat().resolvedOptions().timeZone);
   assert.equal(result.doctorId,'doctor-1');
-  assert.equal(result.timeZone,'Africa/Douala');
+  assert.equal(result.timeZone,Intl.DateTimeFormat().resolvedOptions().timeZone);
   assert.equal(result.consultationMode,'teleconsultation');
-  assert.equal(result.scheduledAt,'2026-11-13T08:30:00.000Z');
+  assert.equal(result.scheduledAt,new Date('2026-11-13T09:30:00').toISOString());
   assert.equal(result.reason,'Consultation de contrôle');
 });
 
@@ -38,14 +38,14 @@ test('only exposes declared weekday windows, not generated slots',()=>{
 
 test('booking refuses blocked day, unavailable hour, truncated duration and unknown mode',()=>{
   const base={date:'2026-11-13',time:'09:00',consultationMode:'home',reason:''};
-  assert.throws(()=>makeBookingRequest(doctor,{...base,date:'2026-11-16'},now,'Africa/Douala'),/plage/i);
+  assert.throws(()=>makeBookingRequest(doctor,{...base,date:'2026-11-16'},now,Intl.DateTimeFormat().resolvedOptions().timeZone),/plage/i);
   assert.throws(()=>makeBookingRequest(doctor,{...base,time:'12:00'},now,'Africa/Douala'),/plage/i);
   assert.throws(()=>makeBookingRequest(doctor,{...base,time:'11:45'},now,'Africa/Douala'),/plage/i);
   assert.throws(()=>makeBookingRequest(doctor,{...base,consultationMode:'invalid'},now,'Africa/Douala'),/mode/i);
 });
 test('booking requires future time, real clock and short optional reason',()=>{
   const base={date:'2026-11-13',time:'09:00',consultationMode:'home',reason:''};
-  assert.throws(()=>makeBookingRequest(doctor,base,Date.parse('2026-11-13T12:00:00Z'),'Africa/Douala'),/futures/i);
+  assert.throws(()=>makeBookingRequest(doctor,base,Date.parse('2026-11-13T12:00:00Z'),Intl.DateTimeFormat().resolvedOptions().timeZone),/futures/i);
   assert.throws(()=>makeBookingRequest(doctor,{...base,time:'99:00'},now,'Africa/Douala'),/Heure invalide/i);
   assert.throws(()=>makeBookingRequest(doctor,{...base,reason:'x'.repeat(501)},now,'Africa/Douala'),/500/);
 });
