@@ -80,3 +80,15 @@ Voir [MOBILE_API_CLIENT.md](docs/MOBILE_API_CLIENT.md) pour l'usage, le réseau 
 - **Session temporaire en mémoire** : à remplacer au prompt 07 par un stockage sécurisé et un rafraîchissement des tokens, après vérification des contrats.
 - Tests locaux : `npm run test:auth` (validateurs et erreurs) ; pipeline PR : `.github/workflows/android-validation.yml`.
 - [Documentation et plan de recette](docs/MOBILE_PUBLIC_AUTH.md). La vérification responsive authentifiée sur le site Vercel et les tests sur véritable appareil restent à exécuter.
+
+## Prompt 07 — Session mobile sécurisée
+
+- Tokens `idToken` et `refreshToken` conservés dans **Expo SecureStore** (Android Keystore), jamais dans AsyncStorage, l'URL ou Zustand.
+- `src/features/auth/session-manager.ts` : restauration au démarrage, validation auprès de `/auth/refresh` et `/auth/profile`, expiration proactive, refresh single-flight, verrou de génération contre l'écrasement d'une nouvelle session, déconnexion et purge des données locales.
+- `src/services/http-client.ts` : retry unique sur 401, abandon des réponses tardives d'un ancien compte et invalidation du token si le retry échoue encore.
+- `src/components/auth/logout-button.tsx` : déconnexion depuis les profils patient et médecin et depuis l'espace administrateur.
+- Documentation : [MOBILE_SECURE_SESSION.md](docs/MOBILE_SECURE_SESSION.md).
+- Tests : `npm run test:session`, `npm run test:http`, puis `npm run check`.
+- Dépendance : `expo-secure-store@~58.0.3` et configuration de l'exclusion Android Auto Backup. Installer via `npm ci` dans un environnement connecté.
+
+**Attention :** les tests Node, les vérifications TypeScript/lint et la compilation Android restent à exécuter sur un runner disposant de npm et du SDK. Les tests dans le dépôt n'impliquent pas qu'ils ont réussi.
