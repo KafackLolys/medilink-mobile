@@ -9,7 +9,7 @@ export const Colors = {
     night: '#0F1F4A', border: '#CBD5E1', input: '#FFFFFF',
     success: '#15803D', warning: '#92400E', danger: '#B91C1C',
     successSurface: '#DCFCE7', warningSurface: '#FEF3C7', dangerSurface: '#FEE2E2',
-    infoSurface: '#DBEAFE', overlay: 'rgba(15,23,42,0.65)',
+    infoSurface: '#EFF6FF', overlay: 'rgba(15,23,42,0.65)',
   },
   dark: {
     text: '#F1F5F9', background: '#0F172A', backgroundElement: '#1E293B',

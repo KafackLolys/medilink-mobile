@@ -4,7 +4,7 @@
   "main": "expo-router/entry",
   "dependencies": {
     "@expo/ui": "~58.0.28",
-    "expo": "~58.0.24",
+    "expo": "~58.0.25",
     "expo-constants": "~58.0.16",
     "expo-device": "~58.0.5",
     "expo-font": "~58.0.12",
@@ -30,11 +30,16 @@
     "react-native-worklets": "0.13.0",
     "zustand": "^5.1.0",
     "expo-secure-store": "~58.0.3",
-    "expo-document-picker": "~58.0.4"
+    "expo-document-picker": "~58.0.5",
+    "expo-notifications": "~58.1.9",
+    "expo-network": "~58.0.5",
+    "expo-dev-client": "~58.0.20"
   },
   "devDependencies": {
     "@types/react": "~19.3.0",
-    "typescript": "~6.0.3"
+    "typescript": "~6.0.3",
+    "eslint": "^9.39.1",
+    "eslint-config-expo": "~58.0.4"
   },
   "scripts": {
     "start": "expo start",
@@ -45,7 +50,7 @@
     "lint": "expo lint",
     "typecheck": "tsc --noEmit",
     "doctor": "npx expo-doctor",
-    "check": "npm run typecheck && npm run lint && npm run test:http && npm run test:auth && npm run test:session && npm run test:onboarding && npm run test:patient && npm run test:doctors && npm run test:doctor-profile && npm run test:needs && npm run test:appointments && npm run test:patient-profile",
+    "check": "npm run typecheck && npm run lint && npm run test:http && npm run test:auth && npm run test:session && npm run test:onboarding && npm run test:patient && npm run test:doctors && npm run test:doctor-profile && npm run test:needs && npm run test:appointments && npm run test:patient-profile && npm run test:doctor-dashboard && npm run test:doctor-needs && npm run test:doctor-agenda && npm run test:doctor-profile-edit && npm run test:messaging && npm run test:notifications && npm run test:documents && npm run test:geo && npm run test:reviews && npm run test:admin && npm run test:network && npm run test:ux",
     "test:http": "node --experimental-strip-types --test src/services/http-client.test.mjs",
     "test:auth": "node --experimental-strip-types --test src/features/auth/validation.test.mjs",
     "test:session": "node --experimental-strip-types --test src/features/auth/session-manager.test.mjs",
@@ -55,7 +60,21 @@
     "test:doctor-profile": "node --experimental-strip-types --test src/features/patient/doctor-profile.test.mjs",
     "test:needs": "node --experimental-strip-types --test src/features/patient/need-model.test.mjs",
     "test:appointments": "node --experimental-strip-types --test src/features/patient/appointment-booking.test.mjs",
-    "test:patient-profile": "node --experimental-strip-types --test src/features/patient/patient-medical-profile.test.mjs"
+    "test:patient-profile": "node --experimental-strip-types --test src/features/patient/patient-medical-profile.test.mjs",
+    "test:doctor-dashboard": "node --experimental-strip-types --test src/features/doctor/doctor-dashboard.test.mjs",
+    "test:doctor-needs": "node --experimental-strip-types --test src/features/doctor/doctor-needs.test.mjs",
+    "test:doctor-agenda": "node --experimental-strip-types --test src/features/doctor/doctor-agenda.test.mjs",
+    "test:doctor-profile-edit": "node --experimental-strip-types --test src/features/doctor/doctor-professional-profile.test.mjs",
+    "test:messaging": "node --experimental-strip-types --test src/features/messaging/messaging-model.test.mjs",
+    "test:notifications": "node --experimental-strip-types --test src/features/notifications/notification-model.test.mjs",
+    "test:documents": "node --experimental-strip-types --test src/features/documents/document-rules.test.mjs",
+    "test:geo": "node --experimental-strip-types --test src/features/geo/doctor-zone-model.test.mjs",
+    "test:reviews": "node --experimental-strip-types --test src/features/reviews/reviews-model.test.mjs",
+    "test:admin": "node --experimental-strip-types --test src/features/admin/admin-model.test.mjs",
+    "test:network": "node --experimental-strip-types --test src/features/network/network-policy.test.mjs",
+    "test:ux": "node --test src/features/ux/ux-audit.test.mjs",
+    "release:validate": "node scripts/validate-android-release.cjs",
+    "release:validate:strict": "node scripts/validate-android-release.cjs --strict"
   },
   "private": true
 }

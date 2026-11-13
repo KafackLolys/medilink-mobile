@@ -5,6 +5,8 @@ import { useColorScheme } from 'react-native';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
 import { ToastProvider } from '@/components/ui/overlays';
 import { useNavigationSession } from '@/store/navigation-session';
+import { PushNotificationLifecycle } from '@/features/notifications/push-lifecycle';
+import { ConnectivityBanner } from '@/features/network/connectivity-banner';
 
 export default function RootLayout() {
   const colorScheme = useColorScheme();
@@ -16,6 +18,8 @@ export default function RootLayout() {
     <SafeAreaProvider>
       <ThemeProvider value={colorScheme === 'dark' ? DarkTheme : DefaultTheme}>
         <ToastProvider>
+          <PushNotificationLifecycle />
+          <ConnectivityBanner />
           <Stack screenOptions={{ headerShown: false }}>
             <Stack.Screen name="index" />
             <Stack.Screen name="(public)" />

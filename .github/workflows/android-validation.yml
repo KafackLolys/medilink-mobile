@@ -34,3 +34,15 @@ jobs:
       - run: npm run test:needs
       - run: npm run test:appointments
       - run: npm run test:patient-profile
+      - run: npm run test:doctor-dashboard
+      - run: npm run test:doctor-needs
+      - run: npm run test:doctor-agenda
+      - run: npm run test:doctor-profile-edit
+      - run: npm run test:messaging
+      - run: npm run test:notifications
+      - run: npm run test:documents
+      - run: npm run test:geo
+      - run: npm run test:reviews
+      - run: npm run test:admin
+      - run: npm run test:network
+      - run: npm run test:ux

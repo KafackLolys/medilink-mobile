@@ -47,6 +47,7 @@ export default function PatientAppointments() {
         colors={[theme.primary]} tintColor={theme.primary}/>}
       ListHeaderComponent={<View style={{gap:Spacing.three,marginBottom:Spacing.three}}>
         <Header title="Mes rendez-vous" subtitle="Suivez vos demandes de consultation et leurs confirmations."/>
+        <Link href="/patient/historique"><ThemedText type="linkPrimary">Historique des consultations terminées ›</ThemedText></Link>
         <Link href="/patient/medecins" asChild><Pressable accessibilityRole="link"
           style={[styles.link,{backgroundColor:theme.infoSurface}]}>
           <ThemedText type="smallBold" themeColor="primary">Trouver un médecin</ThemedText>

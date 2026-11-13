@@ -2,8 +2,8 @@ import { apiRequest, makeMultipart, type NativeUploadFile } from './http';
 import type { DoctorDirectoryItem, DoctorDocument, DoctorOwnProfile } from '@/types/domain';
 export const doctorsApi = {
   list: (filters: { q?: string; specialty?: string; city?: string } = {}, signal?: AbortSignal) =>
-    apiRequest<{ doctors: DoctorDirectoryItem[]; specialties: string[] }>('/doctors', { query: filters, signal }),
-  detail: (id: string, signal?: AbortSignal) => apiRequest<DoctorDirectoryItem>('/doctors/' + encodeURIComponent(id), { signal }),
+    apiRequest<{ doctors: DoctorDirectoryItem[]; specialties: string[] }>('/doctors', { query: filters, signal, retryPolicy: 'safe-get' }),
+  detail: (id: string, signal?: AbortSignal) => apiRequest<DoctorDirectoryItem>('/doctors/' + encodeURIComponent(id), { signal, retryPolicy: 'safe-get' }),
   me: (signal?: AbortSignal) => apiRequest<DoctorOwnProfile>('/doctors/me', { signal }),
   reviews: (signal?: AbortSignal) => apiRequest<unknown[]>('/doctors/me/reviews', { signal }),
   update: (data: { bio?: string; yearsOfExperience?: number; consultationFee?: number; professionalAddress?: string | null }, signal?: AbortSignal) =>

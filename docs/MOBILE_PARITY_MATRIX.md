@@ -1,108 +1,99 @@
-# Medilink Android — Matrice de parité Web → API → Mobile
+# MEDILINK — Matrice finale de parité Web / API / Android
 
-Date de référence : 2026-11-13. Dépôts : [web](https://github.com/KafackLolys/medilink), [API](https://github.com/KafackLolys/medilink-api), [mobile](https://github.com/KafackLolys/medilink-mobile). Branches examinées : `main`. Arbres Git constatés : web `051b33928d785708e4f9a11d88f1eec2a9c1e803`, API `db6b6c55ffc3e37eaea8a4e3ad28893c766f9849`, mobile `0eac16577d41a2ff780a65157897443148a121dd` (SHA des arbres, non des commits).
+**Audit de clôture des prompts 29–30 — 13 novembre 2026.** La matrice initiale du prompt 01 (qui indiquait encore « Mobile absent » partout) est désormais **remplacée** par l'état vérifié des sources. Dépôts : [web](https://github.com/KafackLolys/medilink) (`main`), [API](https://github.com/KafackLolys/medilink-api) (`main`), [Android](https://github.com/KafackLolys/medilink-mobile) (`docs/mobile-audit-parity-2026-11-13`, PR [#4](https://github.com/KafackLolys/medilink-mobile/pull/4) ouverte en brouillon).
 
-## Légende et portée
+## Méthodologie et niveaux de preuve
 
-- **Web : présent** signifie qu'une page, un hook ou un service est détecté, **pas** que son fonctionnement a été testé.
-- **API : présent** signifie que le contrôleur et sa route ont été inspectés; vérifier le corps du service, les formes de réponse et le comportement réel avant implémentation.
-- **Mobile : absent** signifie qu'aucun écran fonctionnel Medilink n'est détecté dans `src/app/`, en dehors du template Expo (`index.tsx`, `explore.tsx`).
-- **À vérifier** : contrôle de l'implémentation, du runtime ou des permissions encore nécessaire. Aucun test E2E ni authentification contre le site déployé n'a été mené.
-- Critère commun : UI Android adaptée, vraie API, états chargement/vide/erreur, contrôle d'accès, tests unitaires/flux, aucune donnée de démonstration dans les écrans de production.
+**Inspecté :** code Next.js et services web, contrôleurs/services NestJS, écrans Expo Router et services HTTP Android. Pour les contrats, voir également les audits détaillés dans `docs/MOBILE_*.md`.
 
-## Matrice des parcours
+**Statuts :**
+- **I** : implémentation mobile présente avec endpoint/API réel et tests unitaires/contrat ; **ne signifie PAS fonctionnellement testé sur téléphone**.
+- **P** : portage partiel ou limitations métier/UX non résolues.
+- **D** : explicitement différé / réservé au web.
+- **B** : bloqué pour qualification de release.
+- **E2E : NON** pour **toutes les lignes** : aucun test complet authentifié web↔API↔appareil Android avec patient, médecin et administrateur n'a été exécuté dans cette session. N'utiliser aucune coche « acceptée » sans cette preuve.
 
-| ID | Rôle / parcours | Référence web | API observée | Mobile | Priorité / dépendances | Critère d'acceptation spécifique |
-| --- | --- | --- | --- | --- | --- | --- |
-| P01 | Public : accueil / recommandations | `app/(puclic)/page.tsx` | `GET /doctors` pour l'annuaire, règles de recommandation à valider | Absent | P2 / navigation, annuaire | Affiche uniquement des données réelles et un CTA utile |
-| P02 | Public : aide/contact/mentions | `app/(puclic)/aide`, `contact`, `privacy`, `terms` | `POST /integration/contact` | Absent | P2 / shell | Documents consultables et contact fonctionnel |
-| A01 | Connexion / inscription | `app/(puclic)/login`, `register`; `services/auth-service.ts` | `POST /auth/login`, `POST /auth/register` | Absent | P0 / client API | Comptes patient/médecin authentifiés, erreurs gérées |
-| A02 | Session et rôle | `hooks/use-auth*`, `store/auth-store.ts`, `components/role-guard.tsx` | `POST /auth/refresh`, `GET /auth/profile`, `POST /auth/logout`; `FirebaseAuthGuard` | Absent | P0 / A01, secure storage | Refresh sérialisé, rôle vérifié, aucune fuite de tokens |
-| A03 | Récupération mot de passe | Écran/route dans `auth-routes.ts` | `POST /auth/reset-password` | Absent | P1 / A01 | Flux identique au contrat serveur |
-| P03 | Accueil patient | `app/(private)/patient/page.tsx` | Composition auth, needs, appointments, doctors, notifications | Absent | P1 / A02 | Données du vrai compte et navigation cohérente |
-| P04 | Liste/recherche des médecins | `patient/medecins/page.tsx`; `hooks/use-doctors.ts`; `services/doctor-service.ts` | `GET /doctors` (authentifié), `DoctorDirectoryFilters`, `doctor-search.ts` | Absent | P1 / A02 | Filtres conformes aux capacités du backend |
-| P05 | Profil médecin et avis | `patient/medecins/[id]/doctor-profile-client.tsx`, `doctor-rating-section.tsx` | `GET /doctors/:id`, avis rattachés aux rendez-vous | Absent | P1 / P04 | Vérification, modes et informations exposés correctement |
-| P06 | Nouvelle demande médicale | `patient/besoins/nouveau/page.tsx` | `POST /needs` avec multipart `data` JSON + `files` (max 5, 10 Mo chacun) | Absent | P1 / A02, upload | Demande créée et pièces jointes traitées |
-| P07 | Mes demandes : liste/détail/édition/clôture/suppression | `patient/demandes/**` | `GET /needs`, `GET /needs/:id`, `PATCH /needs/:id`, `PATCH /needs/:id/close`, `DELETE /needs/:id` | Absent | P1 / P06 | Transitions de statut validées par serveur |
-| P08 | Réservation auprès du médecin | `patient/medecins/[id]/rendez-vous/appointment-booking-form.tsx` | `POST /appointments`; `GET /doctors/:id`; **pas de route publique de lecture des créneaux listée dans `availabilities.controller.ts`** | Absent | P0 / P05, P09 | Seuls les créneaux compatibles sont proposés, rejet propre si collision |
-| P09 | Rendez-vous patient : liste et détail | `patient/rendez-vous/**` | `GET /appointments`, `GET /appointments/:id`, `PATCH /appointments/:id/status` | Absent | P1 / A02 | Liste et détail synchronisés avec le serveur |
-| P10 | Avis après rendez-vous | `patient/rendez-vous/[id]/patient-review-form.tsx` | `GET /appointments/:id/review`, `POST /appointments/:id/review` | Absent | P2 / P09 | Respect des conditions d'éligibilité et anti-doublon |
-| P11 | Profil patient / antécédents | `patient/profil/**`; `services/patient-health-service.ts` | `GET /auth/profile`, `PATCH /integration/patient/profile`, `GET /patients/me/conditions` | Absent | P1 / A02 | Sections autorisées, modification sauvegardée |
-| P12 | Documents patient | `patient/profil/components/patient-documents-content.tsx`, `patient-documents-manager.tsx` | `GET/POST /patients/me/documents`, `DELETE /patients/me/documents/:id` | Absent | P1 / upload sécurisé | Contrôles MIME/taille (10 Mo par document) et permissions |
-| P13 | Messages patient | `patient/messages/page.tsx`; `use-messaging.ts` | `GET /messages/conversations`, `GET/POST /messages/conversations/:id` | Absent | P1 / A02 | Lecture/envoi dans la conversation autorisée |
-| D01 | Accueil médecin | `medecin/page.tsx`, `lib/doctor-dashboard-data.ts` | Composition doctors/needs/appointments/availabilities | Absent | P1 / A02 | Dashboard professionnel réel |
-| D02 | Besoins accessibles médecin | `medecin/besoins/**` | `GET /needs/doctor`, `GET /needs/doctor/:id` | Absent | P1 / A02 | Filtres et détails sans fuite de données |
-| D03 | Réponses / propositions | `medecin/propositions/page.tsx` | `GET /needs/doctor/proposals`, `POST /needs/doctor/:id/proposals`, `PATCH /needs/doctor/proposals/:id/cancel` | Absent | P1 / D02 | Proposer, suivre, annuler selon règles métier |
-| D04 | Agenda médecin / rendez-vous / historique | `medecin/rendez-vous`, `historique` | `GET /appointments/doctor`, `PATCH /appointments/:id/status`, `GET /availabilities/me/appointments` | Absent | P1 / A02 | Actions autorisées et données cohérentes |
-| D05 | Disponibilités et durée | `medecin/disponibilites/page.tsx`; `hooks/use-doctor-availability.ts` | `GET/PUT /availabilities/me/weekly`, `GET/PATCH /availabilities/me/duration` | Absent | P0 / A02 | Horaires semaine, durée, recalcul des créneaux |
-| D06 | Jours indisponibles | Même page | `GET/POST /availabilities/me/blocked`, `DELETE /availabilities/me/blocked/:id` | Absent | P0 / D05 | Dates bloquées exclues des réservations |
-| D07 | Profil et justificatifs | `medecin/profil/**`, `doctor-documents-manager.tsx` | `GET/PATCH /doctors/me`, `POST /doctors/me/documents`, `DELETE /doctors/me/documents/:id` | Absent | P1 / A02 | Droits et vérification respectés |
-| D08 | Zone d'intervention | `medecin/zone-intervention/page.tsx` | `GET/PUT /integration/doctor/zone` | Absent | P2 / D07 | Zone sauvegardée, validation de géographie |
-| D09 | Avis médecin | `medecin/avis/page.tsx` | `GET /doctors/me/reviews` | Absent | P2 / D07 | Avis visibles sans divulgation abusive |
-| D10 | Messages médecin | `medecin/messages/page.tsx` | API messages commune | Absent | P1 / A02 | Même sécurité de conversation |
-| T01 | Notifications | `hooks/use-notifications.ts`, `services/notification-service.ts`, `activity-popover.tsx` | `GET /notifications`, `PATCH /notifications/read-all`, `PATCH /notifications/:id/read` | Absent | P1 / A02 | Marquage lu, pagination conforme |
-| T02 | Push sur appareils | `services/web-push.ts`, service worker | `POST /notifications/devices`, `POST /notifications/devices/:deviceId/unregister` | Absent | P2 / Expo notifications | Token natif compatible avec le fournisseur serveur confirmé |
-| T03 | Cartes et géographie | `doctors-map.tsx`, `geo-map.tsx` | Doctor filters + integration zone | Absent | P2 / P04 | Fonctionne aussi sans permission GPS |
-| X01 | Admin : liste/comptes | `admin/page.tsx`; `services/admin-service.ts` | `GET /admin/accounts`, `PATCH /admin/accounts/:id/status` | Absent | P2 / A02, AdminGuard | Lecture et mutation admin seulement |
-| X02 | Admin : vérification / création admin | Même page | `PATCH /admin/accounts/:id/verification`, `POST /admin/admins` | Absent | P2 / X01 | Confirmation et contrôle serveur |
-| X03 | Non autorisé / non trouvé | `unauthorized/page.tsx`, `not-found.tsx`, role guards | 401/403/404 selon API | Absent | P0 / navigation | Pas de boucle ni d'affichage de contenu privé |
+Les tests mobiles `node --test` utilisent principalement des modèles/parseurs et faux clients HTTP : ils constituent des **preuves de logique et de compilation**, non des preuves de réponses production ni des appels Firebase réels. Les tests GitHub Actions des dépôts **web et API** n'ont pas été trouvés (historique `actions/runs` vide au moment de la requête). L'absence d'un run ne prouve pas que ces logiciels échouent, mais interdit d'affirmer qu'ils passent un pipeline aujourd'hui.
 
-## Inventaire des fichiers de référence
+## Matrice détaillée
 
-### Pages Next.js
-- Public : `(puclic)/page`, login, register, aide, contact, privacy, terms. **`(puclic)` est le nom effectif du groupe de routes, ne pas le corriger sans plan de migration.**
-- Patient : accueil, besoin nouveau, demandes liste/détail/modification, médecins liste/fiche/réservation, messages, profil, rendez-vous liste/détail/avis.
-- Médecin : accueil, besoins liste/détail, propositions, disponibilités, rendez-vous, historique, messages, profil, zone-intervention, avis.
-- Admin : `(private)/admin/page.tsx`; pages d'erreur : unauthorized et not-found.
-- Les fichiers `*.bak` sont des artefacts historiques : ne pas les compter comme pages actives.
+| ID | Parcours web / référence | Contrat backend | Android / preuve dans le code | État et réserve |
+| --- | --- | --- | --- | --- |
+| P01 | Accueil public `app/(puclic)/page` | `GET /doctors` authentifié pour la recherche | `src/app/index.tsx`, CTA de connexion/inscription | **P** : introduction native, pas copie des recommandations publiques dynamiques |
+| P02 | Aide, contact, confidentialité, conditions d’utilisation | `POST /integration/contact` si utilisé | `src/app/(public)/aide.tsx`, `contact.tsx`, `privacy.tsx`, `terms.tsx` | **B** : écrans encore `RoutePlaceholder`, contenus légaux et contact non livrés |
+| A01 | Connexion et inscription patient/médecin | `POST /auth/login`, `POST /auth/register` | `src/app/(auth)/login.tsx`, `register.tsx`; tests `test:auth`, `test:onboarding` | **I**, E2E login/rôle à faire |
+| A02 | Session, rôle, statut du compte, expiration | `GET /auth/profile`, `POST /auth/refresh`, `POST /auth/logout`; gardes Firebase | `src/features/auth/session.ts`, `session-manager.ts`, SecureStore, `Stack.Protected`; `test:session` | **I**, session réelle et révocation à vérifier |
+| A03 | Récupération de mot de passe | `POST /auth/reset-password` | `src/app/(auth)/forgot-password.tsx` | **I**, e-mails non vérifiés ici |
+| P03 | Tableau de bord patient `patient/page.tsx` | `/auth/profile`, `/needs`, `/appointments`, notifications, messages | `patient/(tabs)/index.tsx`, `test:patient` | **I**, états réels sans KPI fictifs |
+| P04 | Recherche et annuaire `patient/medecins` | `GET /doctors?q&city&specialty` | `patient/(tabs)/medecins.tsx`, `test:doctors`, cache public RAM | **I**, pas de pagination/coordonnées géographiques API |
+| P05 | Fiche médecin et notes `patient/medecins/[id]` | `GET /doctors/:id` ; notes publiques autorisées | `patient/medecins/[id]/index.tsx`, `test:doctor-profile` | **I**, sans documents professionnels privés |
+| P06 | Création d’un besoin médical | `POST /needs` multipart, 5 fichiers au plus de 10 Mo | `patient/besoins/nouveau.tsx`, `test:needs` | **I**, upload Android `content://` à tester sur appareil |
+| P07 | Demandes : liste, détail, édition, clôture, suppression | `GET/PATCH/DELETE /needs`, `PATCH /needs/:id/close` | `patient/(tabs)/demandes.tsx`, `patient/demandes/[id]/*`, `test:needs` | **I**, transitions selon statut serveur |
+| P08 | Choix de consultation et réservation | `POST /appointments`, validations semaine, blocage, collision | `patient/medecins/[id]/rendez-vous.tsx`, `test:appointments` | **P** : plages déduites des règles hebdomadaires, **aucune disponibilité temps réel publique** ; l'API confirme/rejette en dernier ressort |
+| P09 | Rendez-vous patient : liste/détail | `GET /appointments`, `GET /appointments/:id` | `patient/(tabs)/rendez-vous.tsx`, `patient/rendez-vous/[id].tsx` | **I**, statut patient en lecture seule si backend le prescrit |
+| P10 | Avis patient après consultation | `GET/POST /appointments/:id/review`, `completed` et un seul avis | `features/reviews/patient-appointment-review.tsx`, `test:reviews` | **I**, doublons concurrents à rejouer en E2E |
+| P11 | Profil, conditions et antécédents patient | `GET /auth/profile`, `PATCH /integration/patient/profile`, `GET /patients/me/conditions` | `patient/(tabs)/profil.tsx`, `test:patient-profile` | **I**, antécédents affichés avec contrôle d'accès, champs éditables seulement si backend |
+| P12 | Documents patient `patient-documents-manager` | `GET/POST/DELETE /patients/me/documents` | `patient/(tabs)/profil.tsx`, `features/documents`, `test:documents` | **P/B sécurité** : le backend patient ne valide pas les signatures de contenu comme le backend médecin ; recette upload/preview requis |
+| P13 | Messages patient | `GET /messages/conversations`, `GET/POST /messages/conversations/:id` | `patient/messages.tsx` et `features/messaging`, `test:messaging` | **I**, polling HTTP, pas de WebSocket ni pièces jointes fictives |
+| P14 | Historique consultations patient | `GET /appointments` avec statuts `completed` | `patient/historique.tsx` | **I**, compteur non inventé |
+| D01 | Dashboard médecin `medecin/page.tsx` | `/doctors/me`, `/needs/doctor`, `/appointments/doctor`, messages, disponibilités | `medecin/(tabs)/index.tsx`, `test:doctor-dashboard` | **I**, KPI issus de l'API seulement |
+| D02 | Besoins accessibles et détail | `GET /needs/doctor`, `GET /needs/doctor/:id` | `medecin/(tabs)/besoins.tsx`, `medecin/besoins/[id].tsx`, `test:doctor-needs` | **I**, médecin vérifié requis pour certaines opérations |
+| D03 | Propositions / annulations | `GET /needs/doctor/proposals`, `POST /needs/doctor/:id/proposals`, `PATCH /needs/doctor/proposals/:id/cancel` | `medecin/(tabs)/propositions.tsx`, `test:doctor-needs` | **I**, aucun replay de POST |
+| D04 | Rendez-vous et statuts médecin | `GET /appointments/doctor`, `PATCH /appointments/:id/status` | `medecin/(tabs)/rendez-vous.tsx`, `test:doctor-agenda` | **I**, actions exactes selon statut serveur |
+| D05 | Horaires et durée | `GET/PUT /availabilities/me/weekly`, `GET/PATCH /availabilities/me/duration` | `medecin/disponibilites.tsx`, `test:doctor-agenda` | **I**, horaires/contraintes serveur |
+| D06 | Plages bloquées | `GET/POST /availabilities/me/blocked`, `DELETE /availabilities/me/blocked/:id` | `medecin/disponibilites.tsx`, `test:doctor-agenda` | **I**, création/suppression non E2E |
+| D07 | Profil professionnel et justificatifs | `GET/PATCH /doctors/me`, `POST/DELETE /doctors/me/documents` | `medecin/(tabs)/profil.tsx`, `test:doctor-profile-edit`, `test:documents` | **I**, spécialité et matricule **non éditables** sans endpoint |
+| D08 | Zones d’intervention | `GET/PUT /integration/doctor/zone` | `medecin/zone-intervention.tsx`, `test:geo` | **I**, ville/quartiers/rayon déclarés sans GPS |
+| D09 | Avis reçus | `GET /doctors/me/reviews` | `medecin/avis.tsx`, `test:reviews` | **I**, notes/répartition prises telles quelles du backend |
+| D10 | Historique médecin | `GET /appointments/doctor` | `medecin/historique.tsx` | **I**, consultations terminées, pas de revenus fictifs |
+| D11 | Messages médecin | API messages partagée | `medecin/messages.tsx` et `features/messaging` | **I**, isolation compte |
+| T01 | Centre de notifications | `GET /notifications`, `PATCH /notifications/:id/read`, `PATCH /notifications/read-all` | `patient/notifications.tsx`, `medecin/notifications.tsx`, `test:notifications` | **I**, compteur serveur |
+| T02 | Push natifs Android | `POST /notifications/devices`, `POST /notifications/devices/:id/unregister` ; Firebase Admin FCM | `features/notifications/push-device.ts`, `push-lifecycle.tsx` | **B** : **APK + projet Firebase Android réels requis** avant validation |
+| T03 | Carte géographique / GPS | Annuaire sans lat/long publiées ; zones sans géocodage | `patient/(tabs)/medecins.tsx` liste et recherche manuelle | **D** : pas de fausse carte ni permission GPS ; attente coordonnées fiables/API |
+| T04 | Résilience réseau et cache | GET public médecins, autres mutations API réelles | `features/network`, `test:network` | **I**, cache **RAM limité** au répertoire public, pas de données médicales |
+| X01 | Admin : comptes/statuts | `GET /admin/accounts`, `PATCH /admin/accounts/:id/status`, `FirebaseAuthGuard + AdminGuard` | `admin/index.tsx`, `test:admin` | **I**, pas de tests réels sur admin actif |
+| X02 | Admin : vérification | `PATCH /admin/accounts/:id/verification` | `admin/index.tsx`, doubles confirmations | **I**, risque de désynchronisation Firebase 503 consigné |
+| X03 | Création d'admin et détail compte individuel | `POST /admin/admins` ; web admin détaillé | `admin/comptes/[id].tsx` demeure placeholder | **D/P** : création admin **web uniquement** (mot de passe provisoire) ; détail séparé non porté, les états essentiels sont consultables dans la liste |
+| X04 | Non autorisé / route inexistante | 401/403/404 et AdminGuard | `unauthorized.tsx`, `+not-found.tsx`, `Stack.Protected` | **I**, accès E2E à vérifier |
+| Q01 | UX et accessibilité | Sans endpoint | `components/ui`, `features/ux/ux-audit.test.mjs` | **P** : revue statique et contrastes principaux, **TalkBack/appareil non testés** |
+| Q02 | Build Android et signature | Firebase Android + EAS + Play Console | `app.json`, `app.config.js`, `eas.json`, `scripts/validate-android-release.cjs` | **B** : profils EAS prêts, identité officielle/FCM/branding/keystore non fournis, **aucun APK/AAB** |
+| Q03 | Qualité et régression | Web/API sans runs GitHub Actions observés | Workflow mobile `android-validation.yml` et `release-quality.yml` | **P** : TypeScript & tests mobiles vérifiables ; lint/Doctor à suivre dans CI qualité ; pas d'E2E tripartite |
 
-### Hooks web
-`use-auth-session`, `use-auth`, `use-doctor-appointments`, `use-doctor-availability`, `use-doctor-history`, `use-doctor-need`, `use-doctor-needs`, `use-doctor-proposals`, `use-doctor`, `use-doctors`, `use-messaging`, `use-my-doctor-profile`, `use-notifications`, `use-patient-appointment`, `use-patient-appointments`, `use-patient-need`, `use-patient-needs`, `use-patient-profile`, `use-require-role`.
+## Correspondance des lots et éléments différés
 
-### Services et routes web
-Services : `admin`, `appointment`, `auth`, `availability`, `doctor-review`, `doctor`, `http`, `integration`, `message`, `need`, `notification`, `patient-document`, `patient-health`, `web-push`. Routes : `admin`, `appointment`, `auth`, `availability`, `doctor`, `message`, `need`, `notification`, `patient`.
+Les commits de la branche Android documentent les lots dans le README et dans les fichiers :
+`MOBILE_ARCHITECTURE.md`, `MOBILE_AUTH*.md`, `MOBILE_PATIENT*.md`, `MOBILE_DOCTOR*.md`, `MOBILE_MESSAGING.md`, `MOBILE_ANDROID_NOTIFICATIONS.md`, `MOBILE_MEDICAL_DOCUMENTS.md`, `MOBILE_GEO_INTERVENTION_ZONES.md`, `MOBILE_REVIEWS_HISTORY.md`, `MOBILE_ADMINISTRATION.md`, `MOBILE_NETWORK_RESILIENCE.md`, `MOBILE_UX_ACCESSIBILITY_AUDIT.md`, et `ANDROID_RELEASE_BUILD.md`.
 
-### Modèles / sécurité
-- Modèles web : `lib/database.ts`, `lib/roles.ts`, `lib/patient-profile-data.ts`, `lib/doctor-dashboard-data.ts`, `store/auth-store.ts`; backend : `src/interfaces/database.ts`, types des services/controller.
-- Gardes : `FirebaseAuthGuard` sur la plupart des contrôleurs, `AdminGuard` sur /admin. Les gardes de navigation Next.js ne remplacent pas ces autorisations.
-- Mobile : `src/app/index.tsx` affiche « Welcome to Expo » et `src/app/explore.tsx` est une page de starter; pas de module auth/doctor/patient métier détecté.
+**Explicitement différé** : carte GPS avec marqueurs faute de coordonnées professionnelles autorisées, création admin mobile (web uniquement), détail admin individuel non porté, e-mail/mentions légales publiques encore placeholders, disponibilité publique temps réel impossible sans nouvel endpoint, WebSocket/pièces jointes de messagerie non pris en charge par le backend. **Ne pas ajouter de fonctionnalité fictive pour combler ces différences.**
 
-## Contrats critiques et écarts à résoudre
+## Preuves de tests et ce qu'elles ne prouvent pas
 
-1. **Disponibilité / réservation : P0.** Le backend `AppointmentsService.create` valide le médecin vérifié et actif, le mode, la plage hebdomadaire, l'heure de fin avec durée, la date bloquée, le fuseau horaire IANA, les droits du patient et les collisions (suite du service à auditer). La route `/availabilities/me/*` appartient au médecin. Ne jamais confondre « médecin vérifié » et « créneau disponible ». Examiner le rendu et le calcul du calendrier patient pour déterminer si un endpoint de créneaux publics est nécessaire.
-2. **Création rendez-vous :** `{doctorId, scheduledAt, timeZone, consultationMode, reason?}`. `scheduledAt` doit être dans le futur; `timeZone` doit être un identifiant IANA valide; `reason` max 500 caractères.
-3. **Mises à jour du profil médecin :** `PATCH /doctors/me` ne montre que `bio`, `yearsOfExperience`, `consultationFee`, `professionalAddress` dans le contrôleur. Ne pas supposer que spécialité ou matricule sont modifiables.
-4. **Disponibilités :** `GET/PATCH /availabilities/me/duration` existe dans le backend, mais n'est pas déclaré dans `routes/availability-routes.ts` (vérifier si le web l'appelle autrement). Les listes semaine sont `GET/PUT`, blocages `GET/POST/DELETE`.
-5. **Documents :** uploads `file` pour patient/médecin, limite contrôleur 10 Mo; besoins `data` sérialisé et `files` (max 5, 10 Mo chacun); voir validations complémentaires des services.
-6. **Profil patient :** `PATCH /integration/patient/profile` est disponible bien qu'absent de `routes/patient-routes.ts`. Vérifier le mapping côté `integration-service.ts`.
-7. **Notifications :** format de token push et fournisseur Firebase/Expo à vérifier dans `notifications.service.ts` avant toute intégration.
-8. **Login / token :** le web fait un refresh single-flight et dépend de `authStore`, `clearBrowserSession` et `credentials: 'include'`. Android doit employer le contrat JSON des endpoints avec stockage sécurisé adapté, sans copier la navigation ou les cookies navigateur.
-9. **Annuaire :** `GET /doctors` est protégé par `FirebaseAuthGuard` bien que la page d'accueil web puisse proposer des recommandations; confirmer le mécanisme de récupération côté page publique.
-10. **Déploiement :** l'API utilise NestJS 12 avec modules ESM potentiels; des problèmes `ERR_REQUIRE_ESM` sur Vercel ont été rapportés antérieurement. Aucune preuve de fonctionnement de la version distante dans cet audit.
-11. **Sécurité :** vérifier `AdminGuard`, vérification des statuts de comptes dans chaque service, scoping Firestore, upload, création d'administrateurs et données sensibles avant la sortie.
-12. **Nommage :** le site observé sur une page locale affiche « Medihome / MedLink » alors que les dépôts portent « medilink » : valider l'identité du produit avant la conception visuelle.
+| Vérification | Preuve disponible | Limite |
+| --- | --- | --- |
+| Code Android | GitHub Actions `Medilink Android validation` sur PR #4 ; Node 22, `npm ci`, `tsc --noEmit`, suites `test:http`, `test:auth`, `test:session`, `test:onboarding`, `test:patient`, `test:doctors`, `test:doctor-profile`, `test:needs`, `test:appointments`, `test:patient-profile`, `test:doctor-dashboard`, `test:doctor-needs`, `test:doctor-agenda`, `test:doctor-profile-edit`, `test:messaging`, `test:notifications`, `test:documents`, `test:geo`, `test:reviews`, `test:admin`, `test:network`, `test:ux` | Preuve de types et tests unitaires/mocks, **pas** d'un parcours E2E de comptes réels |
+| Précontrôle release | `scripts/validate-android-release.cjs` et `scripts/release-config.test.mjs`, workflow `release-quality.yml` | Vérifie configuration et options ; ne signe ni ne compile APK |
+| Lint et Expo Doctor | Contrôles ajoutés au workflow `release-quality.yml` | Les résultats doivent être explicitement vérifiés avant sortie ; un échec bloque la release |
+| Web et API | Inventaire des sources `main` et des contrats ; aucun run Actions retrouvé sur les deux dépôts | **Aucun succès de CI web/API ne peut être affirmé** |
+| Appareils, FCM, E2E | Aucun émulateur ni appareil authentifié accessible ici | **Non testé** : installation, écrans, permissions, Firebase push, appels de production |
+| Build et signature | `eas.json` versionné et précontrôle ; **aucun lien artifact EAS vérifié** | **Aucun APK, AAB, build ID ni SHA-256 binaire** |
 
-## Référence UX responsive obligatoire pour chaque écran
+La campagne d'essais sur appareil est détaillée dans `docs/ANDROID_RELEASE_BUILD.md` et `docs/ANDROID_FINAL_ACCEPTANCE.md`.
 
-Site de référence à inspecter avant **toute création d'écran** : https://medilink-nu-ten.vercel.app/ . Effectuer une revue à 360, 390 et 430 px, avec compte de test du rôle concerné, et noter : structure, informations, interactions, états, CTA, comportement responsive. S'inspirer de la vue mobile réelle sans copier mécaniquement le DOM. Vérifier également la source Next.js correspondant à l'écran.
+## Critères bloquants de recette finale
 
-**État du test en date de l'audit : non validé.** La tentative de lecture du site distant par l'outil web a échoué; le navigateur connecté ne permettait que la lecture des onglets déjà ouverts. Un onglet local `http://localhost:4000/medecin/disponibilites` était lisible : horaires lundi–dimanche, durée de consultation (15/20/30/45/60 minutes), blocages de dates, prochains rendez-vous. Il ne constitue **pas** une preuve de rendu responsive du site Vercel. Aucun identifiant de test ni secret ne doit être commité, inclus dans des captures publiques ou des logs.
+- [ ] Confirmer le package reverse-DNS Android définitif, identique dans Firebase et Google Play, et l'UUID projet EAS.
+- [ ] Fournir `google-services.json` Android réel, activer FCM natif et contrôler les autorisations Android.
+- [ ] Remplacer les icônes/splash **starter Expo** par l'identité Medilink officiellement approuvée.
+- [ ] Valider la politique de confidentialité, les conditions et le contact public dans le mobile.
+- [ ] Corriger/valider côté backend patient la vérification signature réelle des fichiers et types MIME.
+- [ ] Vérifier l'API NestJS HTTPS réelle et les contrats authentifiés avec comptes patient, médecin (vérifié/non vérifié) et admin actif.
+- [ ] Exécuter des scénarios E2E (inscription, login, refresh/logout, besoins, propositions, rendez-vous et conflits, documents, avis, notifications, statuts admin) avec séparation intercomptes.
+- [ ] Sur un **vrai Android** : système de fichiers, caméra non demandée, réseau instable, 401/403, notifications FCM au premier plan/arrière-plan, TalkBack, grandes polices et retour matériel.
+- [ ] Lint + Expo Doctor + typecheck + suites de tests **tous verts sur le même commit**.
+- [ ] Construire un **APK preview signé**, récupérer son URL et son SHA-256, installer/tester ; construire un **AAB production** signé si la recette est acceptée.
+- [ ] Vérifier versionCode supérieur au dernier code Google Play, politique de données médicales, formulaires Data Safety et procédure de publication.
+- [ ] Maintenir la PR #4 en brouillon tant que des critères bloquants ne sont pas clos.
 
-## Priorités et lots
+## Décision de release
 
-- **P0** : audit/contrats, auth/session, rôles, navigation, disponibilité + réservation, sécurité.
-- **P1** : annuaire, fiches médecins, demandes, rendez-vous patient/médecin, profil, documents, messagerie, propositions.
-- **P2** : notifications push, cartes, aide et pages légales, admin mobile, finitions.
-- Dépendances : fondations → connexion → rôle → services métier → scénarios transversaux → tests Android → publication.
-
-## Critères de recette du prompt 01
-
-- [x] Inventaire des chemins de pages, hooks et services des trois arborescences.
-- [x] Contrôleurs API de domaines principaux consultés, endpoints explicités.
-- [x] Matrice de parité et critères pour chaque domaine.
-- [x] Risques et écarts identifiés avec niveau de certitude.
-- [ ] Parcours réels connecté et visite responsive 360/390/430 px du site distant (non accessible via outils disponibles).
-- [ ] Validation des DTO/types et du corps **de tous** les services backend (à approfondir au démarrage de chaque lot).
-- [ ] Tests e2e, build et exécution Android (hors portée de l'audit documentaire).
-
-Aucune fonctionnalité applicative ni donnée du backend n'est modifiée par cette documentation.
+**NON PRÊT À PUBLIER.** L'implémentation mobile et les configurations EAS constituent une **candidate source pré-build**, pas une release Android installable validée. La transition vers « prête » requiert tous les critères bloquants, des preuves Android réelles et la revue de confidentialité/sécurité. La PR #4 n'est pas fusionnée.

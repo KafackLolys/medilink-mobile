@@ -224,3 +224,20 @@ test('old successful response is discarded after an account switch', async () =>
   gate.resolve();
   await assert.rejects(pending, { kind: 'cancelled' });
 });
+
+test('401 on a medical mutation does not replay POST even with refresh available',async()=>{
+ let attempts=0,refreshCalls=0;
+ const client=createHttpClient({
+  baseUrl:'https://api.example.com',
+  getAccessToken:()=> 'expired-firebase-id',
+  getSessionKey:()=> 'patient-one',
+  onUnauthorized:()=>{refreshCalls++;return true;},
+  fetchImpl:async()=>{attempts++;return response(401,{message:'Token expired'});},
+ });
+ for(const [path,method] of [['/appointments','POST'],['/needs','POST'],
+   ['/appointments/appointment-one/status','PATCH'],['/needs/need-one','DELETE']]){
+  await assert.rejects(client.request(path,{method,body:{reason:'private'}}),{kind:'unauthorized'});
+ }
+ assert.equal(attempts,4);
+ assert.equal(refreshCalls,0);
+});

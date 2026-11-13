@@ -1,5 +1,5 @@
-import { RoutePlaceholder } from '@/components/navigation/route-placeholder';
+import { MessagingScreen } from '@/features/messaging/messaging-screen';
 
-export default function Route() {
-  return <RoutePlaceholder title="Messages" description="Conversations médecin" />;
+export default function MessagesRoute() {
+  return <MessagingScreen role="doctor"/>;
 }
