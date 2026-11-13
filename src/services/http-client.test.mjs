@@ -130,3 +130,60 @@ test('rejects external URLs and fragments', async () => {
   await assert.rejects(client.request('//evil.example.com'), /relatif/);
   await assert.rejects(client.request('/any#fragment'), /relatif/);
 });
+
+test('401 refresh retries exactly once using the new token', async () => {
+  let token = 'before';
+  let count = 0;
+  const client = createHttpClient({
+    baseUrl: 'https://api.example.com',
+    getAccessToken: () => token,
+    getSessionKey: () => 'generation-1',
+    onUnauthorized: previous => {
+      assert.equal(previous, 'before');
+      token = 'after';
+      return true;
+    },
+    fetchImpl: async (_url, init) => {
+      count++;
+      if (count === 1) {
+        assert.equal(init.headers.Authorization, 'Bearer before');
+        return response(401, { message: 'expired' });
+      }
+      assert.equal(init.headers.Authorization, 'Bearer after');
+      return response(200, { ok: true });
+    },
+  });
+  assert.deepEqual(await client.request('/private'), { ok: true });
+  assert.equal(count, 2);
+});
+
+test('persistent 401 retries only once, not recursively', async () => {
+  let token = 'before';
+  let count = 0;
+  let refreshes = 0;
+  const client = createHttpClient({
+    baseUrl: 'https://api.example.com',
+    getAccessToken: () => token,
+    getSessionKey: () => 'gen',
+    onUnauthorized: () => { refreshes++; token = 'after'; return true; },
+    fetchImpl: async () => { count++; return response(401, { message: 'expired' }); },
+  });
+  await assert.rejects(client.request('/private'), { kind: 'unauthorized' });
+  assert.equal(refreshes, 1);
+  assert.equal(count, 2);
+});
+
+test('a new account invalidates retry of the old account request', async () => {
+  let token = 'old';
+  let generation = 'one';
+  let count = 0;
+  const client = createHttpClient({
+    baseUrl: 'https://api.example.com',
+    getAccessToken: () => token,
+    getSessionKey: () => generation,
+    onUnauthorized: () => { token = 'new-account'; generation = 'two'; return true; },
+    fetchImpl: async () => { count++; return response(401, { message: 'expired' }); },
+  });
+  await assert.rejects(client.request('/private'), { kind: 'unauthorized' });
+  assert.equal(count, 1);
+});
