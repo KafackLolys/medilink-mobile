@@ -273,3 +273,14 @@ La vraie carte GPS n'est pas réalisable sans coordonnées professionnelles vali
 - Tests `npm run test:reviews` dans la CI ; [contrat exact, permissions, limites et recette Android](docs/MOBILE_REVIEWS_HISTORY.md).
 
 À valider sur téléphone : création de vrais avis, double POST sur deux appareils, isolement intercomptes, lectures des évaluations et historiques, lint, Expo Doctor et comparaison au web.
+
+## Prompt 24 — Administration native sécurisée
+
+- `/admin` : écran Android de consultation des comptes **patients/médecins uniquement**, recherche nom/e-mail/téléphone (`q` ≤100), pagination serveur par 10 (API max 50), statuts, vérification patient et vérification professionnelle médecin.
+- `GET /admin/accounts` et `PATCH /admin/accounts/:id/status`, `PATCH /admin/accounts/:id/verification` : uniquement les endpoints réellement autorisés et protégés par les **deux gardes** `FirebaseAuthGuard` et `AdminGuard`. L'écran exige également la session admin active et vérifie `GET /auth/profile` avant les lectures.
+- Les modifications sensibles passent par **deux confirmations**, ne visent qu'un compte par action, ne sont jamais affichées de façon optimiste et rechargent la liste après succès ou erreur. Suspension/suppression : le serveur désactive Firebase Auth et révoque les refresh tokens ; en cas de réponse 503, le statut Firestore peut avoir été changé avant l'échec de synchronisation.
+- Aucune vue de dossier médical ou modification d'administrateur, aucune persistance d'informations administratives sur le téléphone, aucune journalisation de secrets.
+- `POST /admin/admins` existe mais la **création d'administrateur reste sur le web** : l'opération nécessite la gestion/transmission d'un mot de passe provisoire et une compensation en cas d'échec.
+- Tests `npm run test:admin` intégrés à `npm run check` et GitHub Actions ; [contrats, décisions de sécurité et recette Android](docs/MOBILE_ADMINISTRATION.md).
+
+Une recette avec un véritable admin actif et un compte refusé reste nécessaire avant fusion, ainsi que lint, Expo Doctor et vérification du rendu Android.
