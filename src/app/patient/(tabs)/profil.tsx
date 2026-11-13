@@ -73,6 +73,10 @@ export default function PatientProfileScreen() {
     });
   },[]);
 
+  const [documentSearch,setDocumentSearch]=useState('');
+  const [documentFilter,setDocumentFilter]=useState('all');
+  const [documentPage,setDocumentPage]=useState(1);
+
   useFocusEffect(useCallback(()=>{
     if(session.status==='authenticated'&&session.role==='patient')load();
     return()=>{
@@ -89,9 +93,6 @@ export default function PatientProfileScreen() {
   const view=profile?viewPatientProfile(profile):null;
   const visibleHealth=resources.health.status==='success'?resources.health.value:null;
   const documents=resources.documents.status==='success'?resources.documents.value:null;
-  const [documentSearch,setDocumentSearch]=useState('');
-  const [documentFilter,setDocumentFilter]=useState('all');
-  const [documentPage,setDocumentPage]=useState(1);
   const filteredDocuments=useMemo(()=>filterPatientDocuments(documents??[],documentSearch,documentFilter,DOCUMENT_TYPES),
     [documents,documentSearch,documentFilter]);
   const pagedDocuments=useMemo(()=>pagePatientDocuments(filteredDocuments,documentPage),[filteredDocuments,documentPage]);
