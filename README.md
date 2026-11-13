@@ -56,3 +56,16 @@ Composants réutilisables : `src/components/ui/primitives.tsx` (Button, Card, Ba
 Galerie interactive **locale** : route `/dev/design-system`, indisponible en production (redirection). Elle n'effectue aucun appel API et ne contient aucune donnée médicale réelle. Consulter [MOBILE_DESIGN_SYSTEM.md](docs/MOBILE_DESIGN_SYSTEM.md) pour les tokens et limites.
 
 Les contrôles de type/lint/build sur appareil nécessitent une installation effective de `node_modules` et restent à exécuter dans un environnement connecté. Le site responsive Vercel demeure une condition préalable à la validation des vrais écrans métier.
+
+## Prompt 05 — Client HTTP et services typés
+
+Le transport `src/services/http-client.ts` prend en charge timeouts, annulations, 401/403/404/409/422/500, erreurs réseau, JSON et multipart React Native. `src/services/http.ts` expose `apiRequest` et un futur point d'intégration aux tokens sécurisés.
+
+Les types partagés sont dans `src/types/domain.ts` et les services API dans `src/services/{auth,doctors,patients,needs,appointments,availabilities,messages,notifications,admin,integration}.ts`. Aucun faux endpoint ni réponse simulée en production.
+
+```sh
+npm run test:http
+npm run check
+```
+
+Voir [MOBILE_API_CLIENT.md](docs/MOBILE_API_CLIENT.md) pour l'usage, le réseau émulateur/téléphone/production et les contraintes de confidentialité. Les tests ont été **rédigés mais non exécutés** dans l'environnement de modification : la validation sur un checkout connecté reste obligatoire.
