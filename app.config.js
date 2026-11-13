@@ -21,6 +21,11 @@ module.exports = ({ config }) => {
     if (!['development', 'preview', 'production'].includes(profile)) {
       throw new Error('Profil EAS inconnu.');
     }
+    if (profile === 'production' &&
+        (process.env.MEDILINK_BRANDING_APPROVED !== 'true' ||
+         process.env.MEDILINK_VERSION_CODE_APPROVED !== 'true')) {
+      throw new Error('Build production bloqué : identité visuelle et versionCode Google Play non approuvés.');
+    }
     if (!packageName || !googleServicesFile || !projectId) {
       throw new Error('Build bloqué : identifiant Android, projet EAS et fichier Firebase Android sont requis.');
     }
