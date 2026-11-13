@@ -69,3 +69,14 @@ npm run check
 ```
 
 Voir [MOBILE_API_CLIENT.md](docs/MOBILE_API_CLIENT.md) pour l'usage, le réseau émulateur/téléphone/production et les contraintes de confidentialité. Les tests ont été **rédigés mais non exécutés** dans l'environnement de modification : la validation sur un checkout connecté reste obligatoire.
+
+## Prompt 06 — Connexion et inscription publiques
+
+- `/login` : authentification par e-mail/mot de passe, messages d'erreur et anti-double envoi.
+- `/choose-role` : choix patient ou médecin exclusivement.
+- `/register` : coordonnées, mot de passe confirmé, consentement ; spécialité et numéro professionnel pour les médecins ; confirmation de l'e-mail exigée par l'API.
+- Les requêtes utilisent `POST /auth/login`, `POST /auth/register` et `GET /auth/profile` sans mock de données.
+- Un profil NestJS revalidé détermine le rôle effectif avant la navigation. Les identifiants ne sont jamais inclus dans le code ou dans les tests.
+- **Session temporaire en mémoire** : à remplacer au prompt 07 par un stockage sécurisé et un rafraîchissement des tokens, après vérification des contrats.
+- Tests locaux : `npm run test:auth` (validateurs et erreurs) ; pipeline PR : `.github/workflows/android-validation.yml`.
+- [Documentation et plan de recette](docs/MOBILE_PUBLIC_AUTH.md). La vérification responsive authentifiée sur le site Vercel et les tests sur véritable appareil restent à exécuter.
