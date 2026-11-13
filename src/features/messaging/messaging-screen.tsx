@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { useFocusEffect, useLocalSearchParams } from 'expo-router';
 import {
-  FlatList, KeyboardAvoidingView, Platform, Pressable, RefreshControl, StyleSheet,
+  BackHandler, FlatList, KeyboardAvoidingView, Platform, Pressable, RefreshControl, StyleSheet,
   TextInput, View, type ListRenderItemInfo,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
@@ -158,6 +158,16 @@ export function MessagingScreen({role}:{role:MessagingRole}){
     threadAbort.current?.abort();threadSeq.current++;setThread({status:'idle'});
   }
 
+  useFocusEffect(useCallback(()=>{
+    if(Platform.OS!=='android'||!selected)return;
+    const subscription=BackHandler.addEventListener('hardwareBackPress',()=>{
+      if(!conversationRef.current)return false;
+      back(); // Return to authorized conversation list, not out of the whole messaging section.
+      return true;
+    });
+    return()=>subscription.remove();
+  },[selected]));
+
   async function send(){
     if(sending.current||!selected||!scope.current||list.status!=='success'||
       !requireConversation(list.items,selected))return;
@@ -229,7 +239,7 @@ export function MessagingScreen({role}:{role:MessagingRole}){
           <EmptyState title="Aucune conversation" description="Vos échanges autorisés apparaîtront après une proposition active."/>}
       />:<View style={{flex:1}}>
         <View style={[styles.threadHeader,{borderBottomColor:theme.border}]}>
-          <Button label="‹ Retour" variant="ghost" onPress={back}/>
+          <Button label="Retour aux conversations" variant="ghost" onPress={back}/>
           <Avatar name={active.peerName||'Contact'} size={40}/>
           <View style={{flex:1}}>
             <ThemedText type="smallBold" numberOfLines={1}>{active.peerName}</ThemedText>
@@ -261,7 +271,8 @@ export function MessagingScreen({role}:{role:MessagingRole}){
         {sendError?<ThemedText themeColor="danger" accessibilityRole="alert"
           style={{paddingHorizontal:Spacing.three}}>{sendError}</ThemedText>:null}
         <View style={[styles.composer,{borderTopColor:theme.border,backgroundColor:theme.backgroundElement}]}>
-          <TextInput accessibilityLabel="Votre message" multiline maxLength={4000}
+          <TextInput accessibilityLabel="Votre message" accessibilityHint="Maximum 4 000 caractères. Aucun envoi automatique."
+            allowFontScaling multiline maxLength={4000}
             value={draft} onChangeText={setDraft} editable={!sendingNow}
             placeholder="Écrire un message…" placeholderTextColor={theme.textSecondary}
             style={[styles.textInput,{borderColor:theme.border,color:theme.text,backgroundColor:theme.input}]}/>
@@ -281,12 +292,12 @@ const styles=StyleSheet.create({
   conversation:{borderRadius:Radius.large,borderWidth:1,padding:Spacing.three,
     minHeight:MinimumTouchTarget+34,flexDirection:'row',alignItems:'center',gap:Spacing.three},
   line:{flexDirection:'row',justifyContent:'space-between',alignItems:'center',gap:Spacing.two},
-  threadHeader:{flexDirection:'row',alignItems:'center',borderBottomWidth:1,
+  threadHeader:{flexDirection:'row',alignItems:'center',flexWrap:'wrap',borderBottomWidth:1,
     gap:Spacing.two,paddingHorizontal:Spacing.two,paddingVertical:Spacing.two},
   thread:{padding:Spacing.three,gap:Spacing.two,paddingBottom:Spacing.four},
   messageLine:{flexDirection:'row',width:'100%'},
   bubble:{maxWidth:'85%',borderRadius:Radius.large,padding:Spacing.three,borderWidth:1,gap:Spacing.one},
-  composer:{flexDirection:'row',alignItems:'flex-end',borderTopWidth:1,padding:Spacing.two,gap:Spacing.two},
+  composer:{flexDirection:'row',alignItems:'flex-end',flexWrap:'wrap',borderTopWidth:1,padding:Spacing.two,gap:Spacing.two},
   textInput:{flex:1,minHeight:MinimumTouchTarget,maxHeight:140,borderWidth:1,borderRadius:Radius.large,
     paddingHorizontal:Spacing.three,paddingVertical:Spacing.two,fontSize:16},
 });
