@@ -13,5 +13,5 @@ export const authApi = {
     apiRequest<{ user: AuthenticatedUser }>('/auth/admin/profile', { method: 'PATCH', body: data, signal }),
   logout: (signal?: AbortSignal) => apiRequest<void>('/auth/logout', { method: 'POST', signal }),
   resetPassword: (data: { email: string }, signal?: AbortSignal) =>
-    apiRequest<unknown>('/auth/reset-password', { method: 'POST', authenticated: false, body: data, signal }),
+    apiRequest<{ message: string }>('/auth/reset-password', { method: 'POST', authenticated: false, body: data, signal }),
 };
