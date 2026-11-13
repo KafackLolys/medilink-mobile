@@ -26,7 +26,7 @@ export function Button({ label, onPress, variant = 'primary', loading = false, d
         borderWidth: variant === 'outline' ? 1 : 0, opacity: !active ? 0.55 : pressed ? 0.8 : 1,
       }, style]}>
       {loading ? <ActivityIndicator color={foreground} size="small" accessibilityLabel="Chargement" /> : null}
-      <ThemedText style={{ color: foreground, fontWeight: '700', textAlign: 'center' }}>{label}</ThemedText>
+      <ThemedText style={{ color: foreground, fontWeight: '700', textAlign: 'center', flexShrink: 1 }}>{label}</ThemedText>
     </Pressable>
   );
 }
@@ -53,8 +53,8 @@ export function Badge({ label, tone = 'neutral' }: { label: string; tone?: Badge
   } as const;
   const [backgroundColor, color] = toneMap[tone];
   return (
-    <View style={[styles.badge, { backgroundColor }]} accessibilityLabel={label}>
-      <ThemedText style={{ color, fontSize: 12, lineHeight: 18, fontWeight: '700' }}>{label}</ThemedText>
+    <View style={[styles.badge, { backgroundColor }]} accessible accessibilityRole="text" accessibilityLabel={label}>
+      <ThemedText style={{ color, fontSize: 14, fontWeight: '700', flexShrink: 1 }}>{label}</ThemedText>
     </View>
   );
 }
@@ -63,11 +63,11 @@ export function Avatar({ name, source, size = 48 }: { name: string; source?: Ima
   const theme = useTheme();
   const initials = name.trim().split(/\s+/).slice(0, 2).map(part => part[0] ?? '').join('').toUpperCase() || '?';
   return (
-    <View accessibilityLabel={name} style={{
+    <View accessible accessibilityRole="image" accessibilityLabel={name} style={{
       width: size, height: size, borderRadius: size / 2, backgroundColor: theme.infoSurface,
       alignItems: 'center', justifyContent: 'center', overflow: 'hidden',
     }}>
-      {source ? <Image source={source} style={{ width: size, height: size }} accessibilityLabel={name} /> :
+      {source ? <Image source={source} style={{ width: size, height: size }} accessible={false} /> :
         <ThemedText style={{ color: theme.primary, fontWeight: '700', fontSize: Math.max(14, size * 0.34) }}>{initials}</ThemedText>}
     </View>
   );
@@ -89,10 +89,10 @@ export function Header({ title, subtitle, onBack, action }: {
   const theme = useTheme();
   return (
     <View style={styles.header}>
-      {onBack ? <Pressable onPress={onBack} accessibilityLabel="Retour" accessibilityRole="button" style={[styles.back, { borderColor: theme.border }]}>
-        <ThemedText style={{ color: theme.primary, fontWeight: '700' }}>‹</ThemedText>
+      {onBack ? <Pressable onPress={onBack} accessibilityLabel="Retour" accessibilityRole="button" accessibilityHint="Revenir à l’écran précédent" style={[styles.back, { borderColor: theme.border }]}>
+        <ThemedText accessible={false} style={{ color: theme.primary, fontWeight: '700', fontSize: 26 }}>‹</ThemedText>
       </Pressable> : null}
-      <View style={{ flex: 1 }}>
+      <View style={{ flex: 1, minWidth: 0 }}>
         <ThemedText style={Typography.subtitle} accessibilityRole="header">{title}</ThemedText>
         {subtitle ? <ThemedText themeColor="textSecondary" type="small">{subtitle}</ThemedText> : null}
       </View>
@@ -104,10 +104,10 @@ export function Header({ title, subtitle, onBack, action }: {
 const styles = StyleSheet.create({
   button: { minHeight: MinimumTouchTarget, paddingHorizontal: Spacing.three, paddingVertical: 12, borderRadius: Radius.large, alignItems: 'center', justifyContent: 'center', flexDirection: 'row', gap: Spacing.two },
   card: { borderWidth: 1, borderRadius: Radius.xlarge, padding: Spacing.three, gap: Spacing.two },
-  badge: { alignSelf: 'flex-start', borderRadius: Radius.pill, paddingHorizontal: 12, paddingVertical: 5 },
+  badge: { alignSelf: 'flex-start', maxWidth: '100%', borderRadius: Radius.pill, paddingHorizontal: 12, paddingVertical: 6 },
   screen: { flex: 1 },
   scrollContent: { padding: Spacing.three, paddingBottom: Spacing.six, gap: Spacing.three, width: '100%', maxWidth: 800, alignSelf: 'center' },
   content: { flex: 1, padding: Spacing.three, gap: Spacing.three },
-  header: { flexDirection: 'row', alignItems: 'center', gap: Spacing.two, minHeight: 56 },
+  header: { flexDirection: 'row', alignItems: 'center', flexWrap: 'wrap', gap: Spacing.two, minHeight: 56 },
   back: { width: MinimumTouchTarget, height: MinimumTouchTarget, justifyContent: 'center', alignItems: 'center', borderWidth: 1, borderRadius: Radius.large },
 });
