@@ -68,7 +68,7 @@ export default function AdminHome(){
   return()=>{
    focus.current++;seq.current++;controller.current?.abort();
    setState({status:'loading'});setEdit(null);setPending(null);setError('');setNotice('');
-   setSearch('');setQuery('');setRole('patient');setPage(1);setSearchError('');
+   setSearchError('');
    setSaving(false);setRefreshing(false);
   };
  },[authorized,load]));
