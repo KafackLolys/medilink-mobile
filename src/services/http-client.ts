@@ -4,14 +4,16 @@ export type HttpErrorKind =
   | 'server' | 'http' | 'network' | 'timeout' | 'cancelled' | 'invalid_response';
 
 export class HttpError extends Error {
-  constructor(
-    message: string,
-    public readonly kind: HttpErrorKind,
-    public readonly status: number | null = null,
-    public readonly details: unknown = undefined,
-  ) {
+  readonly kind: HttpErrorKind;
+  readonly status: number | null;
+  readonly details: unknown;
+
+  constructor(message: string, kind: HttpErrorKind, status: number | null = null, details: unknown = undefined) {
     super(message);
     this.name = 'HttpError';
+    this.kind = kind;
+    this.status = status;
+    this.details = details;
   }
 }
 
