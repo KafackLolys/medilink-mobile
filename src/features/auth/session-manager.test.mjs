@@ -189,3 +189,50 @@ test('expired token refreshes before next protected call', async () => {
   assert.equal(await x.manager.validAccessToken(), 'id-new');
   assert.equal(x.refreshCalls, 1);
 });
+
+test('bootstrap is idempotent and does not cause repeated refreshes', async () => {
+  const x = fixture({ stored: { idToken: 'old', refreshToken: 'old-r', userId: 'u1', expiresAt: 0 } });
+  await Promise.all([x.manager.bootstrap(), x.manager.bootstrap()]);
+  await x.manager.bootstrap();
+  assert.equal(x.refreshCalls, 1);
+  assert.equal(x.manager.snapshot.status, 'authenticated');
+});
+
+test('refresh updates role if server changed permissions', async () => {
+  const x = fixture({
+    refresh: async () => response('u1', 'updated', 'rotated', 'doctor'),
+    profile: async () => ({ user: user('u1', 'patient') }),
+  });
+  await x.manager.login(response());
+  assert.equal(x.manager.snapshot.role, 'patient');
+  assert.equal(await x.manager.refresh(), true);
+  assert.equal(x.manager.snapshot.role, 'doctor');
+});
+
+test('a failed local data purge cannot preserve a signed-out secure token', async () => {
+  let persisted = null;
+  let purgeCount = 0;
+  const manager = new SessionManager({
+    storage: {
+      read: async () => persisted,
+      write: async value => { persisted = value; },
+      clear: async () => { persisted = null; },
+    },
+    endpoints: {
+      refresh: async () => response(),
+      profile: async () => ({ user: user() }),
+      logout: async () => ({}),
+    },
+    hooks: {
+      publish: () => {},
+      purge: () => {
+        purgeCount++;
+        if (purgeCount > 1) throw new Error('cache unavailable');
+      },
+    },
+  });
+  await manager.login(response());
+  await assert.rejects(manager.clear(), /cache unavailable/);
+  assert.equal(persisted, null);
+  assert.equal(manager.snapshot.status, 'unauthenticated');
+});
