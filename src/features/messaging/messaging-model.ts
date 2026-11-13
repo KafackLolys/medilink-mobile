@@ -50,7 +50,7 @@ export function mergeMessages(existing:ConversationMessage[],next:ConversationMe
   return [...map.values()].sort((a,b)=>{
     const d=Date.parse(a.sentAt)-Date.parse(b.sentAt);
     return Number.isNaN(d)?a.id.localeCompare(b.id):d||a.id.localeCompare(b.id);
-  });
+  }).slice(-100);
 }
 export function messagingError(error:unknown){
   const e=error as {status?:number;kind?:string}|null;
