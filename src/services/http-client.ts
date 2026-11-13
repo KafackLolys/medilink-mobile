@@ -190,6 +190,8 @@ export function createHttpClient(options: HttpClientOptions) {
         return await request<T>(path,config);
       }catch(error){
         if(!(error instanceof HttpError))throw error;
+        // Preserve existing 401 semantics after a failed refresh; no unsafe replay.
+        if(error.kind==='unauthorized'&&config.retryPolicy!=='safe-get')throw error;
         if(config.signal?.aborted||identity!==options.getSessionKey?.())
           throw new HttpError('Requête annulée.','cancelled');
         const decision=retryDecision({method,policy:config.retryPolicy??'none',
