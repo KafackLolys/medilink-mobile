@@ -1,5 +1,5 @@
 import type { DoctorDirectoryItem, PatientAppointment } from '../../types/domain';
-import { mapDoctorDirectory, doctorLocation, doctorModes } from './doctor-directory';
+import { mapDoctorDirectory, doctorLocation, doctorModes } from './doctor-directory.ts';
 
 export const DAYS: Record<string, string> = {
   monday: 'Lundi', tuesday: 'Mardi', wednesday: 'Mercredi',
