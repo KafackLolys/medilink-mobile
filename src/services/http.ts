@@ -2,8 +2,8 @@ import { getApiBaseUrl } from './config';
 import { createHttpClient, type HttpRequestOptions } from './http-client';
 
 /**
- * Inject the verified token provider during the auth implementation (prompt 07).
- * This module deliberately does not persist or synthesize credentials.
+ * SessionManager supplies access tokens via its SecureStore-backed lifecycle.
+ * This module deliberately never stores or logs credentials.
  */
 let accessTokenProvider: (() => string | null | Promise<string | null>) | null = null;
 let unauthorizedHandler: ((presentedToken: string | null) => boolean | Promise<boolean>) | null = null;
