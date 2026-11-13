@@ -2,7 +2,8 @@ import { useCallback, useRef, useState } from 'react';
 import { Link, useFocusEffect } from 'expo-router';
 import { Linking, RefreshControl, ScrollView, StyleSheet, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import * as DocumentPicker from 'expo-document-picker';
+import { chooseMedicalDocument, previewMedicalDocument } from '@/features/documents/document-actions';
+import { documentTransferError } from '@/features/documents/document-rules';
 import { Avatar, Badge, Button, Card, Header } from '@/components/ui/primitives';
 import { Input, SelectField } from '@/components/ui/form-fields';
 import { ErrorState, LoadingState } from '@/components/ui/states';
@@ -92,18 +93,10 @@ export default function DoctorProfessionalProfile() {
   }
   async function pickDocument(){
     if(lock.current||!profile)return;
-    try{
-      const res=await DocumentPicker.getDocumentAsync({
-        type:[...DOCTOR_ALLOWED_MIME_TYPES],
-        multiple:false,copyToCacheDirectory:true,
-      });
-      if(res.canceled||!res.assets.length)return;
-      const file=res.assets[0];
-      const candidate={uri:file.uri,name:file.name,mimeType:file.mimeType,size:file.size};
-      const issue=validateDoctorDocument(candidate,profile.documents.length);
-      if(issue){setPicked(null);setError(issue);return;}
-      setPicked(candidate);setError('');setNotice('');
-    }catch{setError('Impossible d’ouvrir le sélecteur de documents Android. Réessayez.');}
+    const picked=await chooseMedicalDocument('doctor',profile.documents.length);
+    if(picked.error){setPicked(null);setError(picked.error);return;}
+    if(!picked.file)return; // The chooser was cancelled.
+    setPicked(picked.file);setError('');setNotice('');
   }
   async function upload(){
     if(lock.current||!picked||!profile||session.status!=='authenticated'||session.role!=='doctor')return;
@@ -120,7 +113,7 @@ export default function DoctorProfessionalProfile() {
       setPicked(null);
       setNotice('Justificatif envoyé. Il est en attente de vérification.');
       reload(true);
-    }catch(e){if(operationEpoch===focusEpoch.current){setError(doctorProfileError(e));reload(true);}}
+    }catch(e){if(operationEpoch===focusEpoch.current){setError(documentTransferError(e));reload(true);}}
     finally{lock.current=false;if(operationEpoch===focusEpoch.current)setBusy(false);}
   }
   async function remove(){
@@ -138,12 +131,8 @@ export default function DoctorProfessionalProfile() {
     finally{lock.current=false;if(operationEpoch===focusEpoch.current)setBusy(false);}
   }
   async function openDocument(document:DoctorDocument){
-    try{
-      if(!document.downloadUrl)throw new Error('Lien absent.');
-      const url=new URL(document.downloadUrl);
-      if(url.protocol!=='https:')throw new Error('Lien non sécurisé.');
-      await Linking.openURL(document.downloadUrl);
-    }catch{setError('Impossible d’ouvrir le lien temporaire. Actualisez le profil avant de réessayer.');}
+    const opened=await previewMedicalDocument(document.downloadUrl);
+    if(!opened)setError('Impossible d’ouvrir le lien temporaire sécurisé. Actualisez le profil avant de réessayer.');
   }
 
   if(session.status!=='authenticated'||session.role!=='doctor')
@@ -267,10 +256,12 @@ export default function DoctorProfessionalProfile() {
               <ThemedText type="small" themeColor="textSecondary">
                 {(picked.size!/1024/1024).toFixed(2)} Mo · {picked.mimeType}
               </ThemedText>
+              <ThemedText type="small" themeColor="textSecondary">Aperçu avant envoi : contrôlez le nom, le type et la taille. Le contenu n'est pas recopié dans un cache permanent.</ThemedText>
               <Button label="Envoyer le justificatif" loading={busy} onPress={()=>{void upload();}}/>
               <Button label="Annuler le fichier sélectionné" variant="outline" disabled={busy}
                 onPress={()=>setPicked(null)}/>
             </View>:null}
+            {busy?<ThemedText type="small" themeColor="textSecondary">Transfert en cours… aucun pourcentage fiable disponible.</ThemedText>:null}
             <ThemedText type="small" themeColor="textSecondary">
               Le sélecteur système Android n’exige pas d’autorisation globale de stockage.
               L’approbation du document reste exclusivement effectuée par l’équipe Medilink.
