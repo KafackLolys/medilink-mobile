@@ -9,7 +9,7 @@ import { useTheme } from '@/hooks/use-theme';
 import { useNavigationSession } from '@/store/navigation-session';
 import { appointmentsApi } from '@/services/appointments';
 import type { AppointmentStatus, PatientAppointment } from '@/types/domain';
-import { APPOINTMENT_LABELS, filterAppointments, formatAppointmentDate, getDeviceTimeZone } from '@/features/patient/appointment-booking';
+import { APPOINTMENT_LABELS, filterAppointments, formatAppointmentDate, getDeviceTimeZone, appointmentDetailRoute } from '@/features/patient/appointment-booking';
 import { Spacing, Radius, MinimumTouchTarget } from '@/constants/theme';
 
 type Status = AppointmentStatus|'all';
@@ -71,7 +71,7 @@ export default function PatientAppointments() {
         <ThemedText type="small" themeColor="textSecondary">
           {item.consultationMode==='home'?'À domicile':'Téléconsultation'} · {item.durationMinutes} min
         </ThemedText>
-        <Link href={{pathname:'/patient/rendez-vous/[id]',params:{id:item.id}}} asChild>
+        <Link href={appointmentDetailRoute(item.id)} asChild>
           <Pressable accessibilityRole="link" style={[styles.link,{backgroundColor:theme.infoSurface}]}>
             <ThemedText themeColor="primary" type="smallBold">Voir le détail</ThemedText>
           </Pressable>
