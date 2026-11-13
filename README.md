@@ -217,3 +217,14 @@ L'essai sur un véritable appareil, l'écriture réelle des disponibilités, les
 - [Contrats exacts, restrictions de sécurité et recette Android](docs/MOBILE_DOCTOR_PROFESSIONAL_PROFILE.md).
 
 Les tests avec un compte médecin sur appareil physique, l'upload et la suppression E2E, l'analyse du rendu responsive du site et Expo Doctor restent à valider avant fusion.
+
+## Prompt 19 — Messagerie patient et médecin
+
+- `/patient/messages` et `/medecin/messages` : écrans React Native natifs utilisant `GET /messages/conversations`, `GET /messages/conversations/:id` et `POST /messages/conversations/:id`.
+- Liste des conversations avec non-lus, fil de discussion avec identification de l'expéditeur, saisie 1–4000 caractères, clavier Android, autoscroll, actualisation, erreurs et envoi confirmé par le serveur.
+- Poll HTTP uniquement à l'écran toutes les 15 s, sans inventer de WebSocket, pièce jointe, création arbitraire de conversation ni pagination du fil. Les messages restent bornés aux **100 derniers** disponibles sur l'API.
+- L'accès est limité aux comptes `patient` et `doctor` (médecin professionnellement vérifié) disposant d'une proposition active ; `admin` exclu. Validation de l'appartenance à la liste autorisée, revalidation backend, purge à la navigation et garde d'epoch par compte/conversation.
+- Aucun message sauvegardé dans AsyncStorage ni stockage médical persistant. Un POST ambigu ne déclenche jamais de réessai automatique pouvant créer un doublon.
+- Tests `npm run test:messaging` dans `npm run check` et GitHub Actions ; [contrat, confidentialité et recette Android](docs/MOBILE_MESSAGING.md).
+
+Les échanges E2E entre vrais comptes, le clavier sur appareil Android, le lint, Expo Doctor et la comparaison responsive Vercel restent à vérifier avant fusion.
