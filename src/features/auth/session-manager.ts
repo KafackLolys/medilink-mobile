@@ -1,4 +1,4 @@
-import type { AccountRole, AuthenticatedUser, LoginResponse } from '../../types/domain';
+import type { AccountRole, AccountStatus, AuthenticatedUser, LoginResponse } from '../../types/domain';
 
 export type SessionTokens = {
   idToken: string;
@@ -9,7 +9,7 @@ export type SessionTokens = {
 export type SessionSnapshot =
   | { status: 'loading'; role: null }
   | { status: 'unauthenticated'; role: null }
-  | { status: 'authenticated'; role: AccountRole };
+  | { status: 'authenticated'; role: AccountRole; accountStatus: AccountStatus };
 
 export type SessionStorage = {
   read: () => Promise<SessionTokens | null>;
@@ -146,7 +146,7 @@ export class SessionManager {
       await this.options.hooks.purge();
       if (epoch !== this.generation) return;
       this.tokens = candidate;
-      this.publish({ status: 'authenticated', role: user.role });
+      this.publish({ status: 'authenticated', role: user.role, accountStatus: user.status });
     } catch (error) {
       if (epoch === this.generation) await this.clear();
       throw error;
@@ -209,9 +209,9 @@ export class SessionManager {
         await this.enqueueWrite(() => this.options.storage.write(next));
         if (epoch !== this.generation || this.tokens?.refreshToken !== current.refreshToken) return false;
         this.tokens = next;
-        if (this.state.status === 'authenticated' && this.state.role !== result.user.role) {
+        if (this.state.status === 'authenticated' && (this.state.role !== result.user.role || this.state.accountStatus !== result.user.status)) {
           await this.options.hooks.purge();
-          if (epoch === this.generation) this.publish({ status: 'authenticated', role: result.user.role });
+          if (epoch === this.generation) this.publish({ status: 'authenticated', role: result.user.role, accountStatus: result.user.status });
         }
         return true;
       } catch {
