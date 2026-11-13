@@ -15,10 +15,10 @@ export default function ChooseRole() {
         </Pressable>
       </Link>
       <Link href={{ pathname: '/register', params: { role: 'doctor' } }} asChild>
-        <View accessible accessibilityRole="link">
+        <Pressable accessibilityRole="link">
           <Card><ThemedText type="subtitle">Je suis médecin</ThemedText>
             <ThemedText themeColor="textSecondary">Consulter les besoins des patients et proposer mes services.</ThemedText></Card>
-        </View>
+        </Pressable>
       </Link>
       <Link href="/login"><ThemedText type="linkPrimary">Déjà inscrit ? Se connecter</ThemedText></Link>
     </View>
