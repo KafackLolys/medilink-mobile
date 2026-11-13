@@ -86,3 +86,11 @@ test('error messages do not disclose inaccessible conversations or server secret
  assert.match(messageDate('2026-11-13T08:00:00Z'),/13\/11/);
  assert.equal(messageDate(null),'');
 });
+
+test('message history remains bounded to the last 100 returned messages',()=>{
+ const items=Array.from({length:105},(_,i)=>msg('m'+String(i).padStart(3,'0'),'patient-1','Message',new Date(Date.UTC(2026,10,13,8,i)).toISOString()));
+ const merged=mergeMessages([],items);
+ assert.equal(merged.length,100);
+ assert.equal(merged[0].id,'m005');
+ assert.equal(merged.at(-1).id,'m104');
+});
