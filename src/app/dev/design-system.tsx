@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { Redirect } from 'expo-router';
 import { View } from 'react-native';
 import { Button, Card, Badge, Avatar, Screen, Header } from '@/components/ui/primitives';
 import { Input, PasswordField, SelectField, ToggleField } from '@/components/ui/form-fields';
@@ -19,6 +20,8 @@ export default function DesignSystemGallery() {
   const [dialogVisible, setDialogVisible] = useState(false);
   const [loading, setLoading] = useState(false);
   const { showToast } = useToast();
+
+  if (!__DEV__) return <Redirect href="/" />;
 
   return (
     <Screen>
