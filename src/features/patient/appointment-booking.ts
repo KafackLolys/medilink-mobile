@@ -57,7 +57,8 @@ export function makeBookingRequest(doctor: DoctorDirectoryItem, selection: Booki
 }
 export function appointmentError(error: unknown): string {
   const e=error as {status?:number;kind?:string}|null;
-  if(e?.status===409) return 'Ce créneau est déjà réservé. Choisissez une autre heure et actualisez les horaires.';
+  if(e?.status===409 || (e?.status===400 && typeof (e as { message?: unknown }).message==='string' && /appointment time is no longer available/i.test((e as {message:string}).message)))
+    return 'Ce créneau est déjà réservé. Choisissez une autre heure et actualisez les horaires.';
   if(e?.status===400||e?.status===422) return 'Ce créneau ou ces informations ne sont plus acceptés. Vérifiez les horaires et réessayez.';
   if(e?.status===403) return 'Vous n’êtes pas autorisé à demander ce rendez-vous.';
   if(e?.status===404) return 'Ce médecin ou ce rendez-vous est indisponible.';
