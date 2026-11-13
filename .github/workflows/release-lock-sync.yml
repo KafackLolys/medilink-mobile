@@ -1,0 +1,29 @@
+name: One-time SDK58 release dependency lock
+on:
+  push:
+    branches: [docs/mobile-audit-parity-2026-11-13]
+    paths:
+      - 'package.json'
+      - '.github/workflows/release-lock-sync.yml'
+permissions:
+  contents: write
+jobs:
+  sync:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: docs/mobile-audit-parity-2026-11-13
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - run: npm install --package-lock-only --ignore-scripts --no-audit --no-fund
+      - name: Commit exact SDK 58 dev-client lock
+        run: |
+          if ! git diff --quiet -- package-lock.json; then
+            git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+            git config user.name "github-actions[bot]"
+            git add package-lock.json
+            git commit -m "build(release): lock Expo SDK 58 dev client"
+            git push origin HEAD:docs/mobile-audit-parity-2026-11-13
+          fi
