@@ -30,3 +30,7 @@ jobs:
       - run: npm run test:onboarding
       - run: npm run test:patient
       - run: npm run test:doctors
+      - run: npm run test:doctor-profile
+      - run: npm run test:needs
+      - run: npm run test:appointments
+      - run: npm run test:patient-profile

@@ -128,3 +128,47 @@ Le site Vercel reste la référence pour la parité responsive ; aucune consulta
 - [Contrats et scénarios de recette](docs/MOBILE_DOCTOR_DIRECTORY.md).
 
 La validation visuelle responsive authentifiée sur Vercel et les tests sur téléphone Android avec le compte patient restent à effectuer.
+
+## Prompt 11 — Profil public du médecin
+
+- `/patient/medecins/[id]` charge le profil vérifié depuis `GET /doctors/:id`.
+- Données professionnelles uniquement : identité, présentation, localisation, prix indicatif, notes agrégées, modes de consultation, calendrier hebdomadaire et dates bloquées publiques.
+- Aucun document de validation, téléphone, e-mail, matricule ou avis individuel n'est exposé à partir de la fiche publique.
+- Les consultations terminées sont identifiées depuis les seuls rendez-vous du patient ; l'avis reste soumis à l'autorisation serveur et sera intégré avec la fonctionnalité rendez-vous.
+- `src/features/patient/doctor-profile.ts` : liste autorisée des champs et logique d'affichage, validée par `npm run test:doctor-profile`.
+- [Contrat, limites, tests et recette](docs/MOBILE_DOCTOR_PUBLIC_PROFILE.md).
+
+La PR #2 a été fusionnée pendant le développement ; la **PR #3** reprend les changements ultérieurs sur la même branche unique, sans nouvelle branche. La comparaison responsive Vercel et le parcours authentifié Android restent à exécuter.
+
+## Prompt 12 — Besoins médicaux patient
+
+- Création guidée `/patient/besoins/nouveau` avec validation du contrat, aperçu, consentement, priorité non urgente et jusqu'à 5 pièces jointes PDF/images de 10 Mo.
+- Liste `/patient/demandes`, filtres par statuts réels, détail privé et modification des seuls champs acceptés par `PATCH /needs/:id`.
+- Clôture des demandes actives et suppression **uniquement des brouillons serveur**, chacune après confirmation et actualisation.
+- Aucune persistance locale de symptômes, adresse ou documents médicaux ; formulaire temporaire en mémoire.
+- Tests des transitions, champs et fichiers : `npm run test:needs`, inclus dans la CI.
+- Voir [MOBILE_PATIENT_NEEDS.md](docs/MOBILE_PATIENT_NEEDS.md) pour contrats, confidentialité et recette.
+
+## Prompt 13 — Réservation et suivi des rendez-vous patient
+
+- `/patient/medecins/[id]/rendez-vous` : formulaire de date/heure souhaitées, mode réel du médecin, motif facultatif et confirmation via `POST /appointments`.
+- Les plages hebdomadaires et dates bloquées viennent uniquement de `GET /doctors/:id`. L'API n'expose **aucun endpoint public de créneaux libres garantis**. Les conflits sont décidés par le serveur et affichés sans fuite de détails.
+- Fuseau IANA du téléphone, ISO UTC à l'envoi, contrôle des heures futures et d'une consultation entière dans la plage réelle.
+- `/patient/rendez-vous` : liste authentifiée `GET /appointments`, filtres de statuts, retour depuis un détail et pull-to-refresh.
+- `/patient/rendez-vous/[id]` : lecture protégée du rendez-vous, suivi et accès aux messages.
+- **Pas de bouton d'annulation patient** : `PATCH /appointments/:id/status` est réservé au médecin par l'API actuelle.
+- Tests : `npm run test:appointments`, inclus dans `npm run check` et la CI.
+- [Contrats, conflits et recette Android](docs/MOBILE_PATIENT_APPOINTMENTS.md).
+
+La création E2E avec un vrai compte, les essais sur Android et la comparaison responsive avec Vercel restent obligatoires avant fusion.
+
+## Prompt 14 — Profil patient et dossier médical
+
+- `/patient/profil` : véritable interface React Native, identité et coordonnées issues de `GET /auth/profile`, données de santé via `GET /patients/me/conditions`, documents via `GET /patients/me/documents`.
+- `PATCH /integration/patient/profile` permet de modifier le nom, le téléphone, le groupe sanguin et, lorsqu'une adresse existante est réellement exposée, ville/quartier. L'e-mail, le genre, la date de naissance et les conditions médicales sont en lecture seule.
+- `POST /patients/me/documents` et `DELETE /patients/me/documents/:id` : ajout/suppression de documents du patient, confirmation destructrice, fichiers PDF/JPEG/PNG/WebP ≤10 Mo, liens signés temporaires.
+- Dossier médical masqué par défaut, sources chargées indépendamment, états vides et erreurs par section, relecture après mutation. Aucune donnée médicale enregistrée dans AsyncStorage.
+- `src/features/patient/patient-medical-profile.ts` : mapping strict des réponses, validation des champs et fichiers ; tests `npm run test:patient-profile` en CI.
+- [Contrat, restrictions de modification et recette médicale Android](docs/MOBILE_PATIENT_MEDICAL_PROFILE.md).
+
+Le backend `GET /auth/profile` retourne actuellement `address:null` et `verified:false` pour le patient : le mobile ne fabrique ni adresse ni statut. Le parcours E2E réel et la comparaison responsive Vercel restent à valider.
