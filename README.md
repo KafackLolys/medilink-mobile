@@ -139,3 +139,12 @@ La validation visuelle responsive authentifiée sur Vercel et les tests sur tél
 - [Contrat, limites, tests et recette](docs/MOBILE_DOCTOR_PUBLIC_PROFILE.md).
 
 La PR #2 a été fusionnée pendant le développement ; la **PR #3** reprend les changements ultérieurs sur la même branche unique, sans nouvelle branche. La comparaison responsive Vercel et le parcours authentifié Android restent à exécuter.
+
+## Prompt 12 — Besoins médicaux patient
+
+- Création guidée `/patient/besoins/nouveau` avec validation du contrat, aperçu, consentement, priorité non urgente et jusqu'à 5 pièces jointes PDF/images de 10 Mo.
+- Liste `/patient/demandes`, filtres par statuts réels, détail privé et modification des seuls champs acceptés par `PATCH /needs/:id`.
+- Clôture des demandes actives et suppression **uniquement des brouillons serveur**, chacune après confirmation et actualisation.
+- Aucune persistance locale de symptômes, adresse ou documents médicaux ; formulaire temporaire en mémoire.
+- Tests des transitions, champs et fichiers : `npm run test:needs`, inclus dans la CI.
+- Voir [MOBILE_PATIENT_NEEDS.md](docs/MOBILE_PATIENT_NEEDS.md) pour contrats, confidentialité et recette.
