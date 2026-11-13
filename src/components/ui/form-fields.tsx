@@ -16,7 +16,7 @@ export function Input({ label, hint, error, multiline, style, ...props }: TextIn
         {...props} multiline={multiline} allowFontScaling
         placeholderTextColor={theme.textSecondary}
         accessibilityLabel={label} accessibilityHint={error ?? hint}
-        accessibilityState={{ disabled: !props.editable }}
+        accessibilityState={{ disabled: props.editable === false }}
         onFocus={event => { setFocused(true); props.onFocus?.(event); }}
         onBlur={event => { setFocused(false); props.onBlur?.(event); }}
         style={[styles.input, multiline ? styles.multiline : null, {
