@@ -2,7 +2,7 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import {DOCUMENT_MIME_TYPES,MAX_MEDICAL_FILE_BYTES,validateMedicalFile,
  documentCategoryAllowed,validateDocumentTitle,signedPreviewUrl,
- documentTransferError,pickerOutcome} from './document-rules.ts';
+ documentTransferError,pickerOutcome,filterPatientDocuments,pagePatientDocuments} from './document-rules.ts';
 
 const file={uri:'content://com.android.providers.downloads.documents/document/1',name:'bilan.pdf',
  mimeType:'application/pdf',size:1024};
@@ -57,4 +57,19 @@ test('file transfer errors never include storage URLs or medical data',()=>{
  assert.match(documentTransferError({status:413}),/10 Mo/);
  assert.match(documentTransferError({kind:'network'}),/Transfert interrompu/);
  assert.doesNotMatch(documentTransferError({status:500,message:'PRIVATE_PATIENT_MEDICAL_DOCUMENT'}),/PRIVATE/);
+});
+
+test('patient document search/filter and pagination do not fabricate server data',()=>{
+ const docs=[
+  {id:'1',type:'prescription',title:'Ordonnance',filename:'ordo.pdf'},
+  {id:'2',type:'lab_result',title:'Bilan sanguin',filename:'bilan.pdf'},
+  {id:'3',type:'prescription',title:'Renouvellement',filename:'renouvellement.pdf'},
+ ];
+ const labels={prescription:'Ordonnance médicale',lab_result:'Résultats d’analyse'};
+ assert.deepEqual(filterPatientDocuments(docs,'bilan','all',labels).map(x=>x.id),['2']);
+ assert.deepEqual(filterPatientDocuments(docs,'','prescription',labels).map(x=>x.id),['1','3']);
+ assert.deepEqual(filterPatientDocuments(docs,'ordonnance','all',labels).map(x=>x.id),['1','3']);
+ const page=pagePatientDocuments(docs,2,2);
+ assert.deepEqual(page,{items:[docs[2]],page:2,totalPages:2,total:3});
+ assert.equal(pagePatientDocuments([],10).page,1);
 });
