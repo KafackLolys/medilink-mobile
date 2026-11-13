@@ -8,7 +8,7 @@ import { ThemedText } from '@/components/themed-text';
 import { useTheme } from '@/hooks/use-theme';
 import { useNavigationSession } from '@/store/navigation-session';
 import { appointmentsApi } from '@/services/appointments';
-import { APPOINTMENT_LABELS, formatAppointmentDate, getDeviceTimeZone, canPatientChangeAppointmentStatus } from '@/features/patient/appointment-booking';
+import { APPOINTMENT_LABELS, formatAppointmentDate, getDeviceTimeZone, canPatientChangeAppointmentStatus, APPOINTMENT_LIST_ROUTE } from '@/features/patient/appointment-booking';
 import { Spacing } from '@/constants/theme';
 import type { PatientAppointment } from '@/types/domain';
 
@@ -43,7 +43,7 @@ export default function PatientAppointmentDetail(){
       padding:Spacing.three,paddingBottom:100,gap:Spacing.three}}
       refreshControl={<RefreshControl refreshing={refreshing} onRefresh={()=>load(true)}
         colors={[theme.primary]} tintColor={theme.primary}/>}>
-      <Link href="/patient/rendez-vous"><ThemedText type="linkPrimary">‹ Mes rendez-vous</ThemedText></Link>
+      <Link href={APPOINTMENT_LIST_ROUTE}><ThemedText type="linkPrimary">‹ Mes rendez-vous</ThemedText></Link>
       <Header title="Détail du rendez-vous" subtitle="Informations retournées par Medilink."/>
       {state.status==='loading'?<LoadingState label="Chargement du rendez-vous…" />:
         state.status==='not-found'?<ErrorState title="Rendez-vous introuvable"
