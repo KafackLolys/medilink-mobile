@@ -284,3 +284,15 @@ La vraie carte GPS n'est pas réalisable sans coordonnées professionnelles vali
 - Tests `npm run test:admin` intégrés à `npm run check` et GitHub Actions ; [contrats, décisions de sécurité et recette Android](docs/MOBILE_ADMINISTRATION.md).
 
 Une recette avec un véritable admin actif et un compte refusé reste nécessaire avant fusion, ainsi que lint, Expo Doctor et vérification du rendu Android.
+
+## Prompt 25 — Résilience des réseaux mobiles instables
+
+- Détection du statut du réseau via `expo-network ~58.0.5` (Expo SDK 58), bannière globale hors connexion/connexion limitée, **sans GPS ni collecte d'IP/SSID**.
+- Le client HTTP conserve les timeouts, `AbortController`, authentification Firebase et garde de génération de session. Un retry `safe-get` est **explicitement opt-in** et limité à trois tentatives avec 300/900 ms de backoff ; seuls `GET /doctors` et `GET /doctors/:id` l'utilisent pour les erreurs réseau/timeout ou HTTP 429/502–504.
+- **Aucun retry implicite d'une écriture** `POST`, `PATCH`, `PUT`, `DELETE`, même après une réponse 401. Les réservations et créations de besoins ne sont jamais rejouées automatiquement, faute de garantie d'idempotence.
+- Cache de secours **strictement RAM**, 12 recherches publiques de médecins au maximum, expiration après 5 minutes, champs explicitement publics uniquement et purge au changement de session. Aucune donnée patient, dossier, rendez-vous, message, document, URL de stockage, compte admin ou token n'est persisté. La copie d'annuaire est clairement signalée comme potentiellement ancienne.
+- En mode explicitement hors ligne : annuaire public disponible immédiatement via cache valide, sinon état d'erreur. Rechargement automatique de la **lecture sûre** après rétablissement de la connexion ; autres écrans avec actualisation manuelle.
+- Tests de coupure/reprise, 401/403, absence de double POST, délais bornés, annulation pendant backoff, changement de compte et expiration du cache avec `npm run test:network` et les tests HTTP précédents.
+- [Audit technique et recette réseau Android](docs/MOBILE_NETWORK_RESILIENCE.md).
+
+Reste à effectuer avant fusion : tests instrumentés en mode avion/données mobiles lentes, vérification sur un vrai Android, lint, Expo Doctor et contrôle visuel.
