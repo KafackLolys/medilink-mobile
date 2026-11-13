@@ -228,3 +228,14 @@ Les tests avec un compte médecin sur appareil physique, l'upload et la suppress
 - Tests `npm run test:messaging` dans `npm run check` et GitHub Actions ; [contrat, confidentialité et recette Android](docs/MOBILE_MESSAGING.md).
 
 Les échanges E2E entre vrais comptes, le clavier sur appareil Android, le lint, Expo Doctor et la comparaison responsive Vercel restent à vérifier avant fusion.
+
+## Prompt 20 — Notifications Android FCM
+
+- `/patient/notifications`, `/medecin/notifications` : centre natif des notifications, pagination et non lus réels, marquage unitaire `PATCH /notifications/:id/read` et global `PATCH /notifications/read-all`, actualisation et navigation limitée aux destinations autorisées.
+- `expo-notifications ~58.1.9` pour SDK 58 Android, canal `medilink-updates`, permission utilisateur et `getDevicePushTokenAsync()` : **token FCM natif** conforme au backend NestJS Firebase Admin, **pas** de token Expo Push Service.
+- `POST /notifications/devices` : inscription du terminal lié au Firebase UID authentifié, `deviceId` enregistré dans Expo SecureStore ; `POST /notifications/devices/:deviceId/unregister` tenté **avant le logout**. Aucun token dans les logs/URLs.
+- Réception et rafraîchissement au premier plan ; notification Android standard en arrière-plan/fermeture, ouverture après authentification et validation du propriétaire de la notification côté API. Pas de tâche background « headless » fictive.
+- Config Firebase de build via `app.config.js` (`MEDILINK_ANDROID_PACKAGE`, `MEDILINK_GOOGLE_SERVICES_FILE`) ; fichier Firebase réel et identifiant Android Firebase **obligatoires pour tester FCM sur une build Android**. Expo Go Android ne suffit pas depuis SDK 53.
+- Tests `npm run test:notifications` dans GitHub Actions. [Contrat, permissions, contraintes de sécurité et recette sur appareil](docs/MOBILE_ANDROID_NOTIFICATIONS.md).
+
+**Limites :** aucun envoi/réception FCM sur appareil n'a été testé faute de configuration Firebase Android réelle ; la déconnexion hors ligne ne peut garantir une désinscription serveur immédiate. La recette sur build Android, le lint et Expo Doctor restent à exécuter.
