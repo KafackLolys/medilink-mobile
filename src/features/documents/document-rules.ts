@@ -59,3 +59,20 @@ export function pagePatientDocuments<T>(docs:T[],page:number,pageSize=6){
  const currentPage=Math.min(Math.max(Number.isInteger(page)?page:1,1),totalPages);
  return {items:docs.slice((currentPage-1)*pageSize,currentPage*pageSize),page:currentPage,totalPages,total:docs.length};
 }
+
+/** Pure injectable adapter to test denied file permissions without invoking Expo native APIs. */
+export async function resolveMedicalSelection(
+ choose:()=>Promise<{canceled:boolean;assets?:MedicalFile[]|null}>,
+ role:DocumentRole,count=0,
+):Promise<{file:MedicalFile|null;error:string|null}>{
+ try{
+  const response=await choose();
+  const file=pickerOutcome(response);
+  if(!file)return {file:null,error:null};
+  const problem=validateMedicalFile(file,role,count);
+  return problem?{file:null,error:problem}:{file,error:null};
+ }catch{
+  // Do not expose operating system paths or private file identifiers in logs/errors.
+  return {file:null,error:'Sélection impossible ou accès au fichier refusé par Android. Réessayez.'};
+ }
+}
