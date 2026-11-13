@@ -44,13 +44,14 @@
     "lint": "expo lint",
     "typecheck": "tsc --noEmit",
     "doctor": "npx expo-doctor",
-    "check": "npm run typecheck && npm run lint && npm run test:http && npm run test:auth && npm run test:session && npm run test:onboarding && npm run test:patient && npm run test:doctors",
+    "check": "npm run typecheck && npm run lint && npm run test:http && npm run test:auth && npm run test:session && npm run test:onboarding && npm run test:patient && npm run test:doctors && npm run test:doctor-profile",
     "test:http": "node --experimental-strip-types --test src/services/http-client.test.mjs",
     "test:auth": "node --experimental-strip-types --test src/features/auth/validation.test.mjs",
     "test:session": "node --experimental-strip-types --test src/features/auth/session-manager.test.mjs",
     "test:onboarding": "node --experimental-strip-types --test src/features/auth/account-states.test.mjs",
     "test:patient": "node --experimental-strip-types --test src/features/patient/dashboard-model.test.mjs",
-    "test:doctors": "node --experimental-strip-types --test src/features/patient/doctor-directory.test.mjs"
+    "test:doctors": "node --experimental-strip-types --test src/features/patient/doctor-directory.test.mjs",
+    "test:doctor-profile": "node --experimental-strip-types --test src/features/patient/doctor-profile.test.mjs"
   },
   "private": true
 }
