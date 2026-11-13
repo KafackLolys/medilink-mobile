@@ -25,5 +25,7 @@ jobs:
             git config user.name "github-actions[bot]"
             git add package-lock.json
             git commit -m "build(release): lock Expo SDK 58 dev client"
+            git fetch origin docs/mobile-audit-parity-2026-11-13
+            git rebase origin/docs/mobile-audit-parity-2026-11-13
             git push origin HEAD:docs/mobile-audit-parity-2026-11-13
           fi
