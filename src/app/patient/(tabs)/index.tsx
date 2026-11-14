@@ -160,7 +160,7 @@ export default function PatientDashboard() {
       refreshControl={<RefreshControl refreshing={refreshing} onRefresh={() => load(true)}
         colors={[theme.primary]} tintColor={theme.primary} accessibilityLabel="Actualiser le tableau de bord" />}
       keyboardShouldPersistTaps="handled">
-      <Header title={firstName ? `Bonjour ${firstName} 👋` : 'Bonjour, bienvenue 👋'}
+      <Header action={<Link href="/patient/notifications"><ThemedText type="smallBold" themeColor="primary">Notifications</ThemedText></Link>} title={firstName ? `Bonjour ${firstName} 👋` : 'Bonjour, bienvenue 👋'}
         subtitle="Vos démarches médicales et vos rendez-vous." />
       {data.profile.status === 'success' ? (
         <LinkCard href="/patient/profil" title="Mon profil" description="Consulter mes informations" color={theme.backgroundElement} />
