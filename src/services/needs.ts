@@ -1,5 +1,6 @@
 import { apiRequest, makeMultipart, type NativeUploadFile } from './http';
 import type { DoctorNeed, DoctorProposal, NeedDetail, PatientNeed, Page } from '@/types/domain';
+import type { DoctorNeedDetail } from '@/features/doctor/doctor-needs';
 export type CreateNeedRequest = {
   title: string; specialty: string; description: string; symptoms: string[]; since?: string;
   city: string; district: string; address?: string; priority: 'normal' | 'rapide' | 'urgence';
@@ -20,7 +21,7 @@ export const needsApi = {
   delete: (id: string, signal?: AbortSignal) => apiRequest<{ message: string }>('/needs/' + encodeURIComponent(id), { method: 'DELETE', signal }),
   doctor: (query: { q?: string; specialty?: string; priority?: string; mode?: string; page?: number; pageSize?: number } = {}, signal?: AbortSignal) =>
     apiRequest<Page<DoctorNeed> & { specialties: string[] }>('/needs/doctor', { query, signal }),
-  doctorDetail: (id: string, signal?: AbortSignal) => apiRequest<NeedDetail>('/needs/doctor/' + encodeURIComponent(id), { signal }),
+  doctorDetail: (id: string, signal?: AbortSignal) => apiRequest<DoctorNeedDetail>('/needs/doctor/' + encodeURIComponent(id), { signal }),
   proposals: (query: { status?: string; page?: number; pageSize?: number } = {}, signal?: AbortSignal) =>
     apiRequest<Page<DoctorProposal> & { counts: Record<string, number> }>('/needs/doctor/proposals', { query, signal }),
   propose: (id: string, data: DoctorProposalRequest, signal?: AbortSignal) =>

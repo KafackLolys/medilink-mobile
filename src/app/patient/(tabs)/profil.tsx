@@ -1,8 +1,9 @@
-import { useCallback, useRef, useState } from 'react';
+import { useCallback, useMemo, useRef, useState } from 'react';
 import { Link, useFocusEffect } from 'expo-router';
 import { Linking, Pressable, RefreshControl, ScrollView, StyleSheet, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import * as DocumentPicker from 'expo-document-picker';
+import { chooseMedicalDocument, previewMedicalDocument } from '@/features/documents/document-actions';
+import { documentTransferError, validateDocumentTitle, filterPatientDocuments, pagePatientDocuments } from '@/features/documents/document-rules';
 import { Avatar, Badge, Button, Card, Header } from '@/components/ui/primitives';
 import { Input, SelectField } from '@/components/ui/form-fields';
 import { ErrorState, LoadingState } from '@/components/ui/states';
@@ -49,7 +50,7 @@ export default function PatientProfileScreen() {
   const [documentBusy,setDocumentBusy]=useState(false);
   const [deleteId,setDeleteId]=useState<string|null>(null);
   const [actionError,setActionError]=useState('');
-  const seq=useRef(0),controller=useRef<AbortController|null>(null),mutationLock=useRef(false);
+  const seq=useRef(0),controller=useRef<AbortController|null>(null),mutationLock=useRef(false),documentEpoch=useRef(0);
 
   const load=useCallback((pull=false)=>{
     controller.current?.abort();
@@ -72,13 +73,19 @@ export default function PatientProfileScreen() {
     });
   },[]);
 
+  const [documentSearch,setDocumentSearch]=useState('');
+  const [documentFilter,setDocumentFilter]=useState('all');
+  const [documentPage,setDocumentPage]=useState(1);
+
   useFocusEffect(useCallback(()=>{
     if(session.status==='authenticated'&&session.role==='patient')load();
     return()=>{
-      seq.current++;controller.current?.abort();
+      documentEpoch.current++;seq.current++;controller.current?.abort();
       // Profile and medical data must not survive navigation or account switching.
       setResources(initial());setDraft(null);setEditing(false);
       setSelectedFile(null);setDocumentTitle('');setPrivateVisible(false);
+      setDocumentSearch('');setDocumentFilter('all');setDocumentPage(1);
+      setDocumentBusy(false);setDeleteId(null);setActionError('');
     };
   },[load,session.status,session.role]));
 
@@ -86,6 +93,9 @@ export default function PatientProfileScreen() {
   const view=profile?viewPatientProfile(profile):null;
   const visibleHealth=resources.health.status==='success'?resources.health.value:null;
   const documents=resources.documents.status==='success'?resources.documents.value:null;
+  const filteredDocuments=useMemo(()=>filterPatientDocuments(documents??[],documentSearch,documentFilter,DOCUMENT_TYPES),
+    [documents,documentSearch,documentFilter]);
+  const pagedDocuments=useMemo(()=>pagePatientDocuments(filteredDocuments,documentPage),[filteredDocuments,documentPage]);
 
   function beginEdit(){
     if(!profile)return;
@@ -115,47 +125,45 @@ export default function PatientProfileScreen() {
 
   async function chooseDocument(){
     if(documentBusy||mutationLock.current)return;
-    try{
-      const picked=await DocumentPicker.getDocumentAsync({
-        type:[...DOCUMENT_MIMES],multiple:false,copyToCacheDirectory:true,
-      });
-      if(picked.canceled||!picked.assets.length)return;
-      const file=picked.assets[0];
-      const problem=validatePatientFile(file);
-      if(problem){setActionError(problem);setSelectedFile(null);return;}
-      setSelectedFile({uri:file.uri,name:file.name,mimeType:file.mimeType!,size:file.size!});
-      setDocumentTitle('');setActionError('');
-    }catch{setActionError('Impossible de sélectionner ce document. Réessayez.');}
+    const epoch=documentEpoch.current;
+    const picked=await chooseMedicalDocument('patient');
+    if(epoch!==documentEpoch.current)return;
+    if(picked.error){setActionError(picked.error);setSelectedFile(null);return;}
+    if(!picked.file)return; // The system picker was cancelled; do not show an error.
+    setSelectedFile({uri:picked.file.uri,name:picked.file.name,mimeType:picked.file.mimeType!,size:picked.file.size!});
+    setDocumentTitle('');setActionError('');
   }
   async function uploadDocument(){
     if(mutationLock.current||!selectedFile||session.status!=='authenticated'||session.role!=='patient')return;
-    const issue=validatePatientFile(selectedFile);
+    const issue=validatePatientFile(selectedFile)||validateDocumentTitle(documentTitle,'patient');
     if(issue){setActionError(issue);return;}
+    const epoch=documentEpoch.current;
     mutationLock.current=true;setDocumentBusy(true);setActionError('');
     try{
       const file:NativeUploadFile={uri:selectedFile.uri,name:selectedFile.name,type:selectedFile.mimeType};
-      await patientsApi.uploadDocument(file,documentType,documentTitle.trim()||undefined);
+      const result=await patientsApi.uploadDocument(file,documentType,documentTitle.trim()||undefined);
+      if(epoch!==documentEpoch.current)return;
+      if(!result?.id||result.type!==documentType)throw new Error('Réponse de document invalide.');
       setSelectedFile(null);setDocumentTitle('');setNotice('Document ajouté.');
       load(true);
-    }catch(e){setActionError(patientProfileError(e));}
-    finally{mutationLock.current=false;setDocumentBusy(false);}
+    }catch(e){if(epoch===documentEpoch.current)setActionError(documentTransferError(e));}
+    finally{mutationLock.current=false;if(epoch===documentEpoch.current)setDocumentBusy(false);}
   }
   async function deleteDocument(){
     if(mutationLock.current||!deleteId||session.status!=='authenticated'||session.role!=='patient')return;
+    const epoch=documentEpoch.current;
     mutationLock.current=true;setDocumentBusy(true);setActionError('');
     try{
       await patientsApi.deleteDocument(deleteId);
+      if(epoch!==documentEpoch.current)return;
       setDeleteId(null);setNotice('Document supprimé.');load(true);
-    }catch(e){setActionError(patientProfileError(e));setDeleteId(null);}
-    finally{mutationLock.current=false;setDocumentBusy(false);}
+    }catch(e){if(epoch===documentEpoch.current){setActionError(documentTransferError(e));setDeleteId(null);}}
+    finally{mutationLock.current=false;if(epoch===documentEpoch.current)setDocumentBusy(false);}
   }
   async function openDocument(document:PatientDocument){
-    try{
-      if(!document.downloadUrl)throw new Error('Missing signed URL');
-      const url=new URL(document.downloadUrl);
-      if(url.protocol!=='https:')throw new Error('Unsafe link');
-      await Linking.openURL(document.downloadUrl);
-    }catch{setActionError('Lien indisponible ou expiré. Actualisez les documents pour renouveler son accès.');}
+    const epoch=documentEpoch.current;
+    const opened=await previewMedicalDocument(document.downloadUrl);
+    if(epoch===documentEpoch.current&&!opened)setActionError('Lien sécurisé indisponible ou expiré. Actualisez les documents pour renouveler son accès.');
   }
 
   if(session.status!=='authenticated'||session.role!=='patient')return <SafeAreaView
@@ -247,9 +255,12 @@ export default function PatientProfileScreen() {
         {!privateVisible?<ThemedText themeColor="textSecondary">
           La liste est masquée pour préserver la confidentialité.
         </ThemedText>:<>
+          <Input label="Rechercher un document" value={documentSearch} maxLength={100} onChangeText={value=>{setDocumentSearch(value);setDocumentPage(1);}}/>
+          <SelectField label="Filtrer par catégorie" value={documentFilter} onChange={value=>{setDocumentFilter(value);setDocumentPage(1);}}
+            options={[{label:'Toutes les catégories',value:'all'},...Object.entries(DOCUMENT_TYPES).map(([value,label])=>({value,label}))]}/>
           {resources.documents.status==='loading'?<LoadingState label="Chargement de vos documents…" />:
             resources.documents.status==='error'?<ErrorState title="Documents indisponibles" onRetry={()=>load()}/>:
-            documents?.length?documents.map(item=><View key={item.id} style={[styles.entry,{borderColor:theme.border}]}>
+            pagedDocuments.items.length?pagedDocuments.items.map(item=><View key={item.id} style={[styles.entry,{borderColor:theme.border}]}>
               <ThemedText type="smallBold">{item.title||item.filename}</ThemedText>
               <ThemedText type="small" themeColor="textSecondary">
                 {DOCUMENT_TYPES[item.type as PatientDocumentType]??'Document médical'} · {Math.ceil(item.sizeBytes/1024)} Ko
@@ -259,7 +270,12 @@ export default function PatientProfileScreen() {
                 <ThemedText type="small" themeColor="textSecondary">Lien temporaire non disponible.</ThemedText>}
               <Button label="Supprimer ce document" variant="danger" disabled={documentBusy}
                 onPress={()=>setDeleteId(item.id)}/>
-            </View>):<ThemedText themeColor="textSecondary">Aucun document médical enregistré.</ThemedText>}
+            </View>):<ThemedText themeColor="textSecondary">Aucun document ne correspond aux critères.</ThemedText>}
+          {pagedDocuments.totalPages>1?<View style={{flexDirection:'row',alignItems:'center',justifyContent:'space-between',gap:Spacing.two}}>
+            <Button label="Précédent" variant="outline" disabled={pagedDocuments.page<=1} onPress={()=>setDocumentPage(p=>Math.max(1,p-1))}/>
+            <ThemedText type="small">{pagedDocuments.page} / {pagedDocuments.totalPages}</ThemedText>
+            <Button label="Suivant" variant="outline" disabled={pagedDocuments.page>=pagedDocuments.totalPages} onPress={()=>setDocumentPage(p=>p+1)}/>
+          </View>:null}
           <ThemedText type="smallBold">Ajouter un document</ThemedText>
           <ThemedText type="small" themeColor="textSecondary">
             PDF, JPEG, PNG ou WebP, 10 Mo maximum. Ne sélectionnez que des documents que vous souhaitez envoyer.
@@ -268,6 +284,8 @@ export default function PatientProfileScreen() {
             onPress={()=>{void chooseDocument();}}/>
           {selectedFile?<View style={{gap:Spacing.two}}>
             <ThemedText type="smallBold">{selectedFile.name}</ThemedText>
+            <ThemedText type="small" themeColor="textSecondary">{(selectedFile.size/1024/1024).toFixed(2)} Mo · {selectedFile.mimeType}</ThemedText>
+            <ThemedText type="small" themeColor="textSecondary">Aperçu avant envoi : vérifiez le nom, le format, la taille et la catégorie. Le contenu n'est pas copié durablement dans le cache de l'application.</ThemedText>
             <SelectField label="Type de document" value={documentType}
               onChange={x=>setDocumentType(x as PatientDocumentType)}
               options={Object.entries(DOCUMENT_TYPES).map(([value,label])=>({label,value}))}/>
@@ -277,6 +295,7 @@ export default function PatientProfileScreen() {
             <Button label="Annuler le choix" variant="outline" disabled={documentBusy}
               onPress={()=>{setSelectedFile(null);setDocumentTitle('');}}/>
           </View>:null}
+          {documentBusy?<ThemedText type="small" themeColor="textSecondary">Transfert sécurisé en cours… progression chiffrée non fournie par l'API.</ThemedText>:null}
           {actionError?<ThemedText themeColor="danger" accessibilityRole="alert">{actionError}</ThemedText>:null}
         </>}
       </Card>
