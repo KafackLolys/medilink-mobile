@@ -1,6 +1,8 @@
 name: MediLink Android standalone test APK
 
 on:
+  push:
+    branches: [main]
   pull_request:
     branches: [main]
     paths:
@@ -71,6 +73,8 @@ jobs:
           apksigner=$(find "$sdk/build-tools" -name apksigner -type f | sort -V | tail -1)
           test -x "$apksigner"
           "$apksigner" verify "$apk"
+          "$apksigner" verify --print-certs "$apk" | grep -E 'Signer #1 certificate (SHA-1|SHA-256) digest' > medilink-android-signature-sha.txt
+          test -s medilink-android-signature-sha.txt
           sha256sum "$apk" > medilink-preview-test.apk.sha256
           cp "$apk" medilink-preview-test.apk
       - name: Upload installable test APK
@@ -80,5 +84,6 @@ jobs:
           path: |
             medilink-preview-test.apk
             medilink-preview-test.apk.sha256
+            medilink-android-signature-sha.txt
           if-no-files-found: error
           retention-days: 14
