@@ -25,6 +25,7 @@ type DirectoryState =
 function DoctorCard({ doctor }: { doctor: DoctorDirectoryItem }) {
   const theme = useTheme();
   const detail = { pathname: '/patient/medecins/[id]' as const, params: { id: doctor.id } };
+  const booking = { pathname: '/patient/medecins/[id]/rendez-vous' as const, params: { id: doctor.id } };
   return (
     <Card style={styles.doctorCard}>
       <View style={styles.identity}>
@@ -43,12 +44,24 @@ function DoctorCard({ doctor }: { doctor: DoctorDirectoryItem }) {
       <ThemedText type="small" themeColor="textSecondary">
         Les créneaux disponibles sont confirmés lors de la réservation.
       </ThemedText>
-      <Link href={detail} asChild>
-        <Pressable accessibilityRole="link" accessibilityLabel={`Voir le profil de ${doctor.name}`}
-          style={({ pressed }) => [styles.detailButton, { backgroundColor: theme.infoSurface, opacity: pressed ? .7 : 1 }]}>
-          <ThemedText type="smallBold" themeColor="primary">Voir le profil  ›</ThemedText>
-        </Pressable>
-      </Link>
+      <View style={styles.cardButtons}>
+        <Link href={detail} asChild>
+          <Pressable accessibilityRole="link" accessibilityLabel={`Voir le profil de ${doctor.name}`}
+            style={({ pressed }) => [styles.cardButton, {
+              backgroundColor: theme.infoSurface, opacity: pressed ? .7 : 1,
+            }]}>
+            <ThemedText type="smallBold" themeColor="primary">Voir le profil</ThemedText>
+          </Pressable>
+        </Link>
+        <Link href={booking} asChild>
+          <Pressable accessibilityRole="link" accessibilityLabel={`Prendre rendez-vous avec ${doctor.name}`}
+            style={({ pressed }) => [styles.cardButton, {
+              backgroundColor: theme.primary, opacity: pressed ? .7 : 1,
+            }]}>
+            <ThemedText type="smallBold" style={{ color: theme.onPrimary }}>Prendre rendez-vous</ThemedText>
+          </Pressable>
+        </Link>
+      </View>
     </Card>
   );
 }
@@ -245,6 +258,9 @@ const styles = StyleSheet.create({
   chip: { minHeight: MinimumTouchTarget, paddingHorizontal: Spacing.three, justifyContent: 'center',
     borderRadius: Radius.pill, borderWidth: 1 },
   actions: { flexDirection: 'row', gap: Spacing.two },
+  cardButtons: { flexDirection: 'row', gap: Spacing.two, flexWrap: 'wrap' },
+  cardButton: { flexGrow: 1, flexBasis: 140, minHeight: MinimumTouchTarget, padding: Spacing.two,
+    borderRadius: Radius.pill, alignItems: 'center', justifyContent: 'center' },
   detailButton: { minHeight: MinimumTouchTarget, padding: Spacing.three, borderRadius: Radius.large,
     alignItems: 'center', justifyContent: 'center' },
   footer: { marginTop: Spacing.four },
