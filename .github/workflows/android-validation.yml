@@ -31,6 +31,7 @@ jobs:
       - run: npm run typecheck
       - run: npm run lint
       - run: npm run release:validate
+      - run: node --test scripts/android-auth-notifications.test.mjs
       - run: node --test scripts/startup-validation.test.mjs
       - run: node --test scripts/release-config.test.mjs
       - run: npm run test:http

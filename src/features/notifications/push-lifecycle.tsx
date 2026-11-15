@@ -1,5 +1,5 @@
 import { useEffect, useRef } from 'react';
-import { Platform } from 'react-native';
+import { AppState, Platform } from 'react-native';
 import { useRouter } from 'expo-router';
 import * as Notifications from 'expo-notifications';
 import { useNavigationSession } from '@/store/navigation-session';
@@ -7,6 +7,7 @@ import { authApi } from '@/services/auth';
 import { notificationsApi } from '@/services/notifications';
 import { announceNotification, configurePushPresentation, registerPushDevice } from './push-device';
 import { canUseNotifications, destinationForNotification } from './notification-model';
+import { refreshUnreadNotifications, resetUnreadNotifications } from './unread-store';
 
 /**
  * Android notification lifecycle. OS displays standard FCM notification
@@ -22,10 +23,20 @@ export function PushNotificationLifecycle(){
   const epoch=++generation.current,role=session.role;
   let mounted=true;
   const valid=()=>mounted&&generation.current===epoch;
-  // Request permission only on user action. Restore an already granted registration.
-  void registerPushDevice(false).catch(()=>{/* Push is optional; in-app notifications still work. */});
+  // Request Android 13+ permission after the user has authenticated, then
+  // automatically register the FCM token. Manual test pushes are not required.
+  void registerPushDevice(true).catch(()=>{/* Push remains optional if the user refuses consent. */});
+  void refreshUnreadNotifications();
   try{configurePushPresentation();}catch{/* App may be running in Expo Go. */}
-  const received=Notifications.addNotificationReceivedListener(()=>{if(valid())announceNotification();});
+  const received=Notifications.addNotificationReceivedListener(()=>{
+    if(valid()){announceNotification();void refreshUnreadNotifications();}
+  });
+  const appState=AppState.addEventListener('change',state=>{
+    if(valid()&&state==='active'){
+      void refreshUnreadNotifications();
+      void registerPushDevice(false).catch(()=>{});
+    }
+  });
   // Pass the token supplied by Expo. Calling getDevicePushTokenAsync() in
   // addPushTokenListener can trigger another token event and loop indefinitely.
   const tokenChanged=Notifications.addPushTokenListener(token=>{
@@ -49,6 +60,8 @@ export function PushNotificationLifecycle(){
       if(!valid()||acknowledgement.id!==notificationId||!acknowledgement.readAt)return;
       if(handled===notificationId)return;
       handled=notificationId;
+      announceNotification();
+      void refreshUnreadNotifications();
       router.push(destination as never);
     }catch{/* Silent refusal: never navigate from an unverified notification. */}
   };
@@ -56,7 +69,10 @@ export function PushNotificationLifecycle(){
   void Notifications.getLastNotificationResponseAsync().then(response=>{
    if(response&&valid())void handleResponse(response);
   }).catch(()=>{});
-  return()=>{mounted=false;generation.current++;received.remove();tapped.remove();tokenChanged.remove();};
+  return()=>{mounted=false;generation.current++;received.remove();tapped.remove();tokenChanged.remove();appState.remove();};
  },[session.status,session.role,router]);
+ useEffect(()=>{
+   if(session.status!=='authenticated'||!canUseNotifications(session.role)) resetUnreadNotifications();
+ },[session.status,session.role]);
  return null;
 }
