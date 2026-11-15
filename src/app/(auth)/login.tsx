@@ -2,6 +2,9 @@ import { useEffect, useRef, useState } from 'react';
 import { Link, useRouter } from 'expo-router';
 import { loginAccountIssue } from '@/features/auth/account-states';
 import { View } from 'react-native';
+import { CheckCircle2 } from 'lucide-react-native';
+import { GoogleAuthButton } from '@/components/auth/google-auth-button';
+import { useTheme } from '@/hooks/use-theme';
 import { AuthShell } from '@/components/auth/auth-shell';
 import { Button } from '@/components/ui/primitives';
 import { Input, PasswordField } from '@/components/ui/form-fields';
@@ -13,6 +16,7 @@ import { Spacing } from '@/constants/theme';
 
 export default function LoginScreen() {
   const router = useRouter();
+  const theme = useTheme();
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [errors, setErrors] = useState<Record<string, string>>({});
@@ -51,6 +55,12 @@ export default function LoginScreen() {
   return <AuthShell title="Bon retour parmi nous" subtitle="Connectez-vous pour retrouver vos rendez-vous et demandes.">
     <View style={{ gap: Spacing.three }}>
       {errors.form ? <ThemedText themeColor="danger" accessibilityRole="alert">{errors.form}</ThemedText> : null}
+      <GoogleAuthButton />
+      <View style={{ flexDirection: 'row', alignItems: 'center', gap: Spacing.three, marginVertical: Spacing.two }}>
+        <View style={{ height: 1, backgroundColor: theme.border, flex: 1 }} />
+        <ThemedText type="small" themeColor="textSecondary">ou avec votre e-mail</ThemedText>
+        <View style={{ height: 1, backgroundColor: theme.border, flex: 1 }} />
+      </View>
       <Input label="Adresse e-mail" value={email} onChangeText={setEmail}
         keyboardType="email-address" textContentType="emailAddress" autoComplete="email"
         autoCapitalize="none" autoCorrect={false} error={errors.email}
@@ -58,9 +68,15 @@ export default function LoginScreen() {
       <PasswordField label="Mot de passe" value={password} onChangeText={setPassword}
         autoComplete="current-password" textContentType="password" error={errors.password}
         editable={!pending} placeholder="Votre mot de passe" />
-      <Link href="/forgot-password"><ThemedText type="linkPrimary">Mot de passe oublié ?</ThemedText></Link>
+      <View style={{ flexDirection: 'row', alignItems: 'center', flexWrap: 'wrap', justifyContent: 'space-between', gap: Spacing.two }}>
+        <View style={{ flexDirection: 'row', alignItems: 'center', gap: Spacing.two }}>
+          <CheckCircle2 size={20} color={theme.primary} />
+          <ThemedText type="small">Rester connecté</ThemedText>
+        </View>
+        <Link href="/forgot-password"><ThemedText type="linkPrimary">Mot de passe oublié ?</ThemedText></Link>
+      </View>
       <Button label="Se connecter" loading={pending} disabled={pending} onPress={() => { void submit(); }} />
-      <View style={{ alignItems: 'center', gap: Spacing.two }}>
+      <View style={{ flexDirection: 'row', justifyContent: 'center', flexWrap: 'wrap', gap: Spacing.two, paddingTop: Spacing.three }}>
         <ThemedText themeColor="textSecondary">Pas encore de compte ?</ThemedText>
         <Link href="/choose-role"><ThemedText type="linkPrimary">Créer un compte</ThemedText></Link>
       </View>
