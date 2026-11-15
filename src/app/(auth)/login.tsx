@@ -61,12 +61,6 @@ export default function LoginScreen() {
         <View style={{ height: 1, flex: 1, backgroundColor: theme.border }} />
       </View>
       {errors.form ? <ThemedText themeColor="danger" accessibilityRole="alert">{errors.form}</ThemedText> : null}
-      <GoogleAuthButton />
-      <View style={{ flexDirection: 'row', alignItems: 'center', gap: Spacing.three, marginVertical: Spacing.two }}>
-        <View style={{ height: 1, backgroundColor: theme.border, flex: 1 }} />
-        <ThemedText type="small" themeColor="textSecondary">ou avec votre e-mail</ThemedText>
-        <View style={{ height: 1, backgroundColor: theme.border, flex: 1 }} />
-      </View>
       <Input label="Adresse e-mail" value={email} onChangeText={setEmail}
         keyboardType="email-address" textContentType="emailAddress" autoComplete="email"
         autoCapitalize="none" autoCorrect={false} error={errors.email}
