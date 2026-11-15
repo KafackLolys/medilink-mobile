@@ -1,5 +1,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
+import { readFileSync } from 'node:fs';
+import { join } from 'node:path';
 import {
  canUseNotifications,parseNotificationPage,destinationForNotification,
  validateDeviceRegistration,notificationError,NOTIFICATION_PAGE_SIZE,
@@ -40,4 +42,21 @@ test('errors do not show FCM tokens or server internal details',()=>{
  assert.match(notificationError({status:403,message:'secret-token'}),/refusé/);
  assert.match(notificationError({kind:'network'}),/Connexion/);
  assert.doesNotMatch(notificationError({status:500,message:'SECRET_FCM_TOKEN'}),/SECRET/);
+});
+
+test('Android push channel, visible foreground alerts and Firebase app config are aligned',()=>{
+ const root=join(import.meta.dirname,'../../..');
+ const config=JSON.parse(readFileSync(join(root,'app.json'),'utf8')).expo;
+ const firebase=JSON.parse(readFileSync(join(root,'google-services.json'),'utf8'));
+ const push=readFileSync(join(root,'src/features/notifications/push-device.ts'),'utf8');
+ const channel=config.plugins.find(x=>Array.isArray(x)&&x[0]==='expo-notifications')?.[1]?.defaultChannel;
+ assert.equal(channel,'medilink-alerts-v2');
+ assert.match(push,/PUSH_CHANNEL = 'medilink-alerts-v2'/);
+ assert.match(push,/importance: AndroidImportance.HIGH/);
+ assert.match(push,/lockscreenVisibility: AndroidNotificationVisibility.PRIVATE/);
+ assert.match(push,/shouldShowBanner: true/);
+ assert.match(push,/shouldPlaySound: true/);
+ assert.equal(config.android.googleServicesFile,'./google-services.json');
+ assert.ok(firebase.client.some(x=>x.client_info?.android_client_info?.package_name==='com.lolys.medilink'));
+ assert.ok(firebase.project_info?.project_id);
 });
