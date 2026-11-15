@@ -65,6 +65,17 @@
     "experiments": {
       "typedRoutes": true,
       "reactCompiler": true
-    }
+    },
+    "extra": {
+      "router": {
+        "asyncRoutes": {
+          "web": true
+        }
+      },
+      "eas": {
+        "projectId": "8498e2e6-ccaa-4993-8ca6-b048f5e6432c"
+      }
+    },
+    "owner": "lolys"
   }
 }
