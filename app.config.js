@@ -15,7 +15,11 @@ module.exports = ({ config }) => {
     'com.lolys.medilink'
   ).trim();
   const googleServicesFile = process.env.MEDILINK_GOOGLE_SERVICES_FILE?.trim() || config.android?.googleServicesFile || './google-services.json';
-  const projectId = process.env.MEDILINK_EAS_PROJECT_ID?.trim();
+  // The existing Expo project ID is already tracked in app.json.
+  // Requiring an unrelated duplicate environment variable prevented ordinary
+  // development/preview builds before native Android was even compiled.
+  const projectId = process.env.MEDILINK_EAS_PROJECT_ID?.trim() ||
+    config.extra?.eas?.projectId?.trim();
   const apiUrl = process.env.EXPO_PUBLIC_API_BASE_URL?.trim();
   if (packageName && !appIdPattern.test(packageName)) {
     throw new Error('MEDILINK_ANDROID_PACKAGE doit être un identifiant Android inversé valide.');
@@ -48,7 +52,7 @@ module.exports = ({ config }) => {
       throw new Error('Build production bloqué : identité visuelle et versionCode Google Play non approuvés.');
     }
     if (!packageName || !projectId) {
-      throw new Error('Build bloqué : identifiant Android, projet EAS et fichier Firebase Android sont requis.');
+      throw new Error('Build bloqué : identifiant Android ou projet EAS manquant.');
     }
     if (!apiUrl) {
       throw new Error('Build bloqué : EXPO_PUBLIC_API_BASE_URL est requis.');

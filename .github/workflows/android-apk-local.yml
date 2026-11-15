@@ -1,0 +1,84 @@
+name: MediLink Android standalone test APK
+
+on:
+  pull_request:
+    branches: [main]
+    paths:
+      - 'src/**'
+      - 'assets/**'
+      - 'scripts/**'
+      - 'app.json'
+      - 'app.config.js'
+      - 'google-services.json'
+      - 'package.json'
+      - 'package-lock.json'
+      - '.github/workflows/android-apk-local.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  build-installable-apk:
+    name: Compile Android release test APK with Expo Prebuild
+    runs-on: ubuntu-latest
+    timeout-minutes: 70
+    env:
+      EXPO_NO_TELEMETRY: '1'
+      EXPO_PUBLIC_API_BASE_URL: https://medilink-api-lilac.vercel.app
+      EXPO_PUBLIC_GOOGLE_WEB_CLIENT_ID: 353233115193-k7evhvj5518cgp52p17fe6tmmrp64a8h.apps.googleusercontent.com
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: npm
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '17'
+      - name: Install npm dependencies
+        run: npm ci
+      - name: Read non-secret Firebase client key
+        run: |
+          node - <<'NODE'
+          const fs = require('fs');
+          const data = JSON.parse(fs.readFileSync('google-services.json','utf8'));
+          const key = data.client?.[0]?.api_key?.[0]?.current_key;
+          if (!key || !/^[A-Za-z0-9_-]{20,}$/.test(key)) {
+            throw new Error('Firebase Android client configuration unavailable');
+          }
+          fs.appendFileSync(process.env.GITHUB_ENV,'EXPO_PUBLIC_FIREBASE_API_KEY='+key+'\n');
+          NODE
+      - name: Validate TypeScript, startup and Android config
+        run: |
+          npm run typecheck
+          node --test scripts/startup-validation.test.mjs
+          npm run release:validate
+      - name: Expo prebuild native Android project
+        run: npx expo prebuild --platform android --clean --non-interactive
+      - name: Compile standalone release APK (debug-signed, testing only)
+        working-directory: android
+        run: |
+          chmod +x ./gradlew
+          ./gradlew assembleRelease --no-daemon --stacktrace
+      - name: Verify APK exists and is signed
+        run: |
+          set -e
+          apk=android/app/build/outputs/apk/release/app-release.apk
+          test -s "$apk"
+          sdk="${ANDROID_HOME:-${ANDROID_SDK_ROOT:-/usr/local/lib/android/sdk}}"
+          apksigner=$(find "$sdk/build-tools" -name apksigner -type f | sort -V | tail -1)
+          test -x "$apksigner"
+          "$apksigner" verify "$apk"
+          sha256sum "$apk" > medilink-preview-test.apk.sha256
+          cp "$apk" medilink-preview-test.apk
+      - name: Upload installable test APK
+        uses: actions/upload-artifact@v4
+        with:
+          name: medilink-android-test-apk
+          path: |
+            medilink-preview-test.apk
+            medilink-preview-test.apk.sha256
+          if-no-files-found: error
+          retention-days: 14

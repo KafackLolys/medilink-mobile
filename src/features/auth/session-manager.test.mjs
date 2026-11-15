@@ -292,7 +292,7 @@ test('temporary network outage on cold start retains stored session until online
     },
   });
   await x.manager.bootstrap();
-  assert.equal(x.manager.snapshot.status, 'unverified');
+  assert.equal(x.manager.snapshot.status, 'reconnecting');
   assert.equal(x.persisted.refreshToken, 'r1');
   assert.equal(x.manager.idToken, 'old');
   assert.equal(await x.manager.validAccessToken(), null);

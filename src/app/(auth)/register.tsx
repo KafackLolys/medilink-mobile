@@ -33,22 +33,11 @@ export default function RegisterScreen() {
 
   useEffect(() => () => { request.current?.abort(); }, []);
 
-  // When the account type changes, drop role-specific data (specialty /
-  // registration number) and their errors so stale values never linger
-  // between patient and doctor registrations.
-  useEffect(() => {
-    setForm(current => ({
-      ...current,
-      specialty: '',
-      registrationNumber: '',
-    }));
-    setErrors(current => {
-      const next = { ...current };
-      delete next.specialty;
-      delete next.registrationNumber;
-      return next;
-    });
-  }, [form.role]);
+  // Perform role-specific resets in the event handler, not in a render effect.
+  function changeRole(role: 'patient' | 'doctor') {
+    setForm(current => ({ ...current, role, specialty: '', registrationNumber: '' }));
+    setErrors(current => ({ ...current, specialty: '', registrationNumber: '', form: '' }));
+  }
 
   function update<K extends keyof RegisterForm>(key: K, value: RegisterForm[K]) {
     setForm(current => ({ ...current, [key]: value }));
@@ -103,7 +92,7 @@ export default function RegisterScreen() {
     <View style={{ gap: Spacing.three }}>
       <ThemedText type="smallBold">Type de compte</ThemedText>
       <SelectField label="Choisissez votre profil" value={form.role}
-        onChange={value => update('role', value === 'doctor' ? 'doctor' : 'patient')}
+        onChange={value => changeRole(value === 'doctor' ? 'doctor' : 'patient')}
         options={[{ value: 'patient', label: 'Patient' }, { value: 'doctor', label: 'Médecin' }]} />
       <Input label="Prénom" value={form.firstName} onChangeText={value => update('firstName', value)}
         error={errors.firstName} editable={!pending} autoComplete="given-name" textContentType="givenName" />
