@@ -73,8 +73,11 @@ jobs:
           apksigner=$(find "$sdk/build-tools" -name apksigner -type f | sort -V | tail -1)
           test -x "$apksigner"
           "$apksigner" verify "$apk"
-          "$apksigner" verify --print-certs "$apk" | grep -E 'Signer #1 certificate (SHA-1|SHA-256) digest' > medilink-android-signature-sha.txt
+          # Capture the real certificate output without assuming Android SDK
+          # label formatting (SHA1 / SHA-1, SHA256 / SHA-256).
+          "$apksigner" verify --print-certs "$apk" > medilink-android-signature-sha.txt
           test -s medilink-android-signature-sha.txt
+          grep -qiE 'sha.?1|sha.?256' medilink-android-signature-sha.txt
           sha256sum "$apk" > medilink-preview-test.apk.sha256
           cp "$apk" medilink-preview-test.apk
       - name: Upload installable test APK
