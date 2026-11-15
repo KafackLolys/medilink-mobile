@@ -1,3 +1,45 @@
+# Correctif push Android — 15 novembre 2026 (proposé)
+
+Ce document complète l'implémentation d'origine. La **compilation et les tests de livraison sur appareil physique ne sont pas encore prouvés** par cette PR.
+
+## Causes identifiées dans les sources
+
+**Cause principale avérée :** `getDevicePushTokenAsync()` retourne un objet `{type:'android',data:'...'}` sur Android. Le code original exigeait `native.type === 'fcm'`, ce qui refusait systématiquement tout token natif valide. Le correctif attend `native.type === 'android'` et fait vérifier `data` avant le POST au backend. `addPushTokenListener` réutilise désormais le token fourni par l'événement au lieu de rappeler `getDevicePushTokenAsync()` (qui peut déclencher de nouveaux événements). Référence : https://docs.expo.dev/versions/v58.0.0/sdk/notifications/#devicepushtoken.
+
+1. Le handler Expo configurait `shouldShowBanner: false` et `shouldPlaySound: false` ; Android peut ne montrer aucune alerte déroulante alors que la notification est reçue. Corrigé avec bannière et son activés pour le premier plan.
+2. Le canal historique `medilink-updates` utilisait `AndroidImportance.DEFAULT`. Un ancien canal Android ne peut pas être promu de manière fiable à une importance supérieure. Remplacé par le canal **`medilink-alerts-v2`**, avec importance HIGH et visibilité PRIVÉE sur écran verrouillé.
+3. L'API FCM n'indiquait pas explicitement le canal Android ni la priorité. Nouveau payload FCM `android.priority=high`, `android.notification.channelId=medilink-alerts-v2`, et son standard.
+4. Le code refusait les émulateurs via `expo-device.isDevice`, même si un émulateur Android avec Google Play Services peut recevoir des push. Cette restriction a été supprimée.
+5. Le fichier Firebase Android était bien présent dans le dépôt mais `expo.android.googleServicesFile` n'était pas défini sans variable EAS. Le fichier existant est désormais référencé par défaut, avec vérification de la correspondance du package lors du build EAS. L'option `MEDILINK_GOOGLE_SERVICES_FILE` peut toujours fournir un autre fichier Firebase validé.
+6. L'interface signalait des échecs génériques. Elle présente désormais des messages distincts pour permission refusée, absence de token FCM et rejet de l'enregistrement par l'API.
+
+## Deux tests utilisateur, volontairement différents
+
+Dans l'espace **Patient** ou **Médecin → Notifications** :
+
+- **Activer les notifications Android** : crée le canal, vérifie/demande la permission, récupère le token FCM natif et appelle `POST /notifications/devices`. Une confirmation signifie que l'API a enregistré le token, **pas** que le serveur peut livrer un push.
+- **Tester l'affichage d'une alerte locale** : déclenche une notification locale Android; vérifie permission, canal et présentation **sans contacter FCM**.
+- **Envoyer un push de test depuis le serveur** : appelle `POST /notifications/test-push` (nouveau endpoint API authentifié). Le serveur envoie un message générique **uniquement aux tokens mobiles enregistrés pour cet UID** et retourne les nombres d'appareils enregistrés, d'envois acceptés par FCM et de refus. Il n'expose ni token ni données médicales. Une limite de **1 requête par minute et par compte** est enregistrée dans Firestore. **Accepté par FCM ≠ affiché sur le téléphone**.
+
+Attention : déployer **la PR API correspondante** avant d'utiliser « Envoyer un push de test depuis le serveur », sinon l'API renverra 404. Une alerte de test push ne crée pas une notification métier dans le centre de notifications ; son but est de diagnostiquer l'acheminement FCM.
+
+## Conditions nécessaires avant recette
+
+- [ ] Utiliser un **development APK ou un APK preview signé**, pas Expo Go ; Expo Go SDK 58 ne supporte pas les push distants Android.
+- [ ] Confirmer que le package Android compilé, le fichier `google-services.json` et les autorisations du build correspondent à l'application Firebase Android. Le dépôt référence `com.lolys.medilink` dans ce fichier.
+- [ ] Vérifier que l'API déployée utilise le **même identifiant de projet Firebase** (`FIREBASE_PROJECT_ID`) que le client Android et que le service Firebase Cloud Messaging (API HTTP v1) est actif dans le projet Cloud.
+- [ ] Confirmer les autorisations Android : notifications de l'application, canal « Notifications MediLink », restrictions d'économie de batterie et réseau.
+- [ ] Tester successivement premier plan, arrière-plan, application fermée normalement, puis clic et ouverture des routes protégées.
+- [ ] Vérifier la déconnexion : désinscription du token et absence de notifications de l'ancien compte. La révocation hors ligne ne peut pas être garantie sans traitement serveur différé.
+- [ ] Exécuter TypeScript, lint, tests mobile/API, puis un test physique réel. **Aucun APK ni livraison réelle n'est prétendu ici**.
+
+Le SDK Expo officiel confirme : `expo-notifications` ne reçoit pas de push distants dans Expo Go Android (SDK 53+) ; des émulateurs avec Google Play sont possibles ; `shouldPlaySound: false` peut supprimer les alertes déroulantes. Sources :
+- https://docs.expo.dev/versions/v58.0.0/sdk/notifications/
+- https://docs.expo.dev/push-notifications/receiving-notifications/
+- https://docs.expo.dev/push-notifications/fcm-credentials/
+
+---
+
 # Prompt 20 — Centre de notifications Android et FCM
 
 ## Contrats audités

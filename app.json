@@ -32,7 +32,8 @@
         "android.permission.WRITE_EXTERNAL_STORAGE",
         "android.permission.READ_MEDIA_IMAGES",
         "android.permission.READ_MEDIA_VIDEO"
-      ]
+      ],
+      "googleServicesFile": "./google-services.json"
     },
     "web": {
       "output": "server",
@@ -57,7 +58,7 @@
       [
         "expo-notifications",
         {
-          "defaultChannel": "medilink-updates",
+          "defaultChannel": "medilink-alerts-v2",
           "color": "#208AEF"
         }
       ],

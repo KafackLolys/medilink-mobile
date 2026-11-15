@@ -3,6 +3,8 @@
  * EAS credentials and the Google services file belong to protected EAS environments.
  * The canonical package and project ID must be approved by the product owner.
  */
+const fs = require('node:fs');
+const path = require('node:path');
 const appIdPattern = /^[a-z][a-z0-9_]*(?:\.[a-z][a-z0-9_]*)+$/;
 const projectIdPattern = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-8][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
 module.exports = ({ config }) => {
@@ -12,7 +14,7 @@ module.exports = ({ config }) => {
     config.android?.package ||
     'com.lolys.medilink'
   ).trim();
-  const googleServicesFile = process.env.MEDILINK_GOOGLE_SERVICES_FILE?.trim();
+  const googleServicesFile = process.env.MEDILINK_GOOGLE_SERVICES_FILE?.trim() || config.android?.googleServicesFile || './google-services.json';
   const projectId = process.env.MEDILINK_EAS_PROJECT_ID?.trim();
   const apiUrl = process.env.EXPO_PUBLIC_API_BASE_URL?.trim();
   if (packageName && !appIdPattern.test(packageName)) {
@@ -21,7 +23,22 @@ module.exports = ({ config }) => {
   if (projectId && !projectIdPattern.test(projectId)) {
     throw new Error('MEDILINK_EAS_PROJECT_ID doit être un identifiant de projet EAS UUID valide.');
   }
+  // Fail early on mismatched Firebase project/package; FCM would otherwise fail silently.
   if (profile) {
+    if (!fs.existsSync(path.resolve(googleServicesFile))) {
+      throw new Error('Build bloqué : fichier de configuration Firebase Android introuvable.');
+    }
+    try {
+      const firebase = JSON.parse(fs.readFileSync(path.resolve(googleServicesFile), 'utf8'));
+      const declaredPackages = (firebase.client ?? []).map(c => c.client_info?.android_client_info?.package_name);
+      if (!declaredPackages.includes(packageName) || !firebase.project_info?.project_id) {
+        throw new Error('Configuration Firebase Android non concordante avec le package Android.');
+      }
+    } catch (error) {
+      if (error instanceof SyntaxError) throw new Error('Format de configuration Firebase Android invalide.');
+      throw error;
+    }
+
     if (!['development', 'preview', 'production'].includes(profile)) {
       throw new Error('Profil EAS inconnu.');
     }
@@ -30,7 +47,7 @@ module.exports = ({ config }) => {
         process.env.MEDILINK_VERSION_CODE_APPROVED !== 'true')) {
       throw new Error('Build production bloqué : identité visuelle et versionCode Google Play non approuvés.');
     }
-    if (!packageName || !googleServicesFile || !projectId) {
+    if (!packageName || !projectId) {
       throw new Error('Build bloqué : identifiant Android, projet EAS et fichier Firebase Android sont requis.');
     }
     if (!apiUrl) {

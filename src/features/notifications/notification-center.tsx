@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { useFocusEffect, useRouter } from 'expo-router';
-import { FlatList, RefreshControl, View, StyleSheet } from 'react-native';
+import { FlatList, Linking, RefreshControl, View, StyleSheet } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Button, Card, Badge, Header } from '@/components/ui/primitives';
 import { LoadingState, ErrorState, EmptyState } from '@/components/ui/states';
@@ -9,7 +9,7 @@ import { useTheme } from '@/hooks/use-theme';
 import { useNavigationSession } from '@/store/navigation-session';
 import { Spacing } from '@/constants/theme';
 import { notificationsApi } from '@/services/notifications';
-import { registerPushDevice, subscribeNotifications } from '@/features/notifications/push-device';
+import { PushRegistrationError, registerPushDevice, subscribeNotifications, testLocalPushPresentation } from '@/features/notifications/push-device';
 import { destinationForNotification, parseNotificationPage, notificationError, canUseNotifications, NOTIFICATION_PAGE_SIZE } from '@/features/notifications/notification-model';
 import type { NotificationPage, UserNotification } from '@/types/domain';
 
@@ -19,6 +19,8 @@ export function NotificationCenter({role}:{role:'patient'|'doctor'}){
  const [state,setState]=useState<State>({status:'loading'}),[page,setPage]=useState(1);
  const [refreshing,setRefreshing]=useState(false),[busy,setBusy]=useState<string|null>(null),[error,setError]=useState('');
  const [pushBusy,setPushBusy]=useState(false),[pushNotice,setPushNotice]=useState('');
+ const [localTestBusy,setLocalTestBusy]=useState(false),[settingsRequired,setSettingsRequired]=useState(false);
+ const [fcmTestBusy,setFcmTestBusy]=useState(false);
  const controller=useRef<AbortController|null>(null),sequence=useRef(0),mutation=useRef(false),lifecycle=useRef(0);
  const allowed=session.status==='authenticated'&&session.role===role&&canUseNotifications(session.role);
  const load=useCallback((pull=false)=>{
@@ -39,11 +41,57 @@ export function NotificationCenter({role}:{role:'patient'|'doctor'}){
  },[allowed,load]));
  async function activatePush(){
    if(pushBusy||!allowed)return;
-   setPushBusy(true);setPushNotice('');
-   try{const registered=await registerPushDevice(true);
-     setPushNotice(registered?'Notifications Android activées pour ce compte.':'Permission refusée ou configuration FCM indisponible. Le centre de notifications reste accessible.');
-   }catch{setPushNotice('Activation push indisponible. Vérifiez la configuration Firebase du build Android.');}
-   finally{setPushBusy(false);}
+   setPushBusy(true);setPushNotice('');setSettingsRequired(false);
+   try{
+     const registered=await registerPushDevice(true);
+     setPushNotice(registered
+       ? 'Token FCM enregistré par le serveur. Les notifications reçues apparaîtront dans Android.'
+       : 'Appareil non enregistré : vérifiez votre connexion et reconnectez-vous.');
+   }catch(cause){
+     if(cause instanceof PushRegistrationError){
+       setPushNotice(cause.message);
+       setSettingsRequired(cause.reason==='permission');
+     }else{
+       setPushNotice('Activation impossible. Vérifiez les paramètres Android, Firebase et la connexion API.');
+     }
+   }finally{setPushBusy(false);}
+ }
+ async function testLocalAlert(){
+   if(localTestBusy||!allowed)return;
+   setLocalTestBusy(true);setPushNotice('');
+   try{
+     await testLocalPushPresentation();
+     setPushNotice('Alerte locale demandée. Si elle ne s’affiche pas, vérifiez les autorisations et le canal Android. Ce test ne valide pas la livraison FCM depuis le serveur.');
+   }catch(cause){
+     setPushNotice(cause instanceof PushRegistrationError ? cause.message :
+       'Test local impossible. Vérifiez les notifications de l’application dans Android.');
+   }finally{setLocalTestBusy(false);}
+ }
+ async function testServerPush(){
+   if(fcmTestBusy||!allowed)return;
+   setFcmTestBusy(true);setPushNotice('');setSettingsRequired(false);
+   try{
+     const registered=await registerPushDevice(true);
+     if(!registered)throw new Error('Le téléphone n’est pas encore enregistré auprès du serveur.');
+     const result=await notificationsApi.testPush();
+     if(result.acceptedByFcm>0){
+       setPushNotice(`FCM a accepté l’envoi vers ${result.acceptedByFcm} appareil(s). Vérifiez maintenant la réception de l’alerte Android. L’acceptation FCM ne garantit pas sa présentation par le téléphone.`);
+     }else{
+       setPushNotice(`Le serveur connaît ${result.registeredDevices} appareil(s), mais FCM a refusé le test. Vérifiez les identifiants et le projet Firebase côté API.`);
+     }
+   }catch(cause){
+     if(cause instanceof PushRegistrationError){
+       setPushNotice(cause.message);
+       setSettingsRequired(cause.reason==='permission');
+     }else{
+       const status=(cause as {status?:number}|null)?.status;
+       setPushNotice(status===429
+         ? 'Un test push a déjà été demandé. Réessayez dans une minute.'
+         : status===400
+           ? 'Aucun appareil Android enregistré pour ce compte.'
+           : 'Test FCM indisponible. L’API doit disposer de la route /notifications/test-push et d’un accès Firebase Messaging fonctionnel.');
+     }
+   }finally{setFcmTestBusy(false);}
  }
  async function markRead(item:UserNotification,open=false){
    if(mutation.current||!allowed)return;
@@ -79,6 +127,12 @@ export function NotificationCenter({role}:{role:'patient'|'doctor'}){
      ListHeaderComponent={<View style={styles.header}>
        <Header title="Notifications" subtitle="Événements et mises à jour associés à votre compte Medilink."/>
        <Button label="Activer les notifications Android" variant="outline" loading={pushBusy} onPress={()=>{void activatePush();}}/>
+       <Button label="Tester l’affichage d’une alerte locale" variant="outline" loading={localTestBusy}
+         onPress={()=>{void testLocalAlert();}}/>
+       <Button label="Envoyer un push de test depuis le serveur" variant="outline" loading={fcmTestBusy}
+         onPress={()=>{void testServerPush();}}/>
+       {settingsRequired ? <Button label="Ouvrir les réglages Android" variant="outline"
+         onPress={()=>{void Linking.openSettings();}}/> : null}
        {pushNotice?<ThemedText type="small" themeColor="textSecondary" accessibilityRole="alert">{pushNotice}</ThemedText>:null}
        {value?<View style={styles.summary}>
          <Badge label={value.unreadCount+' non lue(s)'} tone={value.unreadCount?'info':'neutral'}/>

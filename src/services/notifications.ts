@@ -7,6 +7,9 @@ export const notificationsApi = {
   read: (id: string, signal?: AbortSignal) =>
     apiRequest<{ id: string; readAt: string }>('/notifications/' + encodeURIComponent(id) + '/read', { method: 'PATCH', signal }),
   readAll: (signal?: AbortSignal) => apiRequest<{ updated: number }>('/notifications/read-all', { method: 'PATCH', signal }),
+  testPush: (signal?: AbortSignal) =>
+    apiRequest<{ registeredDevices: number; acceptedByFcm: number; rejectedByFcm: number }>(
+      '/notifications/test-push', { method: 'POST', signal }),
   register: (body: RegisterDeviceRequest, signal?: AbortSignal) =>
     apiRequest<{ deviceId: string; platform: 'web' | 'mobile' }>('/notifications/devices', { method: 'POST', body, signal }),
   unregister: (deviceId: string, signal?: AbortSignal) =>

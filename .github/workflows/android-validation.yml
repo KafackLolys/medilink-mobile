@@ -5,6 +5,9 @@ on:
     branches: [main]
     paths:
       - 'src/**'
+      - 'app.json'
+      - 'app.config.js'
+      - 'google-services.json'
       - 'package.json'
       - 'package-lock.json'
       - '.github/workflows/android-validation.yml'
@@ -25,6 +28,7 @@ jobs:
       - run: npm ci
       - run: npm run typecheck
       - run: npm run lint
+      - run: npm run release:validate
       - run: npm run test:http
       - run: npm run test:auth
       - run: npm run test:session

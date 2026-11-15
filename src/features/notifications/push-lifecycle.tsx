@@ -26,7 +26,11 @@ export function PushNotificationLifecycle(){
   void registerPushDevice(false).catch(()=>{/* Push is optional; in-app notifications still work. */});
   try{configurePushPresentation();}catch{/* App may be running in Expo Go. */}
   const received=Notifications.addNotificationReceivedListener(()=>{if(valid())announceNotification();});
-  const tokenChanged=Notifications.addPushTokenListener(()=>{if(valid())void registerPushDevice(false).catch(()=>{});});
+  // Pass the token supplied by Expo. Calling getDevicePushTokenAsync() in
+  // addPushTokenListener can trigger another token event and loop indefinitely.
+  const tokenChanged=Notifications.addPushTokenListener(token=>{
+    if(valid())void registerPushDevice(false, token).catch(()=>{});
+  });
   let handled:string|null=null;
   const handleResponse=async(response:Notifications.NotificationResponse)=>{
     if(!valid())return;
