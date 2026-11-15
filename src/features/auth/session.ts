@@ -4,7 +4,6 @@ import { authApi } from '@/services/auth';
 import { apiRequest, configureHttpAuth, resetHttpAuth } from '@/services/http';
 import { useNavigationSession } from '@/store/navigation-session';
 import type { AuthenticatedUser, LoginResponse } from '@/types/domain';
-import { unregisterPushDevice } from '@/features/notifications/push-device';
 import { clearPublicDoctorDirectoryCache } from '@/features/network/public-directory-cache';
 
 /**
@@ -52,11 +51,16 @@ export function restoreSession() {
 export async function logoutSession() {
   // Attempt server-side device revocation BEFORE SecureStore credentials are erased.
   // If offline, local logout still wins; see the documented backend revocation gap.
-  try { await unregisterPushDevice(); } catch { /* Do not block local logout. */ }
+  try {
+    // Optional notifications must never block app boot/login or local logout.
+    const { unregisterPushDevice } = await import('@/features/notifications/push-device');
+    await unregisterPushDevice();
+  } catch { /* Do not block local logout. */ }
   try { await sessionManager.logout(); }
   finally {
-    const { cancelPendingGoogleRegistration } = await import('@/features/auth/google-auth');
-    await cancelPendingGoogleRegistration();
+    // Use the same Google state owner as the login/role-selection screens.
+    const { discardPendingGoogleRegistration } = await import('@/features/auth/google-sign-in');
+    await discardPendingGoogleRegistration();
   }
 }
 
