@@ -4,6 +4,7 @@ import { Pressable, RefreshControl, ScrollView, StyleSheet, View } from 'react-n
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Avatar, Badge, Button, Card, Header } from '@/components/ui/primitives';
 import { LoadingState, EmptyState } from '@/components/ui/states';
+import { MedihomeHeader } from '@/components/ui/medihome-header';
 import { ThemedText } from '@/components/themed-text';
 import { useTheme } from '@/hooks/use-theme';
 import { useNavigationSession } from '@/store/navigation-session';
@@ -184,9 +185,10 @@ export default function DoctorDashboardScreen() {
       refreshControl={<RefreshControl refreshing={refreshing} onRefresh={() => load(true)}
         colors={[theme.primary]} tintColor={theme.primary}
         accessibilityLabel="Actualiser le tableau de bord médecin" />}>
+      <MedihomeHeader name={profile?.name} notificationsHref="/medecin/notifications" />
       <View style={[styles.hero, { backgroundColor: theme.infoSurface }]}>
         <ThemedText type="smallBold" themeColor="primary">ESPACE PROFESSIONNEL</ThemedText>
-        <Header action={<Link href="/medecin/notifications"><ThemedText type="smallBold" themeColor="primary">Notifications</ThemedText></Link>} title="Bonjour Docteur 👋"
+        <Header title="Bonjour Docteur 👋"
           subtitle="Votre activité et vos consultations, à partir des données Medilink." />
         {profile ? <View style={styles.identity}>
           <Avatar name={profile.name} size={52} />
@@ -389,10 +391,10 @@ const styles = StyleSheet.create({
   section: { gap: Spacing.three },
   sectionHead: { flexDirection: 'row', alignItems: 'center', gap: Spacing.two },
   metrics: { flexDirection: 'row', flexWrap: 'wrap', gap: Spacing.two },
-  metric: { flexBasis: 138, flexGrow: 1, minHeight: 130, padding: Spacing.three,
+  metric: { flexBasis: '100%', flexGrow: 1, minHeight: 105, padding: Spacing.three,
     borderWidth: 1, borderRadius: Radius.xlarge, gap: Spacing.two },
   quickGrid: { flexDirection: 'row', flexWrap: 'wrap', gap: Spacing.two },
-  quickLink: { flexGrow: 1, flexBasis: 150, borderRadius: Radius.large,
+  quickLink: { flexGrow: 1, flexBasis: '100%', borderRadius: Radius.large,
     borderWidth: 1, padding: Spacing.three, minHeight: MinimumTouchTarget + 34,
     gap: Spacing.two, justifyContent: 'center' },
 });

@@ -53,7 +53,11 @@ export async function logoutSession() {
   // Attempt server-side device revocation BEFORE SecureStore credentials are erased.
   // If offline, local logout still wins; see the documented backend revocation gap.
   try { await unregisterPushDevice(); } catch { /* Do not block local logout. */ }
-  await sessionManager.logout();
+  try { await sessionManager.logout(); }
+  finally {
+    const { cancelPendingGoogleRegistration } = await import('@/features/auth/google-auth');
+    await cancelPendingGoogleRegistration();
+  }
 }
 
 export async function clearEphemeralSession() {

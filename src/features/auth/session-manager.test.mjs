@@ -253,3 +253,37 @@ for (const status of ['suspended', 'deleted']) {
     assert.equal(x.persisted, null);
   });
 }
+
+test('temporary network outage on cold start retains stored session until online revalidation', async () => {
+  let offline = true;
+  const saved = { idToken: 'old', refreshToken: 'r1', userId: 'u1', expiresAt: 0 };
+  const x = fixture({
+    stored: saved,
+    refresh: async () => {
+      if (offline) throw Object.assign(new Error('network unavailable'), { kind: 'network' });
+      return response('u1', 'new', 'r2');
+    },
+  });
+  await x.manager.bootstrap();
+  assert.equal(x.manager.snapshot.status, 'unverified');
+  assert.equal(x.persisted.refreshToken, 'r1');
+  assert.equal(x.manager.idToken, 'old');
+  assert.equal(await x.manager.validAccessToken(), null);
+  offline = false;
+  await x.manager.bootstrap();
+  assert.equal(x.manager.snapshot.status, 'authenticated');
+  assert.equal(x.persisted.refreshToken, 'r2');
+  assert.equal(x.refreshCalls, 2);
+});
+
+test('temporary server error while refreshing an active session does not log out', async () => {
+  const x = fixture({
+    refresh: async () => {
+      throw Object.assign(new Error('temporarily unavailable'), { kind: 'server', status: 503 });
+    },
+  });
+  await x.manager.login(response());
+  assert.equal(await x.manager.refresh(), false);
+  assert.equal(x.manager.snapshot.status, 'authenticated');
+  assert.equal(x.persisted.refreshToken, 'refresh-A');
+});

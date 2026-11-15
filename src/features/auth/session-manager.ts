@@ -9,6 +9,7 @@ export type SessionTokens = {
 export type SessionSnapshot =
   | { status: 'loading'; role: null }
   | { status: 'unauthenticated'; role: null }
+  | { status: 'unverified'; role: null }
   | { status: 'authenticated'; role: AccountRole; accountStatus: AccountStatus };
 
 export type SessionStorage = {
@@ -49,6 +50,13 @@ function parseTokens(response: LoginResponse, now: number): SessionTokens {
     userId: response.user.id,
     expiresAt: now + response.expiresIn * 1000,
   };
+}
+
+/** Temporary connectivity/server failures must not delete saved credentials. */
+function isTransientFailure(error: unknown): boolean {
+  const cause = error as { kind?: string; status?: number | null } | null;
+  return cause?.kind === 'network' || cause?.kind === 'timeout' ||
+    cause?.kind === 'server' || (typeof cause?.status === 'number' && cause.status >= 500);
 }
 
 /**
@@ -175,7 +183,13 @@ export class SessionManager {
         const user = await this.verifiedProfile(valid);
         if (epoch !== this.generation) return;
         this.publish({ status: 'authenticated', role: user.role, accountStatus: user.status });
-      } catch {
+      } catch (error) {
+        if (epoch === this.generation && isTransientFailure(error)) {
+          // Keep SecureStore intact, but never open protected routes without
+          // fresh backend verification. The user can retry when online.
+          this.publish({ status: 'unverified', role: null });
+          return;
+        }
         if (epoch === this.generation) {
           try { await this.clear(); }
           catch { this.publish({ status: 'unauthenticated', role: null }); }
@@ -186,7 +200,7 @@ export class SessionManager {
     wrapped = flight.finally(() => {
       if (this.bootFlight === wrapped) {
         this.bootFlight = null;
-        this.bootCompleted = true;
+        this.bootCompleted = this.state.status !== 'unverified';
       }
     });
     this.bootFlight = wrapped;
@@ -214,8 +228,14 @@ export class SessionManager {
           if (epoch === this.generation) this.publish({ status: 'authenticated', role: result.user.role, accountStatus: result.user.status });
         }
         return true;
-      } catch {
+      } catch (error) {
         if (epoch === this.generation && this.tokens?.refreshToken === current.refreshToken) {
+          if (isTransientFailure(error)) {
+            if (this.state.status === 'loading') {
+              this.publish({ status: 'unverified', role: null });
+            }
+            return false;
+          }
           await this.clear();
         }
         return false;

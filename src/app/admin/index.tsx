@@ -8,6 +8,8 @@ import { EmptyState, ErrorState, LoadingState } from '@/components/ui/states';
 import { Modal } from '@/components/ui/overlays';
 import { ThemedText } from '@/components/themed-text';
 import { LogoutButton } from '@/components/auth/logout-button';
+import { CreateAdminForm } from '@/components/admin/create-admin-form';
+import { MedihomeHeader } from '@/components/ui/medihome-header';
 import { useTheme } from '@/hooks/use-theme';
 import { useNavigationSession } from '@/store/navigation-session';
 import { Spacing } from '@/constants/theme';
@@ -142,16 +144,13 @@ export default function AdminHome(){
    refreshControl={<RefreshControl refreshing={refreshing} onRefresh={()=>load(true)}
     colors={[theme.primary]} tintColor={theme.primary}/>}
    ListHeaderComponent={<View style={styles.header}>
-    <Header title="Administration Medilink" subtitle="Gestion sécurisée des comptes patients et médecins."/>
+    <MedihomeHeader name="Administrateur MediLink" />
+    <ThemedText type="smallBold" themeColor="primary">ADMINISTRATION</ThemedText>
+    <Header title="Comptes de la plateforme" subtitle="Consultez les patients et médecins, gérez leurs accès et créez de nouveaux comptes administrateurs."/>
     <Card>
      <ThemedText type="small" themeColor="textSecondary">
       Les opérations sont contrôlées par FirebaseAuthGuard et AdminGuard côté serveur.
       Les changements sensibles exigent une confirmation individuelle.
-     </ThemedText>
-     <ThemedText type="smallBold">Création d’administrateurs</ThemedText>
-     <ThemedText type="small" themeColor="textSecondary">
-      Réservée à l’administration web : manipulation d’un mot de passe provisoire
-      et transmission sécurisée des identifiants.
      </ThemedText>
     </Card>
     {notice?<ThemedText themeColor="success" accessibilityRole="alert">{notice}</ThemedText>:null}
@@ -209,8 +208,12 @@ export default function AdminHome(){
      <Button label="Précédent" variant="outline" disabled={page<=1||saving} onPress={()=>setPage(p=>Math.max(1,p-1))}/>
      <Button label="Suivant" variant="outline" disabled={page>=result.totalPages||saving} onPress={()=>setPage(p=>p+1)}/>
     </View>
+    <CreateAdminForm enabled={authorized} onCreated={() => { setPage(1); load(true); }} />
     <LogoutButton/>
-   </View>:undefined}
+   </View>:<View style={styles.footer}>
+     <CreateAdminForm enabled={authorized} onCreated={() => { setPage(1); load(true); }} />
+     <LogoutButton/>
+    </View>}
   />
   <Modal visible={!!edit} title={edit?.type==='status'?'Modifier le statut du compte':'Modifier la vérification'}
    description="Vous préparez une opération administrative. Une seconde confirmation sera nécessaire."

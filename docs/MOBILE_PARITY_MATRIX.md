@@ -97,3 +97,25 @@ La campagne d'essais sur appareil est détaillée dans `docs/ANDROID_RELEASE_BUI
 ## Décision de release
 
 **NON PRÊT À PUBLIER.** L'implémentation mobile et les configurations EAS constituent une **candidate source pré-build**, pas une release Android installable validée. La transition vers « prête » requiert tous les critères bloquants, des preuves Android réelles et la revue de confidentialité/sécurité. La PR #4 n'est pas fusionnée.
+
+## Addendum — Portage visuel et Google natif (15 novembre 2026, branche de validation)
+
+La branche `feat/mobile-google-auth-web-parity-20261115` ajoute des évolutions
+postérieures au présent audit du 13 novembre. Elles **ne sont pas présumées
+fonctionnelles sur appareil ni fusionnées dans `main`** tant que la revue,
+l'intégration Firebase, le `npm ci`, les tests CI, et la recette Android
+authentifiée ne sont pas terminés.
+
+| ID | Évolution sur la branche | État du code / preuve restante |
+| --- | --- | --- |
+| A04 | Google OAuth natif Android, état existant + choix du rôle Google inconnu | **P** : client Google 17, échange Firebase Identity Toolkit, API Google existante ; build natif, SHA de signature et E2E à faire |
+| A05 | Conserver la session SecureStore sur panne réseau/503 au démarrage | **P** : état `unverified` et nouvelle tentative, tests de modèle ajoutés ; appareil hors ligne et reprise à éprouver |
+| U01 | Accueil public inspiré de la capture, sections, spécialités, CTA | **P** : écran natif, pas d'annuaire public non autorisé ni faux médecins |
+| U02 | Connexion, choix de rôle, inscription : nouveaux composants visuels | **P** : revue TalkBack, petites tailles, clavier et E2E requise |
+| U03 | Barre Medihome patient/médecin/admin, KPI plus lisibles, RDV direct annuaire | **P** : rendu Expo natif non encore vérifié visuellement |
+| X05 | Création admin native, double confirmation, appel `POST /admin/admins` | **P** : API et AdminGuard existants ; test administrateur réel nécessaire |
+| P15 | Aide native, contact via `POST /integration/contact` | **P** : appel réel et validation à vérifier |
+| P16 | Politique de confidentialité et conditions natives portées depuis le web | **B légal** : web conserve des placeholders [éditeur/pays/durée/juridiction] ; revue juridique et mise à jour commune avant publication |
+
+Consulter `docs/MOBILE_GOOGLE_AUTH_PARITY.md` pour la configuration Google/Firebase,
+la liste des preuves et la recette complète.
