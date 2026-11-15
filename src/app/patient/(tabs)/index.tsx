@@ -7,6 +7,7 @@ import {
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Card, Header, Avatar, Badge, Button } from '@/components/ui/primitives';
 import { ThemedText } from '@/components/themed-text';
+import { MedihomeHeader } from '@/components/ui/medihome-header';
 import { LoadingState, EmptyState } from '@/components/ui/states';
 import { Spacing, Radius, MinimumTouchTarget } from '@/constants/theme';
 import { useTheme } from '@/hooks/use-theme';
@@ -160,7 +161,8 @@ export default function PatientDashboard() {
       refreshControl={<RefreshControl refreshing={refreshing} onRefresh={() => load(true)}
         colors={[theme.primary]} tintColor={theme.primary} accessibilityLabel="Actualiser le tableau de bord" />}
       keyboardShouldPersistTaps="handled">
-      <Header action={<Link href="/patient/notifications"><ThemedText type="smallBold" themeColor="primary">Notifications</ThemedText></Link>} title={firstName ? `Bonjour ${firstName} 👋` : 'Bonjour, bienvenue 👋'}
+      <MedihomeHeader name={firstName} notificationsHref="/patient/notifications" />
+      <Header title={firstName ? `Bonjour ${firstName} 👋` : 'Bonjour, bienvenue 👋'}
         subtitle="Vos démarches médicales et vos rendez-vous." />
       {data.profile.status === 'success' ? (
         <LinkCard href="/patient/profil" title="Mon profil" description="Consulter mes informations" color={theme.backgroundElement} />
@@ -285,7 +287,7 @@ const styles = StyleSheet.create({
   sectionHeader: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', gap: Spacing.two },
   sectionTitle: { flexShrink: 1 },
   metrics: { flexDirection: 'row', gap: Spacing.two, flexWrap: 'wrap' },
-  metric: { minWidth: 136, flexBasis: 140, flexGrow: 1, borderWidth: 1, borderRadius: Radius.xlarge,
+  metric: { minWidth: 136, flexBasis: '100%', flexGrow: 1, borderWidth: 1, borderRadius: Radius.xlarge,
     padding: Spacing.three, minHeight: 100, justifyContent: 'space-between', gap: Spacing.two },
   inline: { flexDirection: 'row', alignItems: 'center', gap: Spacing.two },
   footer: { textAlign: 'center' },
