@@ -58,7 +58,7 @@ async function exchangeGoogleToken(googleIdToken: string, signal?: AbortSignal):
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({
       requestUri: 'http://localhost',
-      postBody: new URLSearchParams({ id_token: googleIdToken, providerId: 'google.com' }).toString(),
+      postBody: 'id_token=' + encodeURIComponent(googleIdToken) + '&providerId=google.com',
       returnSecureToken: true,
     }),
     signal,
