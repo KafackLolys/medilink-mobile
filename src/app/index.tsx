@@ -3,7 +3,7 @@ import { Pressable, StyleSheet, View } from 'react-native';
 import {
   Activity, ArrowRight, Brain, CalendarCheck, ChevronRight, Flower2,
   HeartPulse, MapPin, MessageCircle, Plus, Search, ShieldCheck,
-  Sparkles, Stethoscope, UserRound, Baby, LayoutGrid,
+  Sparkles, Stethoscope, Baby, LayoutGrid,
 } from 'lucide-react-native';
 import type { ComponentType } from 'react';
 import type { LucideProps } from 'lucide-react-native';
