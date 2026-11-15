@@ -8,6 +8,7 @@ import { EmptyState, ErrorState, LoadingState } from '@/components/ui/states';
 import { Modal } from '@/components/ui/overlays';
 import { ThemedText } from '@/components/themed-text';
 import { LogoutButton } from '@/components/auth/logout-button';
+import { CreateAdminForm } from '@/components/admin/create-admin-form';
 import { useTheme } from '@/hooks/use-theme';
 import { useNavigationSession } from '@/store/navigation-session';
 import { Spacing } from '@/constants/theme';
@@ -148,11 +149,6 @@ export default function AdminHome(){
       Les opérations sont contrôlées par FirebaseAuthGuard et AdminGuard côté serveur.
       Les changements sensibles exigent une confirmation individuelle.
      </ThemedText>
-     <ThemedText type="smallBold">Création d’administrateurs</ThemedText>
-     <ThemedText type="small" themeColor="textSecondary">
-      Réservée à l’administration web : manipulation d’un mot de passe provisoire
-      et transmission sécurisée des identifiants.
-     </ThemedText>
     </Card>
     {notice?<ThemedText themeColor="success" accessibilityRole="alert">{notice}</ThemedText>:null}
     {error?<ThemedText themeColor="danger" accessibilityRole="alert">{error}</ThemedText>:null}
@@ -209,8 +205,12 @@ export default function AdminHome(){
      <Button label="Précédent" variant="outline" disabled={page<=1||saving} onPress={()=>setPage(p=>Math.max(1,p-1))}/>
      <Button label="Suivant" variant="outline" disabled={page>=result.totalPages||saving} onPress={()=>setPage(p=>p+1)}/>
     </View>
+    <CreateAdminForm enabled={authorized} onCreated={() => { setPage(1); load(true); }} />
     <LogoutButton/>
-   </View>:undefined}
+   </View>:<View style={styles.footer}>
+     <CreateAdminForm enabled={authorized} onCreated={() => { setPage(1); load(true); }} />
+     <LogoutButton/>
+    </View>}
   />
   <Modal visible={!!edit} title={edit?.type==='status'?'Modifier le statut du compte':'Modifier la vérification'}
    description="Vous préparez une opération administrative. Une seconde confirmation sera nécessaire."
