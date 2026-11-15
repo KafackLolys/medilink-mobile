@@ -1,8 +1,9 @@
 import { Link, Redirect } from 'expo-router';
 import { View } from 'react-native';
-import { Screen, Header, Card } from '@/components/ui/primitives';
+import { Screen, Header, Card, Button } from '@/components/ui/primitives';
 import { ThemedText } from '@/components/themed-text';
 import { roleHome, useNavigationSession } from '@/store/navigation-session';
+import { logoutSession, restoreSession } from '@/features/auth/session';
 import { LoadingState } from '@/components/ui/states';
 import { Spacing } from '@/constants/theme';
 
@@ -17,6 +18,18 @@ export default function Index() {
   const session = useNavigationSession(state => state.session);
   if (session.status === 'loading') return <Screen><LoadingState label="Vérification de votre session…" /></Screen>;
   if (session.status === 'authenticated') return <Redirect href={roleHome(session.role)} />;
+  if (session.status === 'reconnecting') return <Screen>
+    <Header title="Votre session est conservée"
+      subtitle="Une connexion au serveur est nécessaire pour sécuriser l’accès à votre espace." />
+    <Card>
+      <ThemedText themeColor="textSecondary">
+        Vos identifiants sont toujours enregistrés de façon sécurisée sur cet appareil.
+        Vous pourrez reprendre votre session sans ressaisir votre mot de passe dès que le réseau fonctionnera.
+      </ThemedText>
+      <Button label="Réessayer la connexion" onPress={() => { void restoreSession(); }} />
+      <Button label="Me déconnecter" variant="outline" onPress={() => { void logoutSession(); }} />
+    </Card>
+  </Screen>;
 
   return (
     <Screen>
