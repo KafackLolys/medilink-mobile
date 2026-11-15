@@ -4,6 +4,8 @@ Ce document complète l'implémentation d'origine. La **compilation et les tests
 
 ## Causes identifiées dans les sources
 
+**Cause principale avérée :** `getDevicePushTokenAsync()` retourne un objet `{type:'android',data:'...'}` sur Android. Le code original exigeait `native.type === 'fcm'`, ce qui refusait systématiquement tout token natif valide. Le correctif attend `native.type === 'android'` et fait vérifier `data` avant le POST au backend. `addPushTokenListener` réutilise désormais le token fourni par l'événement au lieu de rappeler `getDevicePushTokenAsync()` (qui peut déclencher de nouveaux événements). Référence : https://docs.expo.dev/versions/v58.0.0/sdk/notifications/#devicepushtoken.
+
 1. Le handler Expo configurait `shouldShowBanner: false` et `shouldPlaySound: false` ; Android peut ne montrer aucune alerte déroulante alors que la notification est reçue. Corrigé avec bannière et son activés pour le premier plan.
 2. Le canal historique `medilink-updates` utilisait `AndroidImportance.DEFAULT`. Un ancien canal Android ne peut pas être promu de manière fiable à une importance supérieure. Remplacé par le canal **`medilink-alerts-v2`**, avec importance HIGH et visibilité PRIVÉE sur écran verrouillé.
 3. L'API FCM n'indiquait pas explicitement le canal Android ni la priorité. Nouveau payload FCM `android.priority=high`, `android.notification.channelId=medilink-alerts-v2`, et son standard.
