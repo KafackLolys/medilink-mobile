@@ -1,0 +1,78 @@
+name: MediLink Expo Preview APK
+
+on:
+  pull_request:
+    branches: [main]
+    paths:
+      - 'src/**'
+      - 'app.json'
+      - 'app.config.js'
+      - 'eas.json'
+      - 'google-services.json'
+      - 'package.json'
+      - 'package-lock.json'
+      - '.github/workflows/android-apk-preview.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  preview-apk:
+    name: Build installable preview APK with EAS
+    runs-on: ubuntu-latest
+    timeout-minutes: 90
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: npm
+      - name: Verify Expo access token
+        env:
+          EXPO_TOKEN: ${{ secrets.EXPO_TOKEN }}
+        run: |
+          if [ -z "$EXPO_TOKEN" ]; then
+            echo "::error::APK non généré : ajouter EXPO_TOKEN dans les secrets GitHub Actions du dépôt. Le compte Expo doit avoir accès au projet MediLink."
+            exit 1
+          fi
+      - name: Install dependencies
+        run: npm ci
+      - name: Setup EAS CLI
+        uses: expo/expo-github-action@v8
+        with:
+          eas-version: latest
+          token: ${{ secrets.EXPO_TOKEN }}
+      - name: Validate native project and Expo bundle
+        env:
+          EXPO_PUBLIC_API_BASE_URL: https://medilink-api-lilac.vercel.app
+        run: |
+          npm run typecheck
+          npm run release:validate
+          node --test scripts/startup-validation.test.mjs
+          npx expo export --platform android --output-dir /tmp/medilink-apk-preflight
+      - name: Build Android APK via Expo EAS
+        env:
+          EXPO_PUBLIC_API_BASE_URL: https://medilink-api-lilac.vercel.app
+          EXPO_PUBLIC_GOOGLE_WEB_CLIENT_ID: 353233115193-k7evhvj5518cgp52p17fe6tmmrp64a8h.apps.googleusercontent.com
+        run: |
+          # EAS manages the Android signing key and Expo build credentials.
+          # EXPO_PUBLIC_FIREBASE_API_KEY must be configured in EAS preview environment.
+          eas build --platform android --profile preview --non-interactive --wait --json > /tmp/medilink-eas-build.json
+          node -e '
+            const fs = require("fs");
+            const result = JSON.parse(fs.readFileSync("/tmp/medilink-eas-build.json","utf8"));
+            const build = Array.isArray(result) ? result[0] : result;
+            const url = build?.artifacts?.buildUrl ?? build?.artifacts?.applicationArchiveUrl;
+            if (!url || !/^https:\/\//.test(url)) {
+              throw new Error("EAS ne fournit aucun APK vérifiable");
+            }
+            fs.writeFileSync("medilink-apk-build-info.json",
+              JSON.stringify({id:build.id,status:build.status,artifactUrl:url,profile:"preview",gitSha:process.env.GITHUB_SHA},null,2));
+          '
+      - name: Store verified EAS APK link and build identifier
+        uses: actions/upload-artifact@v4
+        with:
+          name: medilink-preview-apk-build-info
+          path: medilink-apk-build-info.json
+          retention-days: 14
