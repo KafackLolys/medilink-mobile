@@ -56,6 +56,11 @@ test('Android push channel, visible foreground alerts and Firebase app config ar
  assert.match(push,/lockscreenVisibility: AndroidNotificationVisibility.PRIVATE/);
  assert.match(push,/shouldShowBanner: true/);
  assert.match(push,/shouldPlaySound: true/);
+ // Expo's native token type is Platform.OS ("android"), not "fcm".
+ assert.match(push,/native.type !== 'android'/);
+ assert.doesNotMatch(push,/native.type !== 'fcm'/);
+ const lifecycle=readFileSync(join(root,'src/features/notifications/push-lifecycle.tsx'),'utf8');
+ assert.match(lifecycle,/registerPushDevice\(false, token\)/);
  assert.equal(config.android.googleServicesFile,'./google-services.json');
  assert.ok(firebase.client.some(x=>x.client_info?.android_client_info?.package_name==='com.lolys.medilink'));
  assert.ok(firebase.project_info?.project_id);
