@@ -1,4 +1,4 @@
-import { GoogleSignin, isSuccessResponse } from '@react-native-google-signin/google-signin';
+import { Platform } from 'react-native';
 import { authApi } from '@/services/auth';
 import { activateLogin } from '@/features/auth/session';
 import type { LoginResponse } from '@/types/domain';
@@ -20,6 +20,37 @@ type FirebaseIdentity = {
 };
 
 let pendingIdentity: FirebaseIdentity | null = null;
+let googleConfigured = false;
+
+/**
+ * Never resolve the Google native module at import time: Expo Go and old APKs
+ * do not contain RNGoogleSignin, and throwing during route evaluation can
+ * prevent the entire application from showing its first screen.
+ */
+async function nativeGoogle() {
+  if (Platform.OS !== 'android' && Platform.OS !== 'ios') {
+    throw new Error('La connexion Google native nécessite une application Android ou iOS.');
+  }
+  try {
+    return await import('@react-native-google-signin/google-signin');
+  } catch {
+    throw new Error('Module Google absent de cette application. Installez un nouvel APK MediLink compilé avec Google Sign-In (Expo Go ne suffit pas).');
+  }
+}
+
+async function configureGoogle() {
+  const { webClientId } = publicGoogleConfig();
+  const native = await nativeGoogle();
+  if (!googleConfigured) {
+    try {
+      native.GoogleSignin.configure({ webClientId });
+      googleConfigured = true;
+    } catch {
+      throw new Error('Google Sign-In natif indisponible. Réinstallez un APK Android de développement à jour.');
+    }
+  }
+  return native;
+}
 
 function publicGoogleConfig() {
   const apiKey = process.env.EXPO_PUBLIC_FIREBASE_API_KEY?.trim();
@@ -88,8 +119,10 @@ export function hasPendingGoogleRegistration() {
 
 export async function discardPendingGoogleRegistration() {
   pendingIdentity = null;
-  try { await GoogleSignin.signOut(); }
-  catch { /* The Firebase session is not activated yet. */ }
+  try {
+    const { GoogleSignin } = await nativeGoogle();
+    await GoogleSignin.signOut();
+  } catch { /* The Firebase session is not activated yet. */ }
 }
 
 export type GoogleSignInOutcome = 'cancelled' | 'needs_role' | 'authenticated';
@@ -97,10 +130,22 @@ export type GoogleSignInOutcome = 'cancelled' | 'needs_role' | 'authenticated';
 /** Start only on a direct button press in an installed Android/iOS dev build. */
 export async function beginGoogleSignIn(): Promise<GoogleSignInOutcome> {
   pendingIdentity = null;
-  const { apiKey, webClientId } = publicGoogleConfig();
-  GoogleSignin.configure({ webClientId });
-  await GoogleSignin.hasPlayServices({ showPlayServicesUpdateDialog: true });
-  const choice = await GoogleSignin.signIn();
+  const { apiKey } = publicGoogleConfig();
+  const { GoogleSignin, isSuccessResponse } = await configureGoogle();
+  if (Platform.OS === 'android') {
+    await GoogleSignin.hasPlayServices({ showPlayServicesUpdateDialog: true });
+  }
+  let choice: Awaited<ReturnType<typeof GoogleSignin.signIn>>;
+  try {
+    choice = await GoogleSignin.signIn();
+  } catch (error) {
+    const code = (error as { code?: string } | null)?.code;
+    if (code === '12501' || code === 'SIGN_IN_CANCELLED') return 'cancelled';
+    if (code === '10' || code === 'DEVELOPER_ERROR') {
+      throw new Error('Google a refusé la configuration OAuth. Vérifiez SHA-1/SHA-256, identifiant Android et client Web Firebase.');
+    }
+    throw new Error('Impossible d’ouvrir la connexion Google. Vérifiez les services Google Play et la version de l’APK.');
+  }
   if (!isSuccessResponse(choice)) return 'cancelled';
   const googleIdToken = choice.data.idToken;
   if (!googleIdToken) throw new Error('Jeton Google manquant. Vérifiez le client OAuth Android et les empreintes SHA.');
