@@ -8,7 +8,7 @@
     "scheme": "medilinkmobile",
     "userInterfaceStyle": "automatic",
     "ios": {
-      "icon": "./assets/expo.icon"
+      "icon": "./assets/icons/icon-app.png"
     },
     "android": {
       "adaptiveIcon": {
