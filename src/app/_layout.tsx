@@ -21,10 +21,7 @@ export default function RootLayout() {
     });
   }, []);
   useEffect(() => {
-    if (!verified || (session.role !== 'patient' && session.role !== 'doctor')) {
-      setPushLifecycle(null);
-      return;
-    }
+    if (!verified || (session.role !== 'patient' && session.role !== 'doctor')) return;
     let active = true;
     // Expo Go and older APKs can lack native FCM functionality. Optional push
     // must never be imported during the initial app navigation bootstrap.
@@ -42,7 +39,8 @@ export default function RootLayout() {
     <SafeAreaProvider>
       <ThemeProvider value={colorScheme === 'dark' ? DarkTheme : DefaultTheme}>
         <ToastProvider>
-          {PushLifecycle ? <PushLifecycle /> : null}
+          {verified && (session.role === 'patient' || session.role === 'doctor') && PushLifecycle
+            ? <PushLifecycle /> : null}
           <ConnectivityBanner />
           <Stack screenOptions={{ headerShown: false }}>
             <Stack.Screen name="index" />
