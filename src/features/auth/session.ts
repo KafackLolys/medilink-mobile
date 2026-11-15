@@ -6,6 +6,7 @@ import { useNavigationSession } from '@/store/navigation-session';
 import type { AuthenticatedUser, LoginResponse } from '@/types/domain';
 import { unregisterPushDevice } from '@/features/notifications/push-device';
 import { clearPublicDoctorDirectoryCache } from '@/features/network/public-directory-cache';
+import { cancelPendingGoogleRegistration } from '@/features/auth/google-auth';
 
 /**
  * Authenticated HTTP profile/logout requests use explicit credentials so the
@@ -53,7 +54,8 @@ export async function logoutSession() {
   // Attempt server-side device revocation BEFORE SecureStore credentials are erased.
   // If offline, local logout still wins; see the documented backend revocation gap.
   try { await unregisterPushDevice(); } catch { /* Do not block local logout. */ }
-  await sessionManager.logout();
+  try { await sessionManager.logout(); }
+  finally { await cancelPendingGoogleRegistration(); }
 }
 
 export async function clearEphemeralSession() {
