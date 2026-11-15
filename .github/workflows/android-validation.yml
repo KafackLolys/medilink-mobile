@@ -32,6 +32,7 @@ jobs:
       - run: npm run lint
       - run: npm run release:validate
       - run: node --test scripts/startup-validation.test.mjs
+      - run: node --test scripts/release-config.test.mjs
       - run: npm run test:http
       - run: npm run test:auth
       - run: npm run test:session
