@@ -20,6 +20,7 @@ export function NotificationCenter({role}:{role:'patient'|'doctor'}){
  const [refreshing,setRefreshing]=useState(false),[busy,setBusy]=useState<string|null>(null),[error,setError]=useState('');
  const [pushBusy,setPushBusy]=useState(false),[pushNotice,setPushNotice]=useState('');
  const [localTestBusy,setLocalTestBusy]=useState(false),[settingsRequired,setSettingsRequired]=useState(false);
+ const [fcmTestBusy,setFcmTestBusy]=useState(false);
  const controller=useRef<AbortController|null>(null),sequence=useRef(0),mutation=useRef(false),lifecycle=useRef(0);
  const allowed=session.status==='authenticated'&&session.role===role&&canUseNotifications(session.role);
  const load=useCallback((pull=false)=>{
@@ -66,6 +67,32 @@ export function NotificationCenter({role}:{role:'patient'|'doctor'}){
        'Test local impossible. Vérifiez les notifications de l’application dans Android.');
    }finally{setLocalTestBusy(false);}
  }
+ async function testServerPush(){
+   if(fcmTestBusy||!allowed)return;
+   setFcmTestBusy(true);setPushNotice('');setSettingsRequired(false);
+   try{
+     const registered=await registerPushDevice(true);
+     if(!registered)throw new Error('Le téléphone n’est pas encore enregistré auprès du serveur.');
+     const result=await notificationsApi.testPush();
+     if(result.acceptedByFcm>0){
+       setPushNotice(`FCM a accepté l’envoi vers ${result.acceptedByFcm} appareil(s). Vérifiez maintenant la réception de l’alerte Android. L’acceptation FCM ne garantit pas sa présentation par le téléphone.`);
+     }else{
+       setPushNotice(`Le serveur connaît ${result.registeredDevices} appareil(s), mais FCM a refusé le test. Vérifiez les identifiants et le projet Firebase côté API.`);
+     }
+   }catch(cause){
+     if(cause instanceof PushRegistrationError){
+       setPushNotice(cause.message);
+       setSettingsRequired(cause.reason==='permission');
+     }else{
+       const status=(cause as {status?:number}|null)?.status;
+       setPushNotice(status===429
+         ? 'Un test push a déjà été demandé. Réessayez dans une minute.'
+         : status===400
+           ? 'Aucun appareil Android enregistré pour ce compte.'
+           : 'Test FCM indisponible. L’API doit disposer de la route /notifications/test-push et d’un accès Firebase Messaging fonctionnel.');
+     }
+   }finally{setFcmTestBusy(false);}
+ }
  async function markRead(item:UserNotification,open=false){
    if(mutation.current||!allowed)return;
    const epoch=lifecycle.current;
@@ -102,6 +129,8 @@ export function NotificationCenter({role}:{role:'patient'|'doctor'}){
        <Button label="Activer les notifications Android" variant="outline" loading={pushBusy} onPress={()=>{void activatePush();}}/>
        <Button label="Tester l’affichage d’une alerte locale" variant="outline" loading={localTestBusy}
          onPress={()=>{void testLocalAlert();}}/>
+       <Button label="Envoyer un push de test depuis le serveur" variant="outline" loading={fcmTestBusy}
+         onPress={()=>{void testServerPush();}}/>
        {settingsRequired ? <Button label="Ouvrir les réglages Android" variant="outline"
          onPress={()=>{void Linking.openSettings();}}/> : null}
        {pushNotice?<ThemedText type="small" themeColor="textSecondary" accessibilityRole="alert">{pushNotice}</ThemedText>:null}
