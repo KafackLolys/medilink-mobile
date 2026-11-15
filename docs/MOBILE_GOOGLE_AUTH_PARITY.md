@@ -137,7 +137,19 @@ npm run release:validate
 6. Parcours complet besoin → proposition médecin → sélection → rendez-vous →
    messagerie, ainsi que les documents et consentements.
 
-**Statut de preuve** : la revue de code seule ne démontre pas le bon
-fonctionnement sur un téléphone. En l'absence de builds EAS signés/configurés,
-de comptes de test et de preuves des jobs CI, ce lot doit rester une **PR de
-validation** et non une release déclarée prête.
+**Statut de preuve** : GitHub Actions « Medilink Android validation »
+[run #239](https://github.com/KafackLolys/medilink-mobile/actions/runs/43679324943)
+sur la PR #5 **réussi** le 15 novembre 2026 : `npm ci`, `npm run typecheck`,
+`npm run lint` et les suites de tests de domaines/auth/session du workflow.
+
+Ces tests **ne démontrent pas** le bon fonctionnement sur un téléphone.
+En l'absence de build EAS signé/configuré, d'authentification Google avec
+une signature Android réelle, de comptes de test et de recette E2E,
+la PR doit rester une **proposition de validation** et non une release prête.
+
+**Écart de vérification médecin Google** : l'API crée les médecins Google
+avec un matricule initialement vide et un statut `pending`. L'écran mobile
+existant ne permet pas d'éditer librement le matricule ou la spécialité,
+faute de contrat d'édition métier. Définir et valider le parcours de collecte
+des justificatifs et du matricule professionnel avant d'activer ces
+comptes en production.
