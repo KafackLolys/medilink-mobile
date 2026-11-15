@@ -88,11 +88,38 @@ test('cold start without session yields unauthenticated without API calls', asyn
 test('invalid refresh clears saved credentials and prevents protected routing', async () => {
   const x = fixture({
     stored: { idToken: 'old', refreshToken: 'r', userId: 'u1', expiresAt: 0 },
-    refresh: async () => { throw new Error('revoked'); },
+    refresh: async () => { throw { kind: 'unauthorized', status: 401 }; },
   });
   await x.manager.bootstrap();
   assert.equal(x.manager.snapshot.status, 'unauthenticated');
   assert.equal(x.persisted, null);
+});
+
+test('network outage at cold start preserves credentials and permits a later retry', async () => {
+  let online = false;
+  const x = fixture({
+    stored: { idToken: 'old', refreshToken: 'r', userId: 'u1', expiresAt: 0 },
+    refresh: async () => {
+      if (!online) throw { kind: 'network' };
+      return response('u1', 'new', 'rotated');
+    },
+  });
+  await x.manager.bootstrap();
+  assert.equal(x.manager.snapshot.status, 'reconnecting');
+  assert.equal(x.persisted.refreshToken, 'r');
+  assert.equal(x.manager.idToken, 'old');
+  online = true;
+  await x.manager.bootstrap();
+  assert.equal(x.manager.snapshot.status, 'authenticated');
+  assert.equal(x.persisted.refreshToken, 'rotated');
+});
+
+test('a transient server refresh error never signs out an authenticated user', async () => {
+  const x = fixture({ refresh: async () => { throw { kind: 'server', status: 503 }; } });
+  await x.manager.login(response('u1', 'id-old', 'refresh-old', 'patient', 1));
+  assert.equal(await x.manager.refresh(), false);
+  assert.equal(x.manager.snapshot.status, 'authenticated');
+  assert.equal(x.persisted.refreshToken, 'refresh-old');
 });
 
 test('401 refresh is single-flight for simultaneous requests', async () => {
