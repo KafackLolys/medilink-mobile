@@ -42,12 +42,28 @@ function DoctorCard({ doctor }: { doctor: DoctorDirectoryItem }) {
       <ThemedText type="small" themeColor="textSecondary">
         Les créneaux disponibles sont confirmés lors de la réservation.
       </ThemedText>
-      <Link href={detail} asChild>
-        <Pressable accessibilityRole="link" accessibilityLabel={`Voir le profil de ${doctor.name}`}
-          style={({ pressed }) => [styles.detailButton, { backgroundColor: theme.infoSurface, opacity: pressed ? .7 : 1 }]}>
-          <ThemedText type="smallBold" themeColor="primary">Voir le profil  ›</ThemedText>
-        </Pressable>
-      </Link>
+      <View style={{ flexDirection: 'row', gap: Spacing.two }}>
+        <View style={{ flex: 1 }}>
+          <Link href={detail} asChild>
+            <Pressable accessibilityRole="link" accessibilityLabel={`Voir le profil de ${doctor.name}`}
+              style={({ pressed }) => [styles.detailButton, {
+                backgroundColor: theme.infoSurface, opacity: pressed ? .7 : 1,
+              }]}>
+              <ThemedText type="smallBold" themeColor="primary">Voir le profil</ThemedText>
+            </Pressable>
+          </Link>
+        </View>
+        <View style={{ flex: 1 }}>
+          <Link href={{ pathname: '/patient/medecins/[id]/rendez-vous', params: { id: doctor.id } }} asChild>
+            <Pressable accessibilityRole="link" accessibilityLabel={`Prendre rendez-vous avec ${doctor.name}`}
+              style={({ pressed }) => [styles.detailButton, {
+                backgroundColor: theme.primary, opacity: pressed ? .7 : 1,
+              }]}>
+              <ThemedText type="smallBold" style={{ color: theme.onPrimary }}>Prendre rendez-vous</ThemedText>
+            </Pressable>
+          </Link>
+        </View>
+      </View>
     </Card>
   );
 }
@@ -158,15 +174,7 @@ export default function DoctorDirectoryScreen() {
           colors={[theme.primary]} tintColor={theme.primary} />}
         ListHeaderComponent={<View style={styles.header}>
           <Header title="Trouver un médecin"
-            subtitle="Profils vérifiés et secteur d’intervention des professionnels." />
-          <Card>
-            <ThemedText type="smallBold">Recherche géographique sans GPS</ThemedText>
-            <ThemedText type="small" themeColor="textSecondary">
-              Indiquez une ville ou un quartier pour filtrer les profils. L’API ne fournit
-              actuellement aucune coordonnée vérifiée : la liste reste disponible sans permission
-              de localisation, sans estimation de distance ni marqueurs placés arbitrairement.
-            </ThemedText>
-          </Card>
+            subtitle="Consultez les profils des médecins vérifiés et leurs disponibilités." />
           <Card>
             <Input label="Rechercher" value={query} onChangeText={setQuery} editable={!refreshing}
               placeholder="Nom ou spécialité" returnKeyType="search" onSubmitEditing={search}
@@ -195,6 +203,9 @@ export default function DoctorDirectoryScreen() {
               <View style={{ flex: 1 }}><Button label="Rechercher" onPress={search} /></View>
               <View style={{ flex: 1 }}><Button label="Effacer" variant="outline" onPress={reset} /></View>
             </View>
+            <ThemedText type="small" themeColor="textSecondary">
+              Recherche par ville ou quartier. L’affichage sur carte sera proposé lorsque les coordonnées professionnelles seront disponibles.
+            </ThemedText>
           </Card>
           {state.status === 'success' && state.stale ? <Card>
             <ThemedText themeColor="warning" type="smallBold">Annuaire enregistré temporairement — données potentiellement anciennes.</ThemedText>
