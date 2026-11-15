@@ -6,6 +6,7 @@ import { Avatar, Badge, Button, Card, Header } from '@/components/ui/primitives'
 import { Input } from '@/components/ui/form-fields';
 import { EmptyState, ErrorState, LoadingState } from '@/components/ui/states';
 import { ThemedText } from '@/components/themed-text';
+import { MedihomeHeader } from '@/components/ui/medihome-header';
 import { useTheme } from '@/hooks/use-theme';
 import { MinimumTouchTarget, Radius, Spacing } from '@/constants/theme';
 import { doctorsApi } from '@/services/doctors';
@@ -157,6 +158,7 @@ export default function DoctorDirectoryScreen() {
         refreshControl={<RefreshControl refreshing={refreshing} onRefresh={() => load(applied, true)}
           colors={[theme.primary]} tintColor={theme.primary} />}
         ListHeaderComponent={<View style={styles.header}>
+          <MedihomeHeader notificationsHref="/patient/notifications" />
           <Header title="Trouver un médecin"
             subtitle="Profils vérifiés et secteur d’intervention des professionnels." />
           <Card>
