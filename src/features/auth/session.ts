@@ -5,6 +5,7 @@ import { apiRequest, configureHttpAuth, resetHttpAuth } from '@/services/http';
 import { useNavigationSession } from '@/store/navigation-session';
 import type { AuthenticatedUser, LoginResponse } from '@/types/domain';
 import { clearPublicDoctorDirectoryCache } from '@/features/network/public-directory-cache';
+import { resetUnreadNotifications } from '@/features/notifications/unread-store';
 
 /**
  * Authenticated HTTP profile/logout requests use explicit credentials so the
@@ -29,6 +30,7 @@ export const sessionManager = new SessionManager({
       // Clear the only public-memory cache on login, logout or session replacement.
       // No medical dossiers, conversations or credentials are cached.
       clearPublicDoctorDirectoryCache();
+      resetUnreadNotifications();
     },
   },
 });
