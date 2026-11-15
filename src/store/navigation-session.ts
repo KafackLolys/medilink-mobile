@@ -8,7 +8,7 @@ import type { AccountRole, AccountStatus } from '@/types/domain';
 export type NavigationSession =
   | { status: 'loading'; role: null }
   | { status: 'unauthenticated'; role: null }
-  | { status: 'unverified'; role: null }
+  | { status: 'reconnecting'; role: null }
   | { status: 'authenticated'; role: AccountRole; accountStatus: AccountStatus };
 
 type SessionState = {

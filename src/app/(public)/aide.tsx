@@ -1,64 +1,61 @@
 import { useState } from 'react';
 import { Link } from 'expo-router';
-import { ChevronDown, ShieldAlert } from 'lucide-react-native';
+import { ChevronDown, ChevronUp, ShieldAlert } from 'lucide-react-native';
 import { Pressable, View } from 'react-native';
 import { Screen, Card, Header } from '@/components/ui/primitives';
 import { ThemedText } from '@/components/themed-text';
-import { useTheme } from '@/hooks/use-theme';
 import { Spacing } from '@/constants/theme';
+import { useTheme } from '@/hooks/use-theme';
 
-const FAQ = [
-  { title: 'Compte', items: [
-    { q: 'Comment créer un compte ?', a: 'Choisissez votre profil (patient ou médecin), renseignez vos informations puis validez le formulaire d’inscription. Les médecins indiquent aussi leur spécialité et leur numéro d’enregistrement.' },
-    { q: 'Je n’ai pas reçu l’e-mail de vérification.', a: 'Vérifiez votre dossier de courriers indésirables. Si rien n’arrive au bout de quelques minutes, contactez-nous en précisant l’adresse e-mail utilisée.' },
-    { q: 'J’ai oublié mon mot de passe.', a: 'Sur la page de connexion, utilisez « Mot de passe oublié » et saisissez votre e-mail. Vous recevrez un lien pour en choisir un nouveau.' },
-    { q: 'Puis-je utiliser Google ?', a: 'Oui, sur une version Android compatible. Si vous utilisez Google pour la première fois, sélectionnez votre profil Patient ou Médecin après l’authentification.' },
+const faq = [
+  { group: 'Compte', items: [
+    { question: 'Comment créer un compte ?', answer: 'Choisissez votre profil (patient ou médecin), renseignez vos informations puis validez le formulaire d’inscription. Les médecins indiquent aussi leur spécialité et leur numéro d’enregistrement.' },
+    { question: 'Je n’ai pas reçu l’e-mail de vérification.', answer: 'Vérifiez vos courriers indésirables. Si aucun message ne vous parvient, contactez-nous en précisant l’adresse e-mail utilisée.' },
+    { question: 'J’ai oublié mon mot de passe.', answer: 'Sur la page de connexion, utilisez « Mot de passe oublié » et saisissez votre adresse e-mail. Vous recevrez un lien pour choisir un nouveau mot de passe.' },
+    { question: 'Dois-je me reconnecter après avoir fermé l’application ?', answer: 'Non. Votre session est conservée sur cet appareil et renouvelée de manière sécurisée. Vous restez connecté jusqu’à votre déconnexion ou jusqu’à ce que la session soit invalidée pour des raisons de sécurité.' },
   ] },
-  { title: 'Besoins médicaux', items: [
-    { q: 'Comment publier un besoin médical ?', a: 'Depuis votre espace patient, créez un nouveau besoin : donnez-lui un titre, choisissez la spécialité, décrivez votre situation et indiquez le mode de consultation souhaité.' },
-    { q: 'Quels fichiers puis-je joindre ?', a: 'Vous pouvez joindre jusqu’à 5 fichiers par besoin, de 10 Mo maximum chacun. Ils ne sont visibles que par les personnes autorisées.' },
-    { q: 'Puis-je modifier ou supprimer un besoin ?', a: 'Vous pouvez modifier un besoin tant qu’il est ouvert, le clore quand il n’est plus d’actualité, et supprimer les brouillons.' },
+  { group: 'Besoins médicaux', items: [
+    { question: 'Comment publier un besoin médical ?', answer: 'Depuis votre espace patient, créez un besoin : indiquez un titre, une spécialité, la description de votre situation et votre mode de consultation souhaité.' },
+    { question: 'Quels fichiers puis-je joindre ?', answer: 'Vous pouvez joindre jusqu’à 5 fichiers par besoin, de 10 Mo maximum chacun. Les fichiers médicaux sont privés et réservés aux personnes autorisées.' },
+    { question: 'Puis-je modifier ou supprimer un besoin ?', answer: 'Vous pouvez modifier un besoin tant qu’il est ouvert, le clore lorsqu’il n’est plus d’actualité et supprimer les brouillons, selon son statut.' },
   ] },
-  { title: 'Notifications', items: [
-    { q: 'Comment activer les notifications ?', a: 'Autorisez les notifications quand Android vous le demande. Vous pouvez ensuite modifier cette autorisation dans les paramètres de votre téléphone.' },
+  { group: 'Notifications', items: [
+    { question: 'Comment recevoir les notifications sur Android ?', answer: 'Autorisez les notifications lors de la demande de l’application. Vous pourrez les ajuster dans les paramètres de votre téléphone.' },
   ] },
 ] as const;
 
-export default function HelpPage() {
+export default function HelpScreen() {
   const theme = useTheme();
   const [expanded, setExpanded] = useState<string | null>(null);
   return <Screen>
-    <Header title="Aide" subtitle="Les réponses aux questions les plus fréquentes sur MediLink." />
-    <Card style={{ backgroundColor: theme.warningSurface }}>
-      <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
-        <ShieldAlert color={theme.warning} size={22} />
-        <ThemedText type="smallBold" style={{ color: theme.warning }}>Urgence médicale</ThemedText>
+    <Header title="Aide" subtitle="Les réponses aux questions les plus fréquentes." />
+    <Card style={{ backgroundColor: theme.warningSurface, borderColor: theme.warning }}>
+      <View style={{ flexDirection: 'row', gap: Spacing.two, alignItems: 'flex-start' }}>
+        <ShieldAlert size={22} color={theme.warning} />
+        <ThemedText type="small" style={{ flex: 1, color: theme.warning }}>
+          MediLink n’est pas un service d’urgence. En cas d’urgence médicale, contactez directement les services d’urgence de votre pays.
+        </ThemedText>
       </View>
-      <ThemedText type="small">
-        MediLink n’est pas un service d’urgence. Contactez immédiatement les services d’urgence de votre pays.
-      </ThemedText>
     </Card>
-    {FAQ.map(group => <View key={group.title} style={{ gap: Spacing.two }}>
-      <ThemedText type="subtitle" accessibilityRole="header">{group.title}</ThemedText>
+    {faq.map(group => <View key={group.group} style={{ gap: Spacing.two }}>
+      <ThemedText type="subtitle" accessibilityRole="header">{group.group}</ThemedText>
       {group.items.map(item => {
-        const open = expanded === item.q;
-        return <View key={item.q} style={{ backgroundColor: theme.backgroundElement,
-          borderColor: theme.border, borderWidth: 1, borderRadius: 14, overflow: 'hidden' }}>
-          <Pressable accessibilityRole="button" accessibilityState={{ expanded: open }}
-            onPress={() => setExpanded(open ? null : item.q)}
-            style={{ minHeight: 52, padding: Spacing.three, flexDirection: 'row', alignItems: 'center', gap: 12 }}>
-            <ThemedText type="smallBold" style={{ flex: 1 }}>{item.q}</ThemedText>
-            <ChevronDown size={19} color={theme.primary} style={open ? { transform: [{ rotate: '180deg' }] } : undefined} />
+        const key = group.group + ':' + item.question;
+        const open = expanded === key;
+        return <Card key={key}>
+          <Pressable accessibilityRole="button" accessibilityLabel={item.question}
+            accessibilityState={{ expanded: open }} onPress={() => setExpanded(open ? null : key)}
+            style={{ flexDirection: 'row', alignItems: 'center', gap: Spacing.two, minHeight: 44 }}>
+            <ThemedText type="smallBold" style={{ flex: 1 }}>{item.question}</ThemedText>
+            {open ? <ChevronUp size={20} color={theme.primary} /> : <ChevronDown size={20} color={theme.primary} />}
           </Pressable>
-          {open ? <View style={{ paddingHorizontal: Spacing.three, paddingBottom: Spacing.three }}>
-            <ThemedText themeColor="textSecondary">{item.a}</ThemedText>
-          </View> : null}
-        </View>;
+          {open ? <ThemedText themeColor="textSecondary">{item.answer}</ThemedText> : null}
+        </Card>;
       })}
     </View>)}
-    <Card style={{ backgroundColor: theme.infoSurface }}>
-      <ThemedText type="smallBold">Besoin d’un coup de main ?</ThemedText>
-      <Link href="/contact"><ThemedText type="linkPrimary">Contactez-nous</ThemedText></Link>
+    <Card>
+      <ThemedText>Vous ne trouvez pas votre réponse ?</ThemedText>
+      <Link href="/contact"><ThemedText type="linkPrimary">Écrivez-nous</ThemedText></Link>
     </Card>
   </Screen>;
 }

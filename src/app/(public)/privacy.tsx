@@ -1,81 +1,34 @@
-import { Screen, Header } from '@/components/ui/primitives';
-import { LegalContact, LegalDraftNotice, LegalSection } from '@/components/legal/legal-sections';
+import { Link } from 'expo-router';
+import { Screen, Card, Header } from '@/components/ui/primitives';
+import { ThemedText } from '@/components/themed-text';
+import { Spacing } from '@/constants/theme';
+import { View } from 'react-native';
 
 const sections = [
-  [
-    "1. Qui est responsable de vos données ?",
-    [
-      "MediLink est exploité par [nom de la structure / de l’éditeur], [adresse]. L’identité et l’adresse de l’éditeur doivent être complétées. Pour toute question sur vos données, utilisez le formulaire de contact."
-    ]
-  ],
-  [
-    "2. Données que nous collectons",
-    [
-      "Compte : prénom, nom, téléphone, adresse e-mail, rôle (patient ou médecin). Pour les médecins : spécialité et numéro d’enregistrement.",
-      "Besoins médicaux : titre, spécialité, description, mode de consultation et pièces jointes que vous choisissez de publier.",
-      "Notifications : identifiant technique de votre appareil si vous activez les notifications.",
-      "Données techniques : journaux de connexion et d’erreurs nécessaires au fonctionnement et à la sécurité du service.",
-      "Votre mot de passe n’est jamais stocké en clair ni dans notre base de données applicative."
-    ]
-  ],
-  [
-    "3. Pourquoi nous les utilisons",
-    [
-      "Créer et sécuriser votre compte.",
-      "Mettre en relation patients et médecins selon la spécialité.",
-      "Vous envoyer les e-mails et notifications liés à votre activité.",
-      "Assurer la sécurité, prévenir les abus et améliorer le service.",
-      "Les données de santé que vous publiez sont traitées sur la base de votre consentement, que vous pouvez retirer à tout moment."
-    ]
-  ],
-  [
-    "4. Qui peut voir vos informations",
-    [
-      "Vos besoins médicaux et leurs pièces jointes ne sont accessibles qu’à vous et aux professionnels autorisés sur la plateforme. Nous ne vendons pas vos données et ne les utilisons pas à des fins publicitaires.",
-      "Nous faisons appel à des prestataires techniques qui traitent des données pour notre compte : Google Firebase (authentification, base de données, notifications) et Supabase (stockage des fichiers). Ils sont tenus de protéger vos données. Vos données peuvent être traitées en dehors de votre pays de résidence."
-    ]
-  ],
-  [
-    "5. Sécurité",
-    [
-      "Les fichiers médicaux sont stockés dans un espace privé et ne sont consultables qu’au moyen de liens temporaires. Les échanges avec l’application sont chiffrés et l’accès aux données est contrôlé par authentification. Aucune mesure n’offre une sécurité absolue : en cas d’incident touchant vos données, nous vous informerons dans les conditions prévues par la loi."
-    ]
-  ],
-  [
-    "6. Durée de conservation",
-    [
-      "Nous conservons vos données tant que votre compte est actif, puis pendant [durée à définir] après sa suppression, sauf obligation légale de les conserver plus longtemps."
-    ]
-  ],
-  [
-    "7. Vos droits",
-    [
-      "Vous pouvez demander l’accès à vos données, leur rectification, leur suppression, ou vous opposer à certains traitements. Pour exercer ces droits, contactez-nous via le formulaire ci-dessous. Vous pouvez aussi saisir l’autorité de protection des données compétente dans votre pays."
-    ]
-  ],
-  [
-    "8. Notifications et stockages techniques",
-    [
-      "Les notifications sont envoyées uniquement après votre autorisation sur l’appareil, et vous pouvez retirer celle-ci dans les paramètres Android. Le stockage local sécurisé nécessaire à la connexion permet de retrouver votre session après la fermeture de l’application."
-    ]
-  ],
-  [
-    "9. Modifications",
-    [
-      "Nous pouvons mettre à jour cette politique. La date de dernière mise à jour figure en haut de la page et, en cas de changement important, nous vous en informerons."
-    ]
-  ]
+  { title: '1. Responsabilité du traitement', body: 'MediLink collecte et utilise des données nécessaires à la mise en relation des patients et des professionnels de santé. L’identité complète de l’éditeur et son adresse légale doivent encore être précisées.' },
+  { title: '2. Données collectées', body: 'Nous utilisons vos informations de compte (nom, prénom, coordonnées, rôle), les justificatifs professionnels des médecins, les besoins médicaux et pièces jointes que vous fournissez, ainsi que des données techniques utiles à la sécurité. Les mots de passe ne sont pas conservés en clair dans la base applicative.' },
+  { title: '3. Finalités', body: 'Création et sécurité des comptes, mise en relation selon les spécialités, échanges et rendez-vous, notifications et prévention des abus. Les informations de santé exigent une protection particulière.' },
+  { title: '4. Accès et prestataires', body: 'Les informations médicales ne doivent être accessibles qu’au patient et aux professionnels autorisés. Le service utilise notamment Firebase pour l’authentification et les notifications, ainsi que des solutions techniques de stockage. Des traitements peuvent avoir lieu hors de votre pays.' },
+  { title: '5. Sécurité', body: 'Les échanges sont chiffrés lors du transport et l’accès aux ressources sensibles est contrôlé. Les documents médicaux privés utilisent des liens d’accès limités. Aucune protection ne garantit l’absence absolue d’incident.' },
+  { title: '6. Conservation', body: 'Les données sont conservées durant l’utilisation du compte, puis selon une durée et les obligations légales que l’éditeur doit encore préciser.' },
+  { title: '7. Vos droits', body: 'Vous pouvez demander l’accès, la correction, la suppression ou certaines limitations du traitement de vos données en utilisant le formulaire de contact.' },
+  { title: '8. Notifications et stockage mobile', body: 'Les notifications nécessitent votre autorisation. Des jetons de session sont conservés dans le stockage sécurisé de l’appareil, jusqu’à déconnexion ou invalidation de la session. Les permissions peuvent être modifiées dans les réglages Android.' },
+  { title: '9. Modifications', body: 'Cette politique peut être mise à jour. Une information adaptée devra être fournie en cas de modification importante.' },
 ] as const;
 
-/** Mobile adaptation of the public web privacy policy, not yet a final legal approval. */
-export default function PrivacyPage() {
+export default function PrivacyScreen() {
   return <Screen>
-    <Header title="Politique de confidentialité"
-      subtitle="Dernière mise à jour du texte web : 12 novembre 2026. Quelles données MediLink collecte, pourquoi et comment vous pouvez les contrôler." />
-    <LegalDraftNotice />
-    {sections.map(([title, paragraphs]) =>
-      <LegalSection key={title} title={title} paragraphs={paragraphs} />,
-    )}
-    <LegalContact />
+    <Header title="Politique de confidentialité" subtitle="Comment MediLink utilise et protège vos données." />
+    <Card>
+      <ThemedText type="smallBold">Informations légales en cours de finalisation</ThemedText>
+      <ThemedText themeColor="textSecondary" type="small">
+        Cette présentation reprend les principes affichés sur le site. Les coordonnées de l’éditeur, la durée de conservation et les mentions réglementaires doivent être validées avant publication.
+      </ThemedText>
+    </Card>
+    {sections.map(section => <View key={section.title} style={{ gap: Spacing.two }}>
+      <ThemedText type="smallBold" accessibilityRole="header">{section.title}</ThemedText>
+      <ThemedText themeColor="textSecondary">{section.body}</ThemedText>
+    </View>)}
+    <Link href="/contact"><ThemedText type="linkPrimary">Exercer mes droits ou contacter l’équipe</ThemedText></Link>
   </Screen>;
 }

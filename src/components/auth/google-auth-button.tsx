@@ -1,73 +1,69 @@
-import { useEffect, useRef, useState } from 'react';
+import { useRef, useState } from 'react';
 import { useRouter } from 'expo-router';
-import { ActivityIndicator, Pressable, StyleSheet, View } from 'react-native';
+import { Pressable, StyleSheet, View } from 'react-native';
 import Svg, { Path } from 'react-native-svg';
-import { ThemedText } from '@/components/themed-text';
+import { beginGoogleSignIn } from '@/features/auth/google-sign-in';
 import { useTheme } from '@/hooks/use-theme';
-import { describeGoogleError, startGoogleSignIn } from '@/features/auth/google-auth';
+import { ThemedText } from '@/components/themed-text';
+import { Radius, Spacing } from '@/constants/theme';
 
 function GoogleMark() {
   return <Svg width={22} height={22} viewBox="0 0 24 24" accessibilityLabel="Google">
-    <Path fill="#4285F4" d="M21.35 12.28c0-.71-.06-1.39-.18-2.05H12v3.88h5.24a4.48 4.48 0 0 1-1.95 2.95v2.45h3.16c1.85-1.7 2.9-4.2 2.9-7.23Z"/>
-    <Path fill="#34A853" d="M12 21.8c2.64 0 4.86-.88 6.48-2.29l-3.16-2.45c-.88.59-2 .95-3.32.95-2.55 0-4.71-1.72-5.49-4.03H3.25v2.53A9.8 9.8 0 0 0 12 21.8Z"/>
-    <Path fill="#FBBC05" d="M6.51 13.98A5.89 5.89 0 0 1 6.2 12c0-.68.12-1.34.31-1.98V7.49H3.25A9.8 9.8 0 0 0 2.2 12c0 1.58.38 3.12 1.05 4.51l3.26-2.53Z"/>
-    <Path fill="#EA4335" d="M12 5.99c1.44 0 2.72.5 3.73 1.46l2.8-2.8A9.39 9.39 0 0 0 12 2.2a9.8 9.8 0 0 0-8.75 5.29l3.26 2.53C7.29 7.71 9.45 5.99 12 5.99Z"/>
+    <Path fill="#4285F4" d="M23 12.3c0-.8-.1-1.6-.2-2.3H12v4.5h6.2a5.3 5.3 0 0 1-2.3 3.5v2.9h3.7c2.2-2 3.4-5 3.4-8.6z"/>
+    <Path fill="#34A853" d="M12 23c3.1 0 5.7-1 7.6-2.8l-3.7-2.9c-1 .7-2.3 1.1-3.9 1.1-3 0-5.5-2-6.4-4.7H1.8v3A11 11 0 0 0 12 23z"/>
+    <Path fill="#FBBC05" d="M5.6 13.7a6.6 6.6 0 0 1 0-4.2v-3H1.8a11 11 0 0 0 0 10.2l3.8-3z"/>
+    <Path fill="#EA4335" d="M12 5.4c1.7 0 3.2.6 4.4 1.7l3.3-3.3A11 11 0 0 0 1.8 6.5l3.8 3C6.5 6.8 9 5.4 12 5.4z"/>
   </Svg>;
 }
 
 export function GoogleAuthButton({ label = 'Continuer avec Google', disabled = false }: {
-  label?: string;
-  disabled?: boolean;
+  label?: string; disabled?: boolean;
 }) {
   const router = useRouter();
   const theme = useTheme();
-  const [loading, setLoading] = useState(false);
-  const [error, setError] = useState('');
+  const [pending, setPending] = useState(false);
+  const [error, setError] = useState<string | null>(null);
   const busy = useRef(false);
-  const controller = useRef<AbortController | null>(null);
-  useEffect(() => () => controller.current?.abort(), []);
 
   async function begin() {
-    if (busy.current || disabled) return;
+    if (disabled || busy.current) return;
     busy.current = true;
-    const request = new AbortController();
-    controller.current = request;
-    setError('');
-    setLoading(true);
+    setPending(true);
+    setError(null);
     try {
-      const result = await startGoogleSignIn(request.signal);
-      if (!request.signal.aborted && result === 'needs-role') {
+      const result = await beginGoogleSignIn();
+      if (result === 'needs_role') {
         router.replace({ pathname: '/choose-role', params: { google: '1' } });
       }
-      // An existing account is redirected by the authenticated role guard.
+      // Successful sign-in already activates SecureStore + protected routing.
     } catch (cause) {
-      if (!request.signal.aborted) setError(describeGoogleError(cause));
+      setError(cause instanceof Error ? cause.message : 'Connexion Google impossible. Réessayez.');
     } finally {
       busy.current = false;
-      if (!request.signal.aborted) setLoading(false);
+      setPending(false);
     }
   }
 
-  return <View style={{ gap: 8 }}>
+  return <View style={{ gap: Spacing.two }}>
     <Pressable accessibilityRole="button" accessibilityLabel={label}
-      accessibilityState={{ disabled: disabled || loading, busy: loading }}
-      disabled={disabled || loading} onPress={() => { void begin(); }}
+      accessibilityHint="Ouvrir le sélecteur natif de comptes Google"
+      accessibilityState={{ busy: pending, disabled: pending || disabled }}
+      disabled={pending || disabled} onPress={() => { void begin(); }}
       style={({ pressed }) => [styles.button, {
-        backgroundColor: theme.backgroundElement,
-        borderColor: theme.border,
-        opacity: disabled ? .55 : pressed ? .8 : 1,
+        backgroundColor: theme.backgroundElement, borderColor: theme.border,
+        opacity: disabled || pending ? 0.6 : pressed ? 0.8 : 1,
       }]}>
-      {loading ? <ActivityIndicator size="small" color={theme.primary} /> : <GoogleMark />}
-      <ThemedText type="smallBold" style={{ color: theme.text }}>{label}</ThemedText>
+      <GoogleMark />
+      <ThemedText type="smallBold">{pending ? 'Connexion Google en cours…' : label}</ThemedText>
     </Pressable>
-    {error ? <ThemedText themeColor="danger" type="small" accessibilityRole="alert">{error}</ThemedText> : null}
+    {error ? <ThemedText type="small" themeColor="danger" accessibilityRole="alert">{error}</ThemedText> : null}
   </View>;
 }
 
 const styles = StyleSheet.create({
   button: {
-    minHeight: 56, borderRadius: 16, borderWidth: 1,
-    flexDirection: 'row', justifyContent: 'center', alignItems: 'center',
-    gap: 12, paddingHorizontal: 16,
+    borderWidth: 1, borderRadius: Radius.large, minHeight: 54,
+    alignItems: 'center', justifyContent: 'center', flexDirection: 'row',
+    gap: Spacing.three, paddingHorizontal: Spacing.three,
   },
 });

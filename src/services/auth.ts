@@ -2,17 +2,17 @@ import { apiRequest } from './http';
 import type { AuthenticatedUser, LoginResponse, RegisterRequest } from '@/types/domain';
 import type { PatientProfileData } from '@/features/patient/patient-medical-profile';
 
-export type GoogleStatus = { registered: false } | { registered: true; user: AuthenticatedUser };
+export type GoogleStatusResponse =
+  | { registered: false }
+  | { registered: true; user: AuthenticatedUser };
 
 export const authApi = {
   googleStatus: (idToken: string, signal?: AbortSignal) =>
-    apiRequest<GoogleStatus>('/auth/google/status', {
-      method: 'POST', authenticated: false, body: { idToken }, signal,
-    }),
+    apiRequest<GoogleStatusResponse>('/auth/google/status',
+      { method: 'POST', authenticated: false, body: { idToken }, signal }),
   googleComplete: (idToken: string, role: 'patient' | 'doctor', signal?: AbortSignal) =>
-    apiRequest<{ user: AuthenticatedUser }>('/auth/google/complete', {
-      method: 'POST', authenticated: false, body: { idToken, role }, signal,
-    }),
+    apiRequest<{ user: AuthenticatedUser }>('/auth/google/complete',
+      { method: 'POST', authenticated: false, body: { idToken, role }, signal }),
   login: (email: string, password: string, signal?: AbortSignal) =>
     apiRequest<LoginResponse>('/auth/login', { method: 'POST', authenticated: false, body: { email, password }, signal }),
   register: (data: RegisterRequest, signal?: AbortSignal) =>

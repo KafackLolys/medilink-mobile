@@ -1,6 +1,6 @@
 import { useCallback, useRef, useState } from 'react';
-import { useFocusEffect } from 'expo-router';
-import { FlatList, RefreshControl, StyleSheet, View } from 'react-native';
+import { Link, useFocusEffect } from 'expo-router';
+import { FlatList, Pressable, RefreshControl, StyleSheet, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Avatar, Badge, Button, Card, Header } from '@/components/ui/primitives';
 import { Input, SelectField, ToggleField } from '@/components/ui/form-fields';
@@ -152,6 +152,19 @@ export default function AdminHome(){
       Les opérations sont contrôlées par FirebaseAuthGuard et AdminGuard côté serveur.
       Les changements sensibles exigent une confirmation individuelle.
      </ThemedText>
+     <ThemedText type="smallBold">Ajouter un administrateur</ThemedText>
+     <ThemedText type="small" themeColor="textSecondary">
+      Créez un compte administrateur actif avec confirmation de l’opération.
+      Transmettez le mot de passe provisoire par un canal sécurisé.
+     </ThemedText>
+     <Link href="/admin/ajouter" asChild>
+       <Pressable accessibilityRole="link" style={{
+         backgroundColor: theme.primary, minHeight: 48,
+         alignItems: 'center', justifyContent: 'center', borderRadius: 12,
+       }}>
+         <ThemedText type="smallBold" style={{ color: theme.onPrimary }}>Créer un compte administrateur</ThemedText>
+       </Pressable>
+     </Link>
     </Card>
     {notice?<ThemedText themeColor="success" accessibilityRole="alert">{notice}</ThemedText>:null}
     {error?<ThemedText themeColor="danger" accessibilityRole="alert">{error}</ThemedText>:null}

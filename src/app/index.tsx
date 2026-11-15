@@ -1,39 +1,35 @@
 import { Link, Redirect } from 'expo-router';
-import { Pressable, StyleSheet, View } from 'react-native';
+import { Pressable, View } from 'react-native';
 import {
-  Activity, ArrowRight, Brain, CalendarCheck, ChevronRight, Flower2,
-  HeartPulse, MapPin, MessageCircle, Plus, Search, ShieldCheck,
-  Sparkles, Stethoscope, Baby, LayoutGrid,
+  Activity, Baby, Brain, CalendarCheck, FileText, Flower2, HeartPulse,
+  LayoutGrid, MessageCircle, Plus, ShieldCheck, Sparkles, Stethoscope,
 } from 'lucide-react-native';
-import type { ComponentType } from 'react';
-import type { LucideProps } from 'lucide-react-native';
-import { Screen, Card, Button } from '@/components/ui/primitives';
+import { Card, Button, Screen } from '@/components/ui/primitives';
 import { ThemedText } from '@/components/themed-text';
 import { roleHome, useNavigationSession } from '@/store/navigation-session';
+import { logoutSession, restoreSession } from '@/features/auth/session';
 import { LoadingState } from '@/components/ui/states';
-import { LogoutButton } from '@/components/auth/logout-button';
-import { restoreSession } from '@/features/auth/session';
-import { useTheme } from '@/hooks/use-theme';
 import { Radius, Spacing } from '@/constants/theme';
+import { useTheme } from '@/hooks/use-theme';
 
-const SPECIALTIES: Array<{ label: string; Icon: ComponentType<LucideProps> }> = [
-  { label: 'Médecine générale', Icon: Stethoscope },
-  { label: 'Pédiatrie', Icon: Baby },
-  { label: 'Cardiologie', Icon: HeartPulse },
-  { label: 'Dermatologie', Icon: Sparkles },
-  { label: 'Gynécologie', Icon: Flower2 },
-  { label: 'Neurologie', Icon: Brain },
-  { label: 'Kinésithérapie', Icon: Activity },
-  { label: 'Autres', Icon: LayoutGrid },
-];
-
-const HOW_IT_WORKS = [
-  { title: 'Décrivez votre besoin', body: 'Expliquez votre situation médicale à votre rythme.', Icon: Search },
-  { title: 'Échangez avec un médecin', body: 'Consultez les propositions et posez vos questions.', Icon: MessageCircle },
-  { title: 'Confirmez le rendez-vous', body: 'Choisissez une date et un mode de consultation adaptés.', Icon: CalendarCheck },
+const specialties = [
+  { name: 'Médecine générale', Icon: Stethoscope },
+  { name: 'Pédiatrie', Icon: Baby },
+  { name: 'Cardiologie', Icon: HeartPulse },
+  { name: 'Dermatologie', Icon: Sparkles },
+  { name: 'Gynécologie', Icon: Flower2 },
+  { name: 'Neurologie', Icon: Brain },
+  { name: 'Kinésithérapie', Icon: Activity },
+  { name: 'Autres', Icon: LayoutGrid },
 ] as const;
 
-/** Public homepage. No fabricated doctors, ratings, pricing or available slots. */
+const steps = [
+  { title: 'Décrivez votre besoin', description: 'Expliquez simplement votre situation, à votre rythme.', Icon: FileText },
+  { title: 'Échangez avec un médecin', description: 'Consultez les propositions reçues et posez vos questions.', Icon: MessageCircle },
+  { title: 'Confirmez le rendez-vous', description: 'Choisissez une date adaptée et un mode de consultation.', Icon: CalendarCheck },
+] as const;
+
+/** Public native home based on the responsive web, with no invented doctor data. */
 export default function Index() {
   const theme = useTheme();
   const session = useNavigationSession(state => state.session);
@@ -41,156 +37,169 @@ export default function Index() {
     return <Screen><LoadingState label="Vérification de votre session…" /></Screen>;
   }
   if (session.status === 'authenticated') return <Redirect href={roleHome(session.role)} />;
-  if (session.status === 'unverified') {
-    return <Screen>
-      <Card>
-        <ThemedText type="subtitle" accessibilityRole="header">Connexion à vérifier</ThemedText>
-        <ThemedText themeColor="textSecondary">
-          Votre compte reste enregistré sur cet appareil. Le serveur est momentanément inaccessible.
-          Vos données privées ne seront accessibles qu’après vérification de votre session.
-        </ThemedText>
-        <Button label="Réessayer la connexion" onPress={() => { void restoreSession(); }} />
-        <LogoutButton />
-      </Card>
-    </Screen>;
-  }
+
+  if (session.status === 'reconnecting') return <Screen>
+    <View style={{ gap: Spacing.three }}>
+      <ThemedText type="title" accessibilityRole="header">Votre session est conservée</ThemedText>
+      <ThemedText themeColor="textSecondary">
+        L’accès à votre espace sera rétabli après une vérification auprès du serveur.
+        Votre compte reste enregistré dans le stockage sécurisé de cet appareil.
+      </ThemedText>
+    </View>
+    <Card>
+      <Button label="Réessayer la connexion" onPress={() => { void restoreSession(); }} />
+      <Button label="Me déconnecter" variant="outline" onPress={() => { void logoutSession(); }} />
+    </Card>
+  </Screen>;
 
   return <Screen>
-    <View style={[styles.topBar, { backgroundColor: theme.backgroundElement, borderColor: theme.border }]}>
-      <View style={styles.brand}>
-        <View style={[styles.mark, { backgroundColor: theme.primary }]}>
-          <HeartPulse color="#FFFFFF" size={20} />
+    <View style={{
+      flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between',
+      borderRadius: Radius.pill, backgroundColor: theme.backgroundElement,
+      paddingHorizontal: Spacing.three, paddingVertical: Spacing.two, gap: Spacing.two,
+    }}>
+      <View style={{ flexDirection: 'row', alignItems: 'center', flexShrink: 1, gap: Spacing.two }}>
+        <View style={{ backgroundColor: theme.primary, width: 32, height: 32,
+          borderRadius: Radius.medium, alignItems: 'center', justifyContent: 'center' }}>
+          <Plus size={23} color={theme.onPrimary} strokeWidth={3} />
         </View>
-        <ThemedText type="smallBold" style={{ fontSize: 17, color: theme.night }}>MediLink</ThemedText>
+        <ThemedText type="smallBold" style={{ fontWeight: '800', color: theme.night }}>MediLink</ThemedText>
       </View>
       <Link href="/choose-role" asChild>
-        <Pressable accessibilityRole="link" style={[styles.createButton, { backgroundColor: theme.primary }]}>
-          <ThemedText style={{ color: '#FFFFFF', fontSize: 12, fontWeight: '700' }}>Créer un compte</ThemedText>
+        <Pressable accessibilityRole="link" style={{
+          backgroundColor: theme.primary, borderRadius: Radius.pill,
+          paddingHorizontal: Spacing.three, paddingVertical: 11,
+        }}>
+          <ThemedText type="smallBold" style={{ color: theme.onPrimary }}>Créer un compte</ThemedText>
         </Pressable>
       </Link>
     </View>
 
-    <View style={[styles.hero, { backgroundColor: theme.infoSurface }]}>
-      <ThemedText type="title" style={{ color: theme.night, fontSize: 31, lineHeight: 36 }}>
+    <Card style={{
+      backgroundColor: theme.infoSurface, borderColor: 'transparent',
+      borderRadius: 26, padding: Spacing.four, gap: Spacing.three,
+    }}>
+      <ThemedText type="title" style={{ color: theme.night }}>
         La santé, plus proche de vous
       </ThemedText>
       <ThemedText themeColor="textSecondary">
         Trouvez un médecin ou publiez votre besoin médical pour recevoir de l’aide, sans vous déplacer.
       </ThemedText>
-      <View style={[styles.searchPanel, { backgroundColor: theme.backgroundElement }]}>
-        <View style={styles.searchRow}>
-          <Stethoscope color={theme.primary} size={21} />
+      <Card style={{ borderColor: 'transparent', padding: Spacing.three, gap: Spacing.three }}>
+        <View style={{ flexDirection: 'row', alignItems: 'center', gap: Spacing.two }}>
+          <Stethoscope size={21} color={theme.primary} />
           <View style={{ flex: 1 }}>
             <ThemedText type="smallBold">Spécialité médicale</ThemedText>
-            <ThemedText type="small" themeColor="textSecondary">Recherchez un médecin vérifié</ThemedText>
+            <ThemedText themeColor="textSecondary" type="small">Médecine générale, pédiatrie, neurologie…</ThemedText>
           </View>
         </View>
-        <View style={styles.searchRow}>
-          <MapPin color={theme.secondary} size={21} />
+        <View style={{ flexDirection: 'row', alignItems: 'center', gap: Spacing.two }}>
+          <Activity size={21} color={theme.secondary} />
           <View style={{ flex: 1 }}>
             <ThemedText type="smallBold">Localisation</ThemedText>
-            <ThemedText type="small" themeColor="textSecondary">Par ville ou quartier, sans accès GPS</ThemedText>
+            <ThemedText themeColor="textSecondary" type="small">Ville ou quartier de votre choix</ThemedText>
           </View>
         </View>
         <Link href="/login" asChild>
-          <Pressable accessibilityRole="link" style={[styles.primaryLink, { backgroundColor: theme.primary }]}>
-            <ArrowRight color="#FFFFFF" size={20} />
-            <ThemedText style={{ color: '#FFFFFF', fontWeight: '700' }}>Se connecter pour rechercher</ThemedText>
+          <Pressable accessibilityRole="link"
+            style={{ backgroundColor: theme.primary, borderRadius: Radius.pill,
+              minHeight: 50, alignItems: 'center', justifyContent: 'center', padding: Spacing.two }}>
+            <ThemedText type="smallBold" style={{ color: theme.onPrimary }}>Connexion</ThemedText>
           </Pressable>
         </Link>
-      </View>
+      </Card>
       <Link href="/login" asChild>
-        <Pressable accessibilityRole="link" style={[styles.feature, { backgroundColor: theme.backgroundSelected }]}>
-          <Stethoscope color={theme.primary} size={25} />
+        <Pressable accessibilityRole="link" style={{ padding: Spacing.three,
+          borderRadius: Radius.xlarge, backgroundColor: theme.backgroundSelected, gap: Spacing.two }}>
+          <Stethoscope size={24} color={theme.primary} />
           <ThemedText type="smallBold" themeColor="primary">Trouver un médecin</ThemedText>
-          <ThemedText type="small" themeColor="textSecondary">Consultez les profils et demandez un rendez-vous.</ThemedText>
+          <ThemedText type="small" themeColor="textSecondary">Consultez les profils et prenez rendez-vous.</ThemedText>
         </Pressable>
       </Link>
-      <Link href="/choose-role" asChild>
-        <Pressable accessibilityRole="link" style={[styles.feature, { backgroundColor: theme.backgroundElement }]}>
-          <Plus color={theme.secondary} size={25} />
-          <ThemedText type="smallBold" style={{ color: theme.secondary }}>Publier un besoin médical</ThemedText>
+      <Link href="/login" asChild>
+        <Pressable accessibilityRole="link" style={{ padding: Spacing.three,
+          borderRadius: Radius.xlarge, backgroundColor: theme.successSurface, gap: Spacing.two }}>
+          <FileText size={24} color={theme.secondary} />
+          <ThemedText type="smallBold" themeColor="secondary">Publier un besoin médical</ThemedText>
           <ThemedText type="small" themeColor="textSecondary">Décrivez votre situation pour recevoir des propositions.</ThemedText>
         </Pressable>
       </Link>
-    </View>
+    </Card>
 
-    <View style={styles.section}>
-      <ThemedText type="subtitle" accessibilityRole="header" style={{ color: theme.night }}>
+    <View style={{ gap: Spacing.three, marginTop: Spacing.four }}>
+      <ThemedText type="subtitle" style={{ color: theme.night }} accessibilityRole="header">
         Quelle spécialité recherchez-vous ?
       </ThemedText>
-      <View style={styles.specialties}>
-        {SPECIALTIES.map(({ label, Icon }) =>
-          <Link href="/login" asChild key={label}>
-            <Pressable accessibilityRole="link" accessibilityLabel={'Se connecter pour rechercher : ' + label}
-              style={({ pressed }) => [styles.specialty, {
-                backgroundColor: theme.backgroundElement, opacity: pressed ? .7 : 1,
-              }]}>
-              <View style={[styles.specialtyIcon, { backgroundColor: theme.infoSurface }]}>
-                <Icon color={theme.primary} size={21} />
-              </View>
-              <ThemedText style={styles.specialtyLabel}>{label}</ThemedText>
-            </Pressable>
-          </Link>,
-        )}
+      <View style={{ flexDirection: 'row', flexWrap: 'wrap', justifyContent: 'space-between', gap: Spacing.two }}>
+        {specialties.map(({ name, Icon }) => <Link href="/login" asChild key={name}>
+          <Pressable accessibilityRole="link" accessibilityLabel={name}
+            style={{ width: '48%', minHeight: 100, alignItems: 'center', justifyContent: 'center',
+              borderRadius: Radius.xlarge, backgroundColor: theme.backgroundElement,
+              padding: Spacing.two, gap: Spacing.two }}>
+            <View style={{ width: 42, height: 42, borderRadius: Radius.large,
+              backgroundColor: theme.infoSurface, alignItems: 'center', justifyContent: 'center' }}>
+              <Icon size={23} color={theme.primary} />
+            </View>
+            <ThemedText type="smallBold" style={{ fontSize: 12, textAlign: 'center' }}>{name}</ThemedText>
+          </Pressable>
+        </Link>)}
       </View>
     </View>
 
-    <View style={styles.section}>
-      <ThemedText type="subtitle" accessibilityRole="header" style={{ color: theme.night }}>
-        Comment ça marche ?
-      </ThemedText>
-      {HOW_IT_WORKS.map(({ title, body, Icon }, index) =>
-        <Card key={title} style={{ borderWidth: 0, borderRadius: Radius.xlarge, padding: Spacing.four }}>
-          <View style={styles.stepHeading}>
-            <View style={[styles.stepIcon, { backgroundColor: theme.infoSurface }]}>
-              <Icon color={theme.secondary} size={22} />
-            </View>
-            <ThemedText style={{ color: theme.border, fontWeight: '800', fontSize: 25 }}>{index + 1}</ThemedText>
+    <View style={{ gap: Spacing.three, marginTop: Spacing.four }}>
+      <ThemedText type="subtitle" style={{ color: theme.night }} accessibilityRole="header">Comment ça marche ?</ThemedText>
+      {steps.map(({ title, description, Icon }, index) => <Card key={title} style={{ padding: Spacing.four }}>
+        <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' }}>
+          <View style={{ backgroundColor: theme.successSurface, width: 40, height: 40,
+            borderRadius: Radius.large, alignItems: 'center', justifyContent: 'center' }}>
+            <Icon size={22} color={theme.secondary} />
           </View>
-          <ThemedText type="smallBold">{title}</ThemedText>
-          <ThemedText type="small" themeColor="textSecondary">{body}</ThemedText>
-        </Card>,
-      )}
+          <ThemedText style={{ fontSize: 27, fontWeight: '800', color: theme.border }}>{index + 1}</ThemedText>
+        </View>
+        <ThemedText type="smallBold">{title}</ThemedText>
+        <ThemedText type="small" themeColor="textSecondary">{description}</ThemedText>
+      </Card>)}
     </View>
 
-    <Card style={{ backgroundColor: theme.infoSurface, borderWidth: 0, padding: Spacing.four }}>
-      <ShieldCheck color={theme.secondary} size={27} />
-      <ThemedText type="subtitle" style={{ color: theme.night }}>Découvrez nos médecins vérifiés</ThemedText>
+    <View style={{ gap: Spacing.two, marginTop: Spacing.four }}>
+      <ThemedText type="subtitle" style={{ color: theme.night }} accessibilityRole="header">
+        Découvrez nos médecins vérifiés
+      </ThemedText>
+      <ThemedText type="small" themeColor="textSecondary">
+        Consultez les profils, spécialités et disponibilités après connexion. Les informations sont récupérées auprès de MediLink.
+      </ThemedText>
+      <Link href="/login"><ThemedText type="linkPrimary">Voir tous les médecins</ThemedText></Link>
+    </View>
+
+    <Card style={{ gap: Spacing.three, marginTop: Spacing.four,
+      backgroundColor: theme.successSurface, borderColor: 'transparent', padding: Spacing.four }}>
+      <ThemedText type="subtitle" style={{ color: theme.night }}>Vous ne savez pas qui contacter ?</ThemedText>
       <ThemedText themeColor="textSecondary" type="small">
-        Consultez les spécialités et les informations vérifiées de l’annuaire MediLink.
+        Publiez votre besoin médical. Les médecins vérifiés de votre secteur vous envoient leurs propositions, vous choisissez.
       </ThemedText>
       <Link href="/login" asChild>
-        <Pressable accessibilityRole="link" style={styles.textLink}>
-          <ThemedText type="smallBold" themeColor="primary">Voir tous les médecins</ThemedText>
-          <ChevronRight color={theme.primary} size={17} />
+        <Pressable accessibilityRole="link"
+          style={{ alignSelf: 'flex-start', backgroundColor: theme.secondary,
+            borderRadius: Radius.pill, paddingHorizontal: Spacing.four, paddingVertical: Spacing.three }}>
+          <ThemedText type="smallBold" style={{ color: theme.onPrimary }}>Publier un besoin médical</ThemedText>
         </Pressable>
       </Link>
     </Card>
 
-    <Card style={{ backgroundColor: theme.infoSurface, borderWidth: 0, padding: Spacing.four }}>
-      <ThemedText type="subtitle" style={{ color: theme.night }}>Vous ne savez pas qui contacter ?</ThemedText>
-      <ThemedText type="small" themeColor="textSecondary">
-        Publiez votre besoin médical. Les médecins vérifiés de votre secteur pourront vous proposer leurs services.
-      </ThemedText>
-      <Link href="/choose-role" asChild>
-        <Pressable accessibilityRole="link" style={[styles.tealLink, { backgroundColor: theme.secondary }]}>
-          <ThemedText style={{ color: '#FFFFFF', fontWeight: '700' }}>Publier un besoin médical</ThemedText>
-        </Pressable>
-      </Link>
-    </Card>
-
-    <View style={styles.footer}>
-      <ThemedText type="small" themeColor="textSecondary">
-        MediLink ne remplace pas une consultation. En cas d’urgence médicale,
-        contactez immédiatement les services d’urgence.
-      </ThemedText>
-      <View style={styles.footerLinks}>
-        <Link href="/aide"><ThemedText type="small" themeColor="primary">Aide</ThemedText></Link>
-        <Link href="/contact"><ThemedText type="small" themeColor="primary">Contact</ThemedText></Link>
-        <Link href="/privacy"><ThemedText type="small" themeColor="primary">Confidentialité</ThemedText></Link>
-        <Link href="/terms"><ThemedText type="small" themeColor="primary">Conditions</ThemedText></Link>
+    <View style={{ marginTop: Spacing.four, gap: Spacing.two }}>
+      <View style={{ flexDirection: 'row', alignItems: 'flex-start', gap: Spacing.two }}>
+        <ShieldCheck size={19} color={theme.secondary} />
+        <ThemedText type="small" themeColor="textSecondary" style={{ flex: 1 }}>
+          MediLink ne remplace pas une consultation. En cas d’urgence médicale, contactez immédiatement les services d’urgence.
+        </ThemedText>
       </View>
+      <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: Spacing.three }}>
+        <Link href="/aide"><ThemedText type="small" themeColor="textSecondary">Aide</ThemedText></Link>
+        <Link href="/contact"><ThemedText type="small" themeColor="textSecondary">Contact</ThemedText></Link>
+        <Link href="/privacy"><ThemedText type="small" themeColor="textSecondary">Confidentialité</ThemedText></Link>
+        <Link href="/terms"><ThemedText type="small" themeColor="textSecondary">Conditions</ThemedText></Link>
+      </View>
+      <ThemedText type="small" themeColor="textSecondary">MediLink · Une mise en relation simple et humaine.</ThemedText>
     </View>
   </Screen>;
 }

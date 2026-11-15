@@ -2,6 +2,21 @@
 
 **Audit de clôture des prompts 29–30 — 13 novembre 2026.** La matrice initiale du prompt 01 (qui indiquait encore « Mobile absent » partout) est désormais **remplacée** par l'état vérifié des sources. Dépôts : [web](https://github.com/KafackLolys/medilink) (`main`), [API](https://github.com/KafackLolys/medilink-api) (`main`), [Android](https://github.com/KafackLolys/medilink-mobile) (`docs/mobile-audit-parity-2026-11-13`, PR [#4](https://github.com/KafackLolys/medilink-mobile/pull/4) ouverte en brouillon).
 
+## Addendum de parité — 15 novembre 2026 (PR #6, branche non fusionnée)
+
+Les captures responsive web fournies par l'utilisateur ont servi de référence visuelle aux modifications **proposées** dans la PR [#6](https://github.com/KafackLolys/medilink-mobile/pull/6). Cet addendum ne remplace pas les preuves historiques du 13 novembre et **n'atteste ni E2E Android ni compilation signée**.
+
+| Parcours | Nouveau code Android dans la PR #6 | Statut de preuve |
+| --- | --- | --- |
+| P01 Accueil public | Mise en page native inspirée des cartes, spécialités, étapes et appels à l'action du site, sans médecin fictif | Implémenté en source; comparaison appareil non exécutée |
+| P02 Aide/contact/confidentialité/conditions | FAQ dépliable, contact via `POST /integration/contact`, pages légales reprenant les principes web sans inventer les mentions manquantes | Source; validation légale et test contact réel requis |
+| A04 Nouveau — Google | `@react-native-google-signin/google-signin` + Firebase Identity Toolkit + `/auth/google/status` / `/auth/google/complete`; sélection patient/médecin uniquement pour nouveau compte | Bloqué par config Firebase OAuth, empreintes SHA et test sur APK development |
+| A02 Restauration de session | SecureStore et refresh déjà présents, désormais préservation des identifiants en panne réseau avec écran de reconnexion sans ouverture des routes privées | Tests de logique prévus; recette réelle à faire |
+| P04 Annuaire médecins | Présentation rapprochée des captures; boutons « Voir le profil » et « Prendre rendez-vous » | Source; disponibilités restent autoritatives côté API |
+| X03 Création administrateur | Nouvelle page `admin/ajouter.tsx` utilisant `POST /admin/admins` et confirmation native; détail individuel `admin/comptes/[id]` reste différé faute de contrat GET de détail | Source; test admin actif et sécurité requis |
+
+Configuration, hypothèses, conditions de recette et limites : `docs/MOBILE_GOOGLE_DESIGN_PARITY_20261115.md`.
+
 ## Méthodologie et niveaux de preuve
 
 **Inspecté :** code Next.js et services web, contrôleurs/services NestJS, écrans Expo Router et services HTTP Android. Pour les contrats, voir également les audits détaillés dans `docs/MOBILE_*.md`.

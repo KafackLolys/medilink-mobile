@@ -9,7 +9,7 @@ export type SessionTokens = {
 export type SessionSnapshot =
   | { status: 'loading'; role: null }
   | { status: 'unauthenticated'; role: null }
-  | { status: 'unverified'; role: null }
+  | { status: 'reconnecting'; role: null }
   | { status: 'authenticated'; role: AccountRole; accountStatus: AccountStatus };
 
 export type SessionStorage = {
@@ -36,6 +36,15 @@ export type SessionManagerOptions = {
 function isActiveUser(user: AuthenticatedUser): user is AuthenticatedUser & { role: AccountRole } {
   return ['patient', 'doctor', 'admin'].includes(user.role)
     && user.status !== 'suspended' && user.status !== 'deleted';
+}
+
+class InvalidAccountError extends Error {}
+
+/** Network and 5xx failures never imply that the saved refresh token was revoked. */
+function isRejectedSession(error: unknown): boolean {
+  if (error instanceof InvalidAccountError) return true;
+  const kind = (error as { kind?: unknown } | null)?.kind;
+  return kind === 'unauthorized' || kind === 'forbidden';
 }
 
 function parseTokens(response: LoginResponse, now: number): SessionTokens {
@@ -127,7 +136,7 @@ export class SessionManager {
   private async verifiedProfile(tokens: SessionTokens): Promise<AuthenticatedUser> {
     const profile = await this.options.endpoints.profile(tokens.idToken);
     if (!profile?.user || profile.user.id !== tokens.userId || !isActiveUser(profile.user)) {
-      throw new Error('Compte inactif ou profil incohérent.');
+      throw new InvalidAccountError('Compte inactif ou profil incohérent.');
     }
     return profile.user;
   }
@@ -177,22 +186,25 @@ export class SessionManager {
         this.tokens = stored;
         // Refresh on every cold start to check revocation and current account status.
         const refreshed = await this.refresh();
-        if (epoch !== this.generation || !refreshed) return;
+        if (epoch !== this.generation) return;
+        if (!refreshed) {
+          if (this.state.status === 'loading') this.publish({ status: 'reconnecting', role: null });
+          return;
+        }
         const valid = this.tokens;
         if (!valid) return;
         const user = await this.verifiedProfile(valid);
         if (epoch !== this.generation) return;
         this.publish({ status: 'authenticated', role: user.role, accountStatus: user.status });
       } catch (error) {
-        if (epoch === this.generation && isTransientFailure(error)) {
-          // Keep SecureStore intact, but never open protected routes without
-          // fresh backend verification. The user can retry when online.
-          this.publish({ status: 'unverified', role: null });
-          return;
-        }
-        if (epoch === this.generation) {
+        if (epoch !== this.generation) return;
+        if (isRejectedSession(error)) {
           try { await this.clear(); }
           catch { this.publish({ status: 'unauthenticated', role: null }); }
+        } else {
+          // Keep SecureStore intact on airplane mode, timeout, or backend outage.
+          // Never open protected screens before a successful server revalidation.
+          this.publish({ status: 'reconnecting', role: null });
         }
       }
     })();
@@ -200,7 +212,7 @@ export class SessionManager {
     wrapped = flight.finally(() => {
       if (this.bootFlight === wrapped) {
         this.bootFlight = null;
-        this.bootCompleted = this.state.status !== 'unverified';
+        this.bootCompleted = this.state.status !== 'reconnecting';
       }
     });
     this.bootFlight = wrapped;
@@ -229,15 +241,12 @@ export class SessionManager {
         }
         return true;
       } catch (error) {
-        if (epoch === this.generation && this.tokens?.refreshToken === current.refreshToken) {
-          if (isTransientFailure(error)) {
-            if (this.state.status === 'loading') {
-              this.publish({ status: 'unverified', role: null });
-            }
-            return false;
-          }
+        if (isRejectedSession(error) && epoch === this.generation &&
+            this.tokens?.refreshToken === current.refreshToken) {
           await this.clear();
         }
+        // A temporary connectivity error does not sign out the patient or doctor.
+        // The next authorized request can retry the refresh.
         return false;
       }
     })();
