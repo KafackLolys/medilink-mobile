@@ -27,7 +27,6 @@ export default function CreateAdminScreen() {
   useEffect(() => () => {
     request.current?.abort();
     // Password is never saved in AsyncStorage, SecureStore or a navigation param.
-    setForm(blank);
   }, []);
 
   function update(field: keyof CreateAdminForm, value: string) {
