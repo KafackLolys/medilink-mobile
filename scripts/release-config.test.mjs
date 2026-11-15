@@ -21,9 +21,9 @@ test('Expo 58 Android release has three explicit EAS profiles and native dev cli
  assert.equal(app.version,pkg.version);
  assert.equal(app.android.versionCode,1);
 });
-test('no fixed fabricated package, Firebase secrets or Expo EAS projectId in repo',()=>{
+test('Android package is generated and known public EAS project is preserved without private secrets',()=>{
  assert.equal(app.android.package,undefined);
- assert.equal(app.extra?.eas?.projectId,undefined);
+ assert.equal(app.extra?.eas?.projectId,'8498e2e6-ccaa-4993-8ca6-b048f5e6432c');
  assert.match(source,/MEDILINK_ANDROID_PACKAGE/);
  assert.match(source,/MEDILINK_GOOGLE_SERVICES_FILE/);
  assert.match(source,/MEDILINK_EAS_PROJECT_ID/);
@@ -64,8 +64,8 @@ test('production build cannot bypass branding and versionCode approval',()=>{
    .map(k=>[k,process.env[k]]));
  try{
   Object.assign(process.env,{
-   EAS_BUILD_PROFILE:'production',MEDILINK_ANDROID_PACKAGE:'cm.medilink.test',
-   MEDILINK_GOOGLE_SERVICES_FILE:'/secure/example.json',
+   EAS_BUILD_PROFILE:'production',MEDILINK_ANDROID_PACKAGE:'com.lolys.medilink',
+   MEDILINK_GOOGLE_SERVICES_FILE:'./google-services.json',
    MEDILINK_EAS_PROJECT_ID:'12345678-1234-4123-8123-123456789abc',
    EXPO_PUBLIC_API_BASE_URL:'https://api.medilink.test',
   });
