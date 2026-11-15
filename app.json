@@ -60,7 +60,8 @@
           "defaultChannel": "medilink-updates",
           "color": "#208AEF"
         }
-      ]
+      ],
+      "@react-native-google-signin/google-signin"
     ],
     "experiments": {
       "typedRoutes": true,
