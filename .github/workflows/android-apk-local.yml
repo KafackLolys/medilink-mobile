@@ -72,9 +72,19 @@ jobs:
           sdk="${ANDROID_HOME:-${ANDROID_SDK_ROOT:-/usr/local/lib/android/sdk}}"
           apksigner=$(find "$sdk/build-tools" -name apksigner -type f | sort -V | tail -1)
           test -x "$apksigner"
-          "$apksigner" verify "$apk"
-          "$apksigner" verify --print-certs "$apk" | grep -E 'Signer #1 certificate (SHA-1|SHA-256) digest' > medilink-android-signature-sha.txt
-          test -s medilink-android-signature-sha.txt
+          # Gradle release output may be unsigned; explicitly sign this test-only APK.
+          # The generated Expo Android project contains the standard debug keystore.
+          keystore=android/app/debug.keystore
+          test -s "$keystore"
+          "$apksigner" sign \
+            --ks "$keystore" \
+            --ks-key-alias androiddebugkey \
+            --ks-pass pass:android \
+            --key-pass pass:android \
+            "$apk"
+          "$apksigner" verify --verbose --print-certs "$apk" | tee apk-signature-verification.log
+          grep -E 'Signer #1 certificate SHA-(1|256) digest:' apk-signature-verification.log > medilink-android-signature-sha.txt
+          test "$(wc -l < medilink-android-signature-sha.txt)" -eq 2
           sha256sum "$apk" > medilink-preview-test.apk.sha256
           cp "$apk" medilink-preview-test.apk
       - name: Upload installable test APK
