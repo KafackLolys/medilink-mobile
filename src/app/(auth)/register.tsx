@@ -82,7 +82,7 @@ export default function RegisterScreen() {
   </AuthShell>;
 
   return <AuthShell title={form.role === 'doctor' ? 'Votre compte médecin' : 'Votre compte patient'}
-    subtitle="Renseignez vos informations pour créer votre compte.">
+    subtitle="Renseignez vos informations pour créer votre compte." step={2}>
     <View style={{ gap: Spacing.three }}>
       <ThemedText type="smallBold">Type de compte</ThemedText>
       <SelectField label="Choisissez votre profil" value={form.role}
