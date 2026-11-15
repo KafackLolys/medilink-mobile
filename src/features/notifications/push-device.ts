@@ -72,7 +72,10 @@ async function ensurePermission(request: boolean): Promise<boolean> {
   return permission.granted;
 }
 
-export async function registerPushDevice(requestPermission: boolean): Promise<boolean> {
+export async function registerPushDevice(
+  requestPermission: boolean,
+  updatedToken?: Awaited<ReturnType<typeof Notifications.getDevicePushTokenAsync>>,
+): Promise<boolean> {
   if (registrationFlight) return registrationFlight;
   const flight = (async () => {
     const session = useNavigationSession.getState().session;
@@ -83,12 +86,14 @@ export async function registerPushDevice(requestPermission: boolean): Promise<bo
     // This backend uses Firebase Admin FCM, NOT Expo Push Service tokens.
     let native: Awaited<ReturnType<typeof Notifications.getDevicePushTokenAsync>>;
     try {
-      native = await Notifications.getDevicePushTokenAsync();
+      native = updatedToken ?? await Notifications.getDevicePushTokenAsync();
     } catch {
       throw new PushRegistrationError('token',
         'Impossible d’obtenir le token FCM. Utilisez une application Android compilée avec le fichier Firebase du bon projet et les services Google Play.');
     }
-    if (native.type !== 'fcm' || typeof native.data !== 'string' || native.data.length < 20) {
+    // Expo returns the operating-system value "android", not "fcm".
+    // Checking for "fcm" silently prevented every Android registration.
+    if (native.type !== 'android' || typeof native.data !== 'string' || native.data.length < 20) {
       throw new PushRegistrationError('token',
         'Token FCM Android indisponible. Vérifiez Firebase et Google Play Services sur cette installation.');
     }
