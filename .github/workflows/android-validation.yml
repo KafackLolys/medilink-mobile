@@ -5,6 +5,8 @@ on:
     branches: [main]
     paths:
       - 'src/**'
+      - 'scripts/**'
+      - 'eas.json'
       - 'app.json'
       - 'app.config.js'
       - 'google-services.json'
@@ -29,6 +31,7 @@ jobs:
       - run: npm run typecheck
       - run: npm run lint
       - run: npm run release:validate
+      - run: node --test scripts/startup-validation.test.mjs
       - run: npm run test:http
       - run: npm run test:auth
       - run: npm run test:session
@@ -51,3 +54,9 @@ jobs:
       - run: npm run test:admin
       - run: npm run test:network
       - run: npm run test:ux
+      - name: Verify Metro Android JavaScript bundle
+        env:
+          EXPO_PUBLIC_API_BASE_URL: https://medilink-api-lilac.vercel.app
+          EXPO_PUBLIC_GOOGLE_WEB_CLIENT_ID: 353233115193-k7evhvj5518cgp52p17fe6tmmrp64a8h.apps.googleusercontent.com
+          EXPO_PUBLIC_FIREBASE_API_KEY: PLACEHOLDER_ONLY_FOR_BUNDLING
+        run: npx expo export --platform android --output-dir /tmp/medilink-android-bundle
