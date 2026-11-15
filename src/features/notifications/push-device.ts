@@ -154,20 +154,4 @@ export function configurePushPresentation() {
   });
 }
 
-export async function testLocalPushPresentation(): Promise<void> {
-  if (!(await ensurePermission(true))) return;
-  await Notifications.scheduleNotificationAsync({
-    content: {
-      title: 'MediLink · Test de notification',
-      body: 'Les alertes locales fonctionnent sur cet appareil.',
-      sound: 'default',
-    },
-    trigger: {
-      type: Notifications.SchedulableTriggerInputTypes.TIME_INTERVAL,
-      seconds: 1,
-      channelId: PUSH_CHANNEL,
-    },
-  });
-}
-
 export function notificationBackendUser() { return activeUser; }
