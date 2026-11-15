@@ -1,6 +1,8 @@
 import { Link, Redirect } from 'expo-router';
 import { View } from 'react-native';
-import { Screen, Header, Card } from '@/components/ui/primitives';
+import { Screen, Header, Card, Button } from '@/components/ui/primitives';
+import { LogoutButton } from '@/components/auth/logout-button';
+import { restoreSession } from '@/features/auth/session';
 import { ThemedText } from '@/components/themed-text';
 import { roleHome, useNavigationSession } from '@/store/navigation-session';
 import { LoadingState } from '@/components/ui/states';
@@ -17,6 +19,14 @@ export default function Index() {
   const session = useNavigationSession(state => state.session);
   if (session.status === 'loading') return <Screen><LoadingState label="Vérification de votre session…" /></Screen>;
   if (session.status === 'authenticated') return <Redirect href={roleHome(session.role)} />;
+  if (session.status === 'unverified') return <Screen>
+    <Card>
+      <Header title="Connexion à vérifier" subtitle="Votre compte reste enregistré sur cet appareil. La connexion au serveur est momentanément indisponible." />
+      <ThemedText themeColor="textSecondary">Pour protéger vos données médicales, les espaces privés se débloquent uniquement après vérification de votre session.</ThemedText>
+      <Button label="Réessayer la connexion" onPress={() => { void restoreSession(); }} />
+      <LogoutButton />
+    </Card>
+  </Screen>;
 
   return (
     <Screen>
