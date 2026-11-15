@@ -9,6 +9,7 @@ import { Modal } from '@/components/ui/overlays';
 import { ThemedText } from '@/components/themed-text';
 import { LogoutButton } from '@/components/auth/logout-button';
 import { CreateAdminForm } from '@/components/admin/create-admin-form';
+import { MedihomeHeader } from '@/components/ui/medihome-header';
 import { useTheme } from '@/hooks/use-theme';
 import { useNavigationSession } from '@/store/navigation-session';
 import { Spacing } from '@/constants/theme';
@@ -143,7 +144,9 @@ export default function AdminHome(){
    refreshControl={<RefreshControl refreshing={refreshing} onRefresh={()=>load(true)}
     colors={[theme.primary]} tintColor={theme.primary}/>}
    ListHeaderComponent={<View style={styles.header}>
-    <Header title="Administration Medilink" subtitle="Gestion sécurisée des comptes patients et médecins."/>
+    <MedihomeHeader name="Administrateur MediLink" />
+    <ThemedText type="smallBold" themeColor="primary">ADMINISTRATION</ThemedText>
+    <Header title="Comptes de la plateforme" subtitle="Consultez les patients et médecins, gérez leurs accès et créez de nouveaux comptes administrateurs."/>
     <Card>
      <ThemedText type="small" themeColor="textSecondary">
       Les opérations sont contrôlées par FirebaseAuthGuard et AdminGuard côté serveur.
