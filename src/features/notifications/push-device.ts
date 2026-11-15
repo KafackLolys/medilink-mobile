@@ -161,9 +161,12 @@ export async function testLocalPushPresentation(): Promise<void> {
       title: 'MediLink · Test de notification',
       body: 'Les alertes locales fonctionnent sur cet appareil.',
       sound: 'default',
+    },
+    trigger: {
+      type: Notifications.SchedulableTriggerInputTypes.TIME_INTERVAL,
+      seconds: 1,
       channelId: PUSH_CHANNEL,
     },
-    trigger: null,
   });
 }
 
