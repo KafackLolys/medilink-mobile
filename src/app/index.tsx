@@ -203,36 +203,3 @@ export default function Index() {
     </View>
   </Screen>;
 }
-
-const styles = StyleSheet.create({
-  topBar: {
-    flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between',
-    borderRadius: Radius.pill, borderWidth: 1, padding: 9, paddingHorizontal: 12, gap: 8,
-  },
-  brand: { flexDirection: 'row', alignItems: 'center', gap: 9 },
-  mark: { width: 38, height: 38, borderRadius: 11, justifyContent: 'center', alignItems: 'center' },
-  createButton: { borderRadius: Radius.pill, minHeight: 36, paddingHorizontal: 12, justifyContent: 'center' },
-  hero: { padding: Spacing.four, borderRadius: Radius.xlarge, gap: Spacing.three },
-  searchPanel: { borderRadius: Radius.xlarge, padding: Spacing.three, gap: Spacing.three },
-  searchRow: { flexDirection: 'row', alignItems: 'center', gap: 12 },
-  primaryLink: {
-    minHeight: 48, flexDirection: 'row', alignItems: 'center', justifyContent: 'center',
-    borderRadius: Radius.pill, paddingHorizontal: 12, gap: 8,
-  },
-  feature: { borderRadius: Radius.xlarge, padding: Spacing.three, gap: Spacing.two },
-  section: { gap: Spacing.three, marginTop: Spacing.two },
-  specialties: { flexDirection: 'row', flexWrap: 'wrap', gap: Spacing.two },
-  specialty: {
-    flexBasis: '47%', flexGrow: 1, minHeight: 110,
-    borderRadius: Radius.xlarge, alignItems: 'center',
-    justifyContent: 'center', gap: 8, padding: Spacing.two,
-  },
-  specialtyIcon: { width: 42, height: 42, borderRadius: 14, alignItems: 'center', justifyContent: 'center' },
-  specialtyLabel: { fontSize: 12, fontWeight: '600', textAlign: 'center' },
-  stepHeading: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' },
-  stepIcon: { width: 40, height: 40, borderRadius: 12, alignItems: 'center', justifyContent: 'center' },
-  textLink: { minHeight: 44, flexDirection: 'row', alignItems: 'center', gap: 3 },
-  tealLink: { alignSelf: 'flex-start', minHeight: 48, borderRadius: Radius.pill, paddingHorizontal: 20, justifyContent: 'center', marginTop: 6 },
-  footer: { gap: Spacing.three, paddingVertical: Spacing.three },
-  footerLinks: { flexDirection: 'row', flexWrap: 'wrap', gap: Spacing.three },
-});

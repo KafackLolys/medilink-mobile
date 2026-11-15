@@ -114,13 +114,4 @@ export default function ChooseRole() {
     </View>
   </AuthShell>;
 }
-const styles = StyleSheet.create({
-  option: {
-    minHeight: 124, borderWidth: 1.5, borderRadius: Radius.xlarge,
-    flexDirection: 'row', alignItems: 'center', padding: Spacing.three, gap: Spacing.three,
-  },
-  icon: {
-    width: 58, height: 58, borderRadius: Radius.xlarge,
-    alignItems: 'center', justifyContent: 'center',
-  },
-});
+

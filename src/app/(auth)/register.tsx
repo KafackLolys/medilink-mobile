@@ -33,6 +33,23 @@ export default function RegisterScreen() {
 
   useEffect(() => () => { request.current?.abort(); }, []);
 
+  // When the account type changes, drop role-specific data (specialty /
+  // registration number) and their errors so stale values never linger
+  // between patient and doctor registrations.
+  useEffect(() => {
+    setForm(current => ({
+      ...current,
+      specialty: '',
+      registrationNumber: '',
+    }));
+    setErrors(current => {
+      const next = { ...current };
+      delete next.specialty;
+      delete next.registrationNumber;
+      return next;
+    });
+  }, [form.role]);
+
   function update<K extends keyof RegisterForm>(key: K, value: RegisterForm[K]) {
     setForm(current => ({ ...current, [key]: value }));
     setErrors(current => ({ ...current, [key]: '', form: '' }));
@@ -82,7 +99,7 @@ export default function RegisterScreen() {
   </AuthShell>;
 
   return <AuthShell title={form.role === 'doctor' ? 'Votre compte médecin' : 'Votre compte patient'}
-    subtitle="Renseignez vos informations pour créer votre compte." step={2}>
+    subtitle="Renseignez vos informations pour créer votre compte.">
     <View style={{ gap: Spacing.three }}>
       <ThemedText type="smallBold">Type de compte</ThemedText>
       <SelectField label="Choisissez votre profil" value={form.role}
